@@ -22,7 +22,7 @@ namespace FUParkingModel.DatabaseContext
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return config.GetConnectionString("DefaultConnection") ?? throw new Exception(ErrorEnumServer.SERVER_ERROR);
+            return config.GetConnectionString("DefaultConnection") ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

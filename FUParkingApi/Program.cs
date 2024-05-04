@@ -1,4 +1,6 @@
 using FUParkingModel.DatabaseContext;
+using FUParkingService;
+using FUParkingService.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,13 @@ builder.Services.AddSwaggerGen();
 
 #region Database
 builder.Services.AddScoped<FUParkingDatabaseContext>();
+#endregion
+
+#region Services
+builder.Services.AddScoped<IMinioService, MinioService>();
+#endregion
+
+#region Repositories
 #endregion
 
 var app = builder.Build();

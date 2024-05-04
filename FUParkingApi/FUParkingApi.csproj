@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
+    <ProjectReference Include="..\FUParkingService\FUParkingService.csproj" />
   </ItemGroup>
 
 </Project>
