@@ -34,7 +34,7 @@ namespace FUParkingService
                         {
                             Data = new ReturnObjectUrlResDto
                             {
-                                ObjUrl = "https://miniofile.khangbpa.com/parking/" + req.ObjName
+                                ObjUrl = "https://miniofile.khangbpa.com/" + req.BucketName + "/" + req.ObjName
                             },
                             IsSuccess = true,
                             SuccessfullyMessage = SuccessfullyEnumServer.FOUND_OBJECT
@@ -88,7 +88,7 @@ namespace FUParkingService
                             {
                                 Data = new ReturnObjectUrlResDto
                                 {
-                                    ObjUrl = "https://miniofile.khangbpa.com/parking/" + req.ObjName
+                                    ObjUrl = "https://miniofile.khangbpa.com/" + req.BucketName + "/" + req.ObjName
                                 },
                                 IsSuccess = true,
                                 SuccessfullyMessage = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY
@@ -102,7 +102,7 @@ namespace FUParkingService
                                 IsSuccess = false,
                                 InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
                             };
-                        }                       
+                        }
                     }
                     else
                     {
@@ -123,7 +123,7 @@ namespace FUParkingService
                         InternalErrorMessage = isExist.InternalErrorMessage
                     };
                 }
-            } 
+            }
             catch (Exception ex)
             {
                 return new Return<ReturnObjectUrlResDto>
