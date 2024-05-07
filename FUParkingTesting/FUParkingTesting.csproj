@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FUParkingRepository\FUParkingRepository.csproj" />
     <ProjectReference Include="..\FUParkingService\FUParkingService.csproj" />
   </ItemGroup>
 

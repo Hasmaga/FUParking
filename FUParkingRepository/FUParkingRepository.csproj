@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Interface\" />
+    <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
   </ItemGroup>
 
 </Project>

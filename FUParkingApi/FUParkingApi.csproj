@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
@@ -16,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
+    <ProjectReference Include="..\FUParkingRepository\FUParkingRepository.csproj" />
     <ProjectReference Include="..\FUParkingService\FUParkingService.csproj" />
   </ItemGroup>
 

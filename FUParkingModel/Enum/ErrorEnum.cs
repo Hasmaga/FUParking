@@ -3,6 +3,9 @@
     public class ErrorEnumApplication
     {
         public const string SERVER_ERROR = "Server error";
+        public const string ADD_OBJECT_ERROR = "Add object error";
+        public const string GET_OBJECT_ERROR = "Get object error";
+        public const string UPDATE_OBJECT_ERROR = "Update object error";
     }
 
     public class MinioErrorServerDefineEnum
