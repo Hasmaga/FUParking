@@ -3,6 +3,9 @@ using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService;
 using FUParkingService.Interface;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +29,12 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 #endregion
 
 #region GoogleAuth
-builder.Services.AddAuthentication()
+builder.Services.AddAuthentication(opt =>
+    {
+        opt.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        opt.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    })
+    .AddCookie()
     .AddGoogle(opt =>
     {
         opt.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new Exception("ErrorGoogleClientId");
@@ -44,6 +52,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
