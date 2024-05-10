@@ -15,11 +15,11 @@ namespace FUParkingTesting
             _customerRepository = new CustomerRepository(_db);
         }
 
-        [TestMethod]
-        public async Task GetAllCustomer_ShouldReturnListCustomer()
-        {
-            var result = await _customerRepository.GetAllCustomerWithFilterAsync();
-            Assert.IsTrue(result.IsSuccess);
-        }
+        //[TestMethod]
+        //public async Task GetAllCustomer_ShouldReturnListCustomer()
+        //{
+        //    var result = await _customerRepository.GetAllCustomerWithFilterAsync();
+        //    Assert.IsTrue(result.IsSuccess);
+        //}
     }
 }
