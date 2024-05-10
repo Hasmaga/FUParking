@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingModel.ReturnObject;
 using FUParkingRepository.Interface;
@@ -26,13 +27,19 @@ namespace FUParkingService
             _configuration = configuration;
         }
 
-        public async Task<Return<string>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login)
+        public Task<Return<CreateUserReqDto>> CreateUserAsync(CreateUserReqDto user)
         {
+            throw new NotImplementedException();
+        }
+
+        public async Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login)
+        {
+            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 if (login.IsAuthentication == false)
                 {
-                    return new Return<string>
+                    return new Return<LoginResDto>
                     {
                         ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                         IsSuccess = false,
@@ -41,7 +48,7 @@ namespace FUParkingService
                 // Check the email is @fpt.edu.vn only
                 if (!login.Email.Contains("@fpt.edu.vn"))
                 {
-                    return new Return<string>
+                    return new Return<LoginResDto>
                     {
                         ErrorMessage = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY,
                         IsSuccess = false,
@@ -52,12 +59,11 @@ namespace FUParkingService
                 // If the user is not registered, create a new user
                 if (isUserRegistered.Data == null)
                 {
-                    using var transaction = new TransactionScope();
                     // Get the customer type
                     var customerType = await _customerTypeRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
                     if (customerType.Data == null)
                     {
-                        return new Return<string>
+                        return new Return<LoginResDto>
                         {
                             ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
                             IsSuccess = false,
@@ -71,21 +77,27 @@ namespace FUParkingService
                         StatusCustomer = StatusCustomerEnum.ACTIVE
                     };
                     var result = await _customerRepository.CreateNewCustomerAsync(newCustomer);
-                    transaction.Complete();
                     if (result.IsSuccess == false)
                     {
-                        return new Return<string>
+                        transaction.Dispose();
+                        return new Return<LoginResDto>
                         {
                             ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = result.InternalErrorMessage
                         };
                     }
+                    transaction.Complete();
                     if (result.IsSuccess == true && result.Data != null)
                     {
-                        return new Return<string>
+                        return new Return<LoginResDto>
                         {
-                            Data = CreateBearerTokenAccount(result.Data.Id),
+                            Data = new LoginResDto
+                            {
+                                BearerToken = CreateBearerTokenAccount(result.Data.Id),
+                                Name = result.Data.FullName,
+                                Email = result.Data.Email
+                            },
                             IsSuccess = true,
                             SuccessfullyMessage = SuccessfullyEnumServer.SUCCESSFULLY
                         };
@@ -93,14 +105,20 @@ namespace FUParkingService
                 }
                 if (isUserRegistered != null && isUserRegistered.Data != null)
                 {
-                    return new Return<string>
+                    return new Return<LoginResDto>
                     {
-                        Data = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                        Data = new LoginResDto
+                        {
+                            BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                            Name = isUserRegistered.Data.FullName,
+                            Email = isUserRegistered.Data.Email
+                        },
                         IsSuccess = true,
                         SuccessfullyMessage = SuccessfullyEnumServer.SUCCESSFULLY
                     };
                 }
-                return new Return<string>
+                transaction.Dispose();
+                return new Return<LoginResDto>
                 {
                     ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                     IsSuccess = false,
@@ -108,7 +126,8 @@ namespace FUParkingService
             }
             catch (Exception ex)
             {
-                return new Return<string>
+                transaction.Dispose();
+                return new Return<LoginResDto>
                 {
                     ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                     IsSuccess = false,

@@ -70,4 +70,26 @@
         public const string PAID = "PAID";
         public const string FREE = "FREE";
     }
+
+    public class GateTypeEnum
+    {
+        public const string IN = "IN";
+        public const string OUT = "OUT";
+    }
+
+    public class VehicleTypeEnum
+    {
+        public const string MANUAL_TRANSMISSION_MOTORCYCLE = "Manual Transmission Motorcycle";
+        public const string AUTOMATIC_TRANSMISSION_MOTORCYCLE = "Automatic Transmission Motorcycle";
+        public const string ELECTRIC_MOTORCYCLE = "Electric Motorcycle";
+        public const string ELECTRIC_BICYCLE = "Electric Bicycle";
+        public const string BICYCLE = "Bicycle";
+    }
+    
+    public class RoleEnum
+    {
+        public const string STAFF = "STAFF";
+        public const string SUPERVISOR = "SUPERVISOR";
+        public const string MANAGER = "MANAGER";
+    }
 }

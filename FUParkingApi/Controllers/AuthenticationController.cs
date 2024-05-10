@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace FUParkingApi.Controllers
 {
     [Route("auth")]
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController : Controller
     {
         private readonly IAuthService _authService;
         public AuthenticationController(IAuthService authService)
@@ -43,11 +43,11 @@ namespace FUParkingApi.Controllers
                 var result = await _authService.LoginWithGoogleAsync(login);
                 if (result.IsSuccess)
                 {
-                    return Ok(result.Data);
+                    return Ok(result);
                 }
                 else
                 {
-                    return BadRequest(result.ErrorMessage);
+                    return BadRequest(result);
                 }
             } catch (Exception ex)
             {

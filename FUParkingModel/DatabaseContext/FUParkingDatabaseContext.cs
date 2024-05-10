@@ -1,5 +1,4 @@
-﻿using FUParkingModel.Enum;
-using FUParkingModel.Object;
+﻿using FUParkingModel.Object;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -12,7 +11,7 @@ namespace FUParkingModel.DatabaseContext
         }
 
         public FUParkingDatabaseContext(DbContextOptions<FUParkingDatabaseContext> options) : base(options)
-        {            
+        {
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlServer(GetConnectionString());
@@ -149,7 +148,7 @@ namespace FUParkingModel.DatabaseContext
                 .WithOne(e => e.Wallet)
                 .HasForeignKey(e => e.WalletId)
                 .OnDelete(DeleteBehavior.NoAction);
-            
+
             modelBuilder.Entity<Package>()
                 .Property(e => e.Price)
                 .HasColumnType("decimal(18, 0)");
@@ -177,6 +176,6 @@ namespace FUParkingModel.DatabaseContext
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Vehicle> Vehicles { get; set; }
         public virtual DbSet<VehicleType> VehicleTypes { get; set; }
-        public virtual DbSet<Wallet> Wallets { get; set; }        
+        public virtual DbSet<Wallet> Wallets { get; set; }
     }
 }

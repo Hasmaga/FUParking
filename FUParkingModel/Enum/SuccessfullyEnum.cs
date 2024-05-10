@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace FUParkingModel.Enum
+﻿namespace FUParkingModel.Enum
 {
     public class SuccessfullyEnumServer
     {

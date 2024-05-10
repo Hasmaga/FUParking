@@ -7,31 +7,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
 {
-    public class CustomerTypeRepository : ICustomerTypeRepository
+    public class UserRepository : IUserRepository
     {
         private readonly FUParkingDatabaseContext _db;
 
-        public CustomerTypeRepository(FUParkingDatabaseContext db)
+        public UserRepository(FUParkingDatabaseContext db)
         {
             _db = db;
         }
 
-        public async Task<Return<CustomerType>> CreateCustomerTypeAsync(CustomerType customerType)
+        public async Task<Return<User>> CreateUserAsync(User user)
         {
             try
             {
-                await _db.CustomerTypes.AddAsync(customerType);
+                await _db.Users.AddAsync(user);
                 await _db.SaveChangesAsync();
-                return new Return<CustomerType>
+                return new Return<User>
                 {
-                    Data = customerType,
+                    Data = user,
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                return new Return<CustomerType>
+                return new Return<User>
                 {
                     ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     IsSuccess = false,
@@ -40,20 +39,19 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<CustomerType>>> GetAllCustomerType()
+        public async Task<Return<User>> GetUserByEmailAsync(string email)
         {
             try
-            {
-                return new Return<IEnumerable<CustomerType>>
+            {                
+                return new Return<User>
                 {
-                    Data = await _db.CustomerTypes.ToListAsync(),
+                    Data = await _db.Users.FirstOrDefaultAsync(u => u.Email == email),
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                return new Return<IEnumerable<CustomerType>>
+                return new Return<User>
                 {
                     ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
@@ -62,23 +60,44 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<CustomerType>> GetCustomerTypeByNameAsync(string name)
+        public async Task<Return<User>> GetUserByIdAsync(Guid id)
         {
             try
             {
-                var customerType = await _db.CustomerTypes.FirstOrDefaultAsync(ct => ct.Name == name);
-                return new Return<CustomerType>
+                return new Return<User>
                 {
-                    Data = customerType,
+                    Data = await _db.Users.FindAsync(id),
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                return new Return<CustomerType>
+                return new Return<User>
                 {
                     ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<User>> UpdateUserAsync(User user)
+        {
+            try
+            {
+                _db.Users.Update(user);
+                await _db.SaveChangesAsync();
+                return new Return<User>
+                {
+                    Data = user,
+                    IsSuccess = true,
+                    SuccessfullyMessage = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            } catch (Exception ex)
+            {
+                return new Return<User>
+                {
+                    ErrorMessage = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };

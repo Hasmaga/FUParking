@@ -28,11 +28,16 @@ builder.Services.AddScoped<FUParkingDatabaseContext>();
 builder.Services.AddScoped<IMinioService, MinioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHelpperService, HelpperService>();
+builder.Services.AddScoped<IInitializeDataService, InitializeDataService>();
 #endregion
 
 #region Repositories
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerTypeRepository, CustomerTypeRepository>();
+builder.Services.AddScoped<IGateTypeRepository, GateTypeRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVehicleTypeRepository, VehicleTypeRepository>();
 #endregion
 
 #region Auth
