@@ -19,7 +19,7 @@ namespace FUParkingTesting
         public async Task GetAllCustomer_ShouldReturnListCustomer()
         {
             var result = await _customerRepository.GetAllCustomerWithFilterAsync();
-            Assert.IsTrue(result.IsSuccess);            
+            Assert.IsTrue(result.IsSuccess);
         }
     }
 }

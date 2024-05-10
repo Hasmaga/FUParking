@@ -1,4 +1,6 @@
-﻿namespace FUParkingModel.Enum
+﻿using System.Data;
+
+namespace FUParkingModel.Enum
 {
     public class SuccessfullyEnumServer
     {
@@ -7,5 +9,6 @@
         public const string CREATE_OBJECT_SUCCESSFULLY = "Create object successfully";
         public const string GET_OBJECT_SUCCESSFULLY = "Get object successfully";
         public const string UPDATE_OBJECT_SUCCESSFULLY = "Update object successfully";
+        public const string SUCCESSFULLY = "Successfully";
     }
 }

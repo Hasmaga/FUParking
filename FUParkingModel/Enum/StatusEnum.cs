@@ -64,4 +64,10 @@
         public const string SUCCESSED = "SUCCESSED";
         public const string FAILED = "FAILED";
     }
+
+    public class CustomerTypeEnum
+    {
+        public const string PAID = "PAID";
+        public const string FREE = "FREE";
+    }
 }

@@ -6,6 +6,8 @@
         public const string ADD_OBJECT_ERROR = "Add object error";
         public const string GET_OBJECT_ERROR = "Get object error";
         public const string UPDATE_OBJECT_ERROR = "Update object error";
+        public const string GOOGLE_LOGIN_FAILED = "Google login failed";
+        public const string NOT_EMAIL_FPT_UNIVERSITY = "Only email FPT University is allow";
     }
 
     public class MinioErrorServerDefineEnum
@@ -19,4 +21,11 @@
         public const string NOT_FOUND = "Not found";
         public const string FILE_NAME_IS_EXIST = "File name is exist";
     }    
+
+    public class LoginEnum
+    {
+        public const string Name = "NO_NAME";
+        public const string Email = "NO_EMAIL";
+        public const string GivenName = "NO_GIVEN_NAME";
+    }
 }

@@ -12,7 +12,7 @@ namespace FUParkingModel.DatabaseContext
         }
 
         public FUParkingDatabaseContext(DbContextOptions<FUParkingDatabaseContext> options) : base(options)
-        {
+        {            
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlServer(GetConnectionString());
@@ -177,6 +177,6 @@ namespace FUParkingModel.DatabaseContext
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Vehicle> Vehicles { get; set; }
         public virtual DbSet<VehicleType> VehicleTypes { get; set; }
-        public virtual DbSet<Wallet> Wallets { get; set; }
+        public virtual DbSet<Wallet> Wallets { get; set; }        
     }
 }

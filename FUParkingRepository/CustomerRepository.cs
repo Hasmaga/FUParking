@@ -28,7 +28,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<Customer>
                 {
@@ -52,9 +53,32 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<IEnumerable<Customer>>
+                {
+                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<Customer>> GetCustomerByEmail(string email)
+        {
+            try
+            {
+                return new Return<Customer>
+                {
+                    Data = await _db.Customers.FirstOrDefaultAsync(c => c.Email == email),
+                    IsSuccess = true,
+                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<Customer>
                 {
                     ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
@@ -73,7 +97,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<Customer>
                 {
@@ -96,7 +121,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     SuccessfullyMessage = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<Customer>
                 {
