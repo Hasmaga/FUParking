@@ -5,16 +5,16 @@ using FUParkingRepository.Interface;
 
 namespace FUParkingRepository
 {
-    public class PriceTableRepository : IPriceTableRepository
+    public class SessionRepository : ISessionRepository
     {
         private readonly FUParkingDatabaseContext _db;
 
-        public PriceTableRepository(FUParkingDatabaseContext db)
+        public SessionRepository(FUParkingDatabaseContext db)
         {
             _db = db;
         }
 
-        public Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable)
+        public Task<Return<Session>> CreateSessionAsync(Session session)
         {
             throw new NotImplementedException();
         }

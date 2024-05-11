@@ -35,6 +35,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
+                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR
                 };
             }
         }
@@ -56,6 +57,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
+                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }
@@ -77,6 +79,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
+                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }
@@ -100,6 +103,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
+                    ErrorMessage = ErrorEnumApplication.UPDATE_OBJECT_ERROR
                 };
             }
         }

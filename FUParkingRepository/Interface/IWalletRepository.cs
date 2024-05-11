@@ -3,8 +3,8 @@ using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
 {
-    public interface IPriceTableRepository
+    public interface IWalletRepository
     {
-        Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable);
+        public Task<Return<Wallet>> CreateWalletAsync(Wallet wallet);
     }
 }

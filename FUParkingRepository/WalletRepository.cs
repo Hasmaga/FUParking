@@ -6,34 +6,35 @@ using FUParkingRepository.Interface;
 
 namespace FUParkingRepository
 {
-    public class FeedbackRepository : IFeedbackRepository
+    public class WalletRepository : IWalletRepository
     {
         private readonly FUParkingDatabaseContext _db;
 
-        public FeedbackRepository(FUParkingDatabaseContext db)
+        public WalletRepository(FUParkingDatabaseContext db)
         {
             _db = db;
         }
 
-        public async Task<Return<Feedback>> CreateFeedbackAsync(Feedback feedback)
+        public async Task<Return<Wallet>> CreateWalletAsync(Wallet wallet)
         {
             try
             {
-                await _db.Feedbacks.AddAsync(feedback);
+                await _db.Wallets.AddAsync(wallet);
                 await _db.SaveChangesAsync();
-                return new Return<Feedback>
+                return new Return<Wallet>
                 {
-                    Data = feedback,
                     IsSuccess = true,
+                    Data = wallet,
                     SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
-                return new Return<Feedback>
+                return new Return<Wallet>
                 {
-                     IsSuccess = false,
-                     ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                     InternalErrorMessage = e.Message                   
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR
                 };
             }
         }

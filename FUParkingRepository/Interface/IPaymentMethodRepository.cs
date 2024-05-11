@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FUParkingModel.Object;
+using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
 {
     public interface IPaymentMethodRepository
     {
+        Task<Return<PaymentMethod>> CreatePaymentMethodAsync(PaymentMethod paymentMethod);
     }
 }
