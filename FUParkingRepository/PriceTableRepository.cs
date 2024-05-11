@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.DatabaseContext;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -14,9 +15,27 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable)
+        public async Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _db.PriceTables.AddAsync(priceTable);
+                await _db.SaveChangesAsync();
+                return new Return<PriceTable>
+                {
+                    Data = priceTable,
+                    IsSuccess = true,
+                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
+            } catch (Exception e)
+            {
+                return new Return<PriceTable>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
         }
     }
 }
