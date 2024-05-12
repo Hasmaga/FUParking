@@ -92,4 +92,10 @@
         public const string SUPERVISOR = "SUPERVISOR";
         public const string MANAGER = "MANAGER";
     }
+
+    public class StatusUserEnum
+    {
+        public const string ACTIVE = "ACTIVE";
+        public const string INACTIVE = "INACTIVE";
+    }
 }

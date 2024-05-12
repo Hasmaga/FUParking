@@ -8,6 +8,9 @@
         public const string UPDATE_OBJECT_ERROR = "Update object error";
         public const string GOOGLE_LOGIN_FAILED = "Google login failed";
         public const string NOT_EMAIL_FPT_UNIVERSITY = "Only email FPT University is allow";
+        public const string NOT_AUTHORITY = "You are not authority to use this function";
+        public const string EMAIL_IS_EXIST = "This email is already exist";
+        public const string CRENEDTIAL_IS_WRONG = "Credential is wrong";
     }
 
     public class MinioErrorServerDefineEnum

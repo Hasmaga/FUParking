@@ -2,17 +2,11 @@
 
 namespace FUParkingModel.RequestObject
 {
-    public class CreateUserReqDto
+    public class CreateUserPrimaryReqDto
     {
-        [Required]
-        [EmailAddress(ErrorMessage = "Must be email format")]
+        public Guid RoleId { get; set; }
         public string Email { get; set; } = null!;
-
-        [Required]
-        [MinLength(8, ErrorMessage = "Password has to be 8 or more character")]
         public string Password { get; set; } = null!;
-
-        [Required]
         public string FullName { get; set; } = null!;
     }
 }

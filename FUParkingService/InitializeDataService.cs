@@ -3,6 +3,8 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Security.Cryptography;
+using System.Text;
 using System.Transactions;
 
 namespace FUParkingService
@@ -13,13 +15,15 @@ namespace FUParkingService
         private readonly IGateTypeRepository _gateTypeRepository;
         private readonly IVehicleTypeRepository _vehicleTypeRepository;
         private readonly IRoleRepository _roleRepository;
+        private readonly IUserRepository _userRepository;
 
-        public InitializeDataService(ICustomerTypeRepository customerTypeRepository, IGateTypeRepository gateTypeRepository, IVehicleTypeRepository vehicleTypeRepository, IRoleRepository roleRepository)
+        public InitializeDataService(ICustomerTypeRepository customerTypeRepository, IGateTypeRepository gateTypeRepository, IVehicleTypeRepository vehicleTypeRepository, IRoleRepository roleRepository, IUserRepository userRepository)
         {
             _customerTypeRepository = customerTypeRepository;
             _gateTypeRepository = gateTypeRepository;
             _vehicleTypeRepository = vehicleTypeRepository;
             _roleRepository = roleRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<Return<bool>> InitializeDatabase()
@@ -174,6 +178,114 @@ namespace FUParkingService
                         }
                     }
                 }
+                // Initialize data Table User
+                // roleStaff
+                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
+                if (!roleStaff.IsSuccess || roleStaff.Data == null)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = roleStaff.InternalErrorMessage
+                    };
+                }
+                var passwordStaff = "Staff@123";
+                User newStaff = new()
+                {
+                    Email = "staff@localhost.com",
+                    PasswordHash = CreatePassHashAndPassSalt(passwordStaff, out byte[] passwordSaltStaff),
+                    PasswordSalt = Convert.ToBase64String(passwordSaltStaff),
+                    RoleId = roleStaff.Data.Id,
+                    FullName = "Staff",
+                    StatusUser = StatusUserEnum.ACTIVE
+                };
+                var isSuccessfullyStaff = await _userRepository.CreateUserAsync(newStaff);
+                if (!isSuccessfullyStaff.IsSuccess)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = isSuccessfullyStaff.InternalErrorMessage
+                    };
+                }
+
+                // roleManager
+                var roleManager = await _roleRepository.GetRoleByNameAsync(RoleEnum.MANAGER);
+                if (!roleManager.IsSuccess || roleManager.Data == null)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = roleManager.InternalErrorMessage
+                    };
+                }
+                var passwordManager = "Manager@123";
+                User newManager = new()
+                {
+                    Email = "manager@localhost.com",
+                    PasswordHash = CreatePassHashAndPassSalt(passwordManager, out byte[] passwordSaltManager),
+                    PasswordSalt = Convert.ToBase64String(passwordSaltManager),
+                    RoleId = roleManager.Data.Id,
+                    FullName = "Manager",
+                    StatusUser = StatusUserEnum.ACTIVE
+                };
+                var isSuccessfullyManager = await _userRepository.CreateUserAsync(newManager);
+                if (!isSuccessfullyManager.IsSuccess)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = isSuccessfullyManager.InternalErrorMessage
+                    };
+                }
+
+                // roleSupervisor
+                var roleSupervisor = await _roleRepository.GetRoleByNameAsync(RoleEnum.SUPERVISOR);
+                if (!roleSupervisor.IsSuccess || roleSupervisor.Data == null)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = roleSupervisor.InternalErrorMessage
+                    };
+                }
+                var passwordSupervisor = "Supervisor@123";
+                User newSupervisor = new()
+                {
+                    Email = "supervisor@localhost.com",
+                    PasswordHash = CreatePassHashAndPassSalt(passwordSupervisor, out byte[] passwordSaltSupervisor),
+                    PasswordSalt = Convert.ToBase64String(passwordSaltSupervisor),
+                    RoleId = roleSupervisor.Data.Id,
+                    FullName = "Supervisor",
+                    StatusUser = StatusUserEnum.ACTIVE
+                };
+                var isSuccessfullySupervisor = await _userRepository.CreateUserAsync(newSupervisor);
+                if (!isSuccessfullySupervisor.IsSuccess)
+                {
+                    transaction.Dispose();
+                    return new Return<bool>
+                    {
+                        Data = false,
+                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = isSuccessfullySupervisor.InternalErrorMessage
+                    };
+                }
                 transaction.Complete();
                 return new Return<bool>
                 {
@@ -193,6 +305,13 @@ namespace FUParkingService
                     InternalErrorMessage = ex.Message
                 };
             }
+        }
+
+        private static string CreatePassHashAndPassSalt(string pass, out byte[] passwordSalt)
+        {
+            using var hmac = new HMACSHA512();
+            passwordSalt = hmac.Key;
+            return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass)));
         }
     }
 }

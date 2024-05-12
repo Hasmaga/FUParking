@@ -61,5 +61,27 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Role>> GetRoleByNameAsync(string roleName)
+        {
+            try
+            {
+                return new Return<Role>
+                {
+                    Data = await _db.Roles.FirstOrDefaultAsync(x => x.Name == roleName),
+                    IsSuccess = true,
+                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            } 
+            catch (Exception ex)
+            {
+                return new Return<Role>
+                {
+                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
     }
 }

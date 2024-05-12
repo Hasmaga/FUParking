@@ -18,6 +18,9 @@ namespace FUParkingModel.Object
         [Column("PasswordHash")]
         public string? PasswordHash { get; set; }
 
+        [Column("PasswordSalt")]
+        public string? PasswordSalt { get; set; }
+
         [Column("StatusUser")]
         public string? StatusUser { get; set; }
     }

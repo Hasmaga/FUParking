@@ -1,7 +1,9 @@
-﻿using FUParkingModel.ReturnObject;
+﻿using FUParkingModel.RequestObject;
+using FUParkingModel.ReturnObject;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -16,7 +18,7 @@ namespace FUParkingApi.Controllers
             _authService = authService;
         }
 
-        [HttpGet("login")]
+        [HttpGet("loginGoogle")]
         public IActionResult Login()
         {
             var props = new AuthenticationProperties { RedirectUri = "auth/signin-google" };
@@ -53,6 +55,43 @@ namespace FUParkingApi.Controllers
             {
                 return BadRequest(ex.Message);
             }            
+        }
+
+        [HttpPost("loginWithCredential")]
+        public async Task<IActionResult> LoginAsync(LoginWithCredentialReqDto login)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _authService.LoginWithCredentialAsync(login);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+
+        [Authorize]
+        [HttpPost("CreateStaff")]
+        public async Task<IActionResult> CreateStaffAsync(CreateUserReqDto staff)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _authService.CreateStaffAsync(staff);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
     }
 }

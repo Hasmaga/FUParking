@@ -6,7 +6,7 @@ using FUParkingRepository.Interface;
 
 namespace FUParkingRepository
 {
-    internal class PriceItemRepository : IPriceItemRepository
+    public class PriceItemRepository : IPriceItemRepository
     {
         private readonly FUParkingDatabaseContext _db;
 
