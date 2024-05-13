@@ -24,14 +24,14 @@ namespace FUParkingRepository
                 {
                     Data = package,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             } catch (Exception e)
             {
                 return new Return<Package>
                 {
                     IsSuccess = false,
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }

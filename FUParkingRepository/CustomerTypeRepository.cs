@@ -26,14 +26,14 @@ namespace FUParkingRepository
                 {
                     Data = customerType,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<CustomerType>
                 {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -48,14 +48,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.CustomerTypes.ToListAsync(),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<CustomerType>>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -71,14 +71,14 @@ namespace FUParkingRepository
                 {
                     Data = customerType,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<CustomerType>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };

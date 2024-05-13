@@ -25,7 +25,7 @@ namespace FUParkingRepository
                 {
                     Data = card,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY                    
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY                    
                 };
             }
             catch (Exception e)
@@ -34,7 +34,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR
                 };
             }
         }

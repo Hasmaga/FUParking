@@ -9,5 +9,6 @@ namespace FUParkingRepository.Interface
         Task<Return<User>> GetUserByIdAsync(Guid id);
         Task<Return<User>> CreateUserAsync(User user);
         Task<Return<User>> UpdateUserAsync(User user);
+        Task<Return<IEnumerable<User>>> GetAllUsersAsync();
     }
 }

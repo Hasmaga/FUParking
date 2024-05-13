@@ -25,10 +25,31 @@ builder.Services.AddScoped<FUParkingDatabaseContext>();
 #endregion
 
 #region Services
-builder.Services.AddScoped<IMinioService, MinioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICameraService, CameraService>();
+builder.Services.AddScoped<ICardService, CardService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICustomerTypeService, CustomerTypeService>();
+builder.Services.AddScoped<IDepositService, DepositService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IGateService, GateService>();
+builder.Services.AddScoped<IGateTypeService, GateTypeService>();
 builder.Services.AddScoped<IHelpperService, HelpperService>();
 builder.Services.AddScoped<IInitializeDataService, InitializeDataService>();
+builder.Services.AddScoped<IMinioService, MinioService>();
+builder.Services.AddScoped<IPackageService, PackageService>();
+builder.Services.AddScoped<IParkingAreaService, ParkingAreaService>();
+builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IPriceItemService, PriceItemService>();
+builder.Services.AddScoped<IPriceTableService, PriceTableService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IVehicleTypeService, VehicleTypeService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 #endregion
 
 #region Repositories

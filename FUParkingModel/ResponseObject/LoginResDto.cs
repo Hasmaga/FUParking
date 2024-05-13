@@ -1,4 +1,4 @@
-﻿namespace FUParkingModel.ReturnObject
+﻿namespace FUParkingModel.ResponseObject
 {
     public class LoginResDto
     {

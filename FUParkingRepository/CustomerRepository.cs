@@ -26,14 +26,14 @@ namespace FUParkingRepository
                 {
                     Data = customer,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -51,14 +51,14 @@ namespace FUParkingRepository
                 {
                     Data = customers,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<Customer>>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -73,14 +73,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Customers.FirstOrDefaultAsync(c => c.Email == email),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -95,14 +95,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Customers.FindAsync(customerId),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -119,14 +119,14 @@ namespace FUParkingRepository
                 {
                     Data = customer,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    ErrorMessage = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };

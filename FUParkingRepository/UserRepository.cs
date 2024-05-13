@@ -26,13 +26,36 @@ namespace FUParkingRepository
                 {
                     Data = user,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<User>>> GetAllUsersAsync()
+        {
+            try
+            {
+                return new Return<IEnumerable<User>>
+                {
+                    Data = await _db.Users.Include(r => r.Role).ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<User>>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -42,18 +65,19 @@ namespace FUParkingRepository
         public async Task<Return<User>> GetUserByEmailAsync(string email)
         {
             try
-            {                
+            {
                 return new Return<User>
                 {
                     Data = await _db.Users.FirstOrDefaultAsync(u => u.Email == email),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -68,13 +92,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(r => r.Id.Equals(id)),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -91,13 +116,14 @@ namespace FUParkingRepository
                 {
                     Data = user,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    ErrorMessage = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };

@@ -1,7 +1,7 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingModel.ReturnObject;
+using FUParkingModel.ResponseObject;
 using FUParkingService.Interface;
 using Minio;
 using Minio.DataModel;
@@ -19,11 +19,11 @@ namespace FUParkingService
                 var isExist = await CheckFileIsExistInBucket(req.ObjName, req.BucketName, minio);
                 if (isExist.IsSuccess)
                 {
-                    if (isExist.SuccessfullyMessage == MinioErrorApplicationDefineEnum.NOT_FOUND)
+                    if (isExist.Message == MinioErrorApplicationDefineEnum.NOT_FOUND)
                     {
                         return new Return<ReturnObjectUrlResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                            Message = ErrorEnumApplication.SERVER_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
                         };
@@ -37,7 +37,7 @@ namespace FUParkingService
                                 ObjUrl = "https://miniofile.khangbpa.com/" + req.BucketName + "/" + req.ObjName
                             },
                             IsSuccess = true,
-                            SuccessfullyMessage = SuccessfullyEnumServer.FOUND_OBJECT
+                            Message = SuccessfullyEnumServer.FOUND_OBJECT
                         };
                     }
                 }
@@ -45,7 +45,7 @@ namespace FUParkingService
                 {
                     return new Return<ReturnObjectUrlResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         IsSuccess = false,
                         InternalErrorMessage = isExist.InternalErrorMessage
                     };
@@ -55,7 +55,7 @@ namespace FUParkingService
             {
                 return new Return<ReturnObjectUrlResDto>
                 {
-                    ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -70,7 +70,7 @@ namespace FUParkingService
                 var isExist = await CheckFileIsExistInBucket(req.ObjName, req.BucketName, minio);
                 if (isExist.IsSuccess)
                 {
-                    if (isExist.SuccessfullyMessage == MinioErrorApplicationDefineEnum.NOT_FOUND)
+                    if (isExist.Message == MinioErrorApplicationDefineEnum.NOT_FOUND)
                     {
                         var uploadObjectArgs = new PutObjectArgs()
                             .WithBucket(req.BucketName)
@@ -91,14 +91,14 @@ namespace FUParkingService
                                     ObjUrl = "https://miniofile.khangbpa.com/" + req.BucketName + "/" + req.ObjName
                                 },
                                 IsSuccess = true,
-                                SuccessfullyMessage = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY
+                                Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY
                             };
                         }
                         else
                         {
                             return new Return<ReturnObjectUrlResDto>
                             {
-                                ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                                Message = ErrorEnumApplication.SERVER_ERROR,
                                 IsSuccess = false,
                                 InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
                             };
@@ -108,7 +108,7 @@ namespace FUParkingService
                     {
                         return new Return<ReturnObjectUrlResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                            Message = ErrorEnumApplication.SERVER_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = MinioErrorApplicationDefineEnum.FILE_NAME_IS_EXIST
                         };
@@ -118,7 +118,7 @@ namespace FUParkingService
                 {
                     return new Return<ReturnObjectUrlResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         IsSuccess = false,
                         InternalErrorMessage = isExist.InternalErrorMessage
                     };
@@ -128,7 +128,7 @@ namespace FUParkingService
             {
                 return new Return<ReturnObjectUrlResDto>
                 {
-                    ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -160,7 +160,7 @@ namespace FUParkingService
                 {
                     Data = await minio.StatObjectAsync(statObjectArgs),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.FOUND_OBJECT
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception ex)
@@ -169,7 +169,7 @@ namespace FUParkingService
                 {
                     return new Return<ObjectStat>
                     {
-                        SuccessfullyMessage = MinioErrorApplicationDefineEnum.NOT_FOUND,
+                        Message = MinioErrorApplicationDefineEnum.NOT_FOUND,
                         IsSuccess = true // Why is true, because the action is success but the file is not found
                     };
                 }
@@ -177,7 +177,7 @@ namespace FUParkingService
                 {
                     return new Return<ObjectStat>
                     {
-                        ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         IsSuccess = false, // Why is false, because the action is fail
                         InternalErrorMessage = ex.Message
                     };

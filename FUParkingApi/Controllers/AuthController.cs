@@ -1,24 +1,27 @@
-﻿using FUParkingModel.RequestObject;
-using FUParkingModel.ReturnObject;
+﻿using FUParkingModel.Enum;
+using FUParkingModel.RequestObject;
+using FUParkingModel.ReturnCommon;
+using FUParkingModel.ResponseObject;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Reactive.Linq;
 using System.Security.Claims;
 
 namespace FUParkingApi.Controllers
 {
-    [Route("auth")]
-    public class AuthenticationController : Controller
+    [ApiController]
+    [Route("api/auth")]
+    public class AuthController : Controller
     {
         private readonly IAuthService _authService;
-        public AuthenticationController(IAuthService authService)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
 
-        [HttpGet("loginGoogle")]
+        [HttpGet("login-google")]
         public IActionResult Login()
         {
             var props = new AuthenticationProperties { RedirectUri = "auth/signin-google" };
@@ -57,13 +60,23 @@ namespace FUParkingApi.Controllers
             }            
         }
 
-        [HttpPost("loginWithCredential")]
+        [HttpPost]
         public async Task<IActionResult> LoginAsync(LoginWithCredentialReqDto login)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+                return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                {
+                    Data = errors,
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.INVALID_INPUT
+                });
             }
+
             var result = await _authService.LoginWithCredentialAsync(login);
             if (result.IsSuccess)
             {
@@ -73,25 +86,6 @@ namespace FUParkingApi.Controllers
             {
                 return BadRequest(result);
             }
-        }
-
-        [Authorize]
-        [HttpPost("CreateStaff")]
-        public async Task<IActionResult> CreateStaffAsync(CreateUserReqDto staff)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var result = await _authService.CreateStaffAsync(staff);
-            if (result.IsSuccess)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest(result);
-            }
-        }
+        }        
     }
 }

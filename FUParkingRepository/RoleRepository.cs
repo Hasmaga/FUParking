@@ -26,14 +26,14 @@ namespace FUParkingRepository
                 {
                     Data = role,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Role>()
                 {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -48,14 +48,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Roles.ToListAsync(),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<Role>>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -70,14 +70,14 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Roles.FirstOrDefaultAsync(x => x.Name == roleName),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             } 
             catch (Exception ex)
             {
                 return new Return<Role>
                 {
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };

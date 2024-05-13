@@ -11,6 +11,7 @@
         public const string NOT_AUTHORITY = "You are not authority to use this function";
         public const string EMAIL_IS_EXIST = "This email is already exist";
         public const string CRENEDTIAL_IS_WRONG = "Credential is wrong";
+        public const string INVALID_INPUT = "Invalid input data";
     }
 
     public class MinioErrorServerDefineEnum

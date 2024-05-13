@@ -25,7 +25,7 @@ namespace FUParkingRepository
                 {
                     Data = camera,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception e)
@@ -33,7 +33,7 @@ namespace FUParkingRepository
                 return new Return<Camera>
                 {
                     IsSuccess = false,
-                    ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
+                    Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                     InternalErrorMessage = e.Message
                 };
             }

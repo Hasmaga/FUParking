@@ -1,6 +1,6 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingModel.ReturnObject;
+using FUParkingModel.ResponseObject;
 
 namespace FUParkingService.Interface
 {

@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FUParkingApi.Controllers
 {
-    [Route("initialize")]
+    [ApiController]
+    [Route("api/initialize-data")]
     public class InitializeDataController : Controller
     {
         private readonly IInitializeDataService _initializeDataService;
@@ -13,7 +14,7 @@ namespace FUParkingApi.Controllers
             _initializeDataService = initializeDataService;
         }
 
-        [HttpGet("InitData")]
+        [HttpGet("init-data")]
         public async Task<IActionResult> InitializeDatabase()
         {
             var result = await _initializeDataService.InitializeDatabase();

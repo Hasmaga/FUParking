@@ -26,7 +26,7 @@ namespace FUParkingRepository
                 {
                     Data = vehicleType,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception e)
@@ -35,7 +35,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR
                 };
             }
         }
@@ -48,7 +48,7 @@ namespace FUParkingRepository
                 {
                     Data = await _db.VehicleTypes.ToListAsync(),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception e)
@@ -57,7 +57,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }
@@ -70,7 +70,7 @@ namespace FUParkingRepository
                 {
                     Data = await _db.VehicleTypes.FindAsync(vehicleTypeId),
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception e)
@@ -79,7 +79,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
-                    ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }
@@ -94,7 +94,7 @@ namespace FUParkingRepository
                 {
                     Data = vehicleType,
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception e)
@@ -103,7 +103,7 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
-                    ErrorMessage = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
                 };
             }
         }

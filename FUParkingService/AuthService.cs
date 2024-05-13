@@ -2,7 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingModel.ReturnObject;
+using FUParkingModel.ResponseObject;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.Extensions.Configuration;
@@ -22,18 +22,14 @@ namespace FUParkingService
         private readonly IConfiguration _configuration;
         private readonly IWalletRepository _walletRepository;
         private readonly IUserRepository _userRepository;
-        private readonly IHelpperService _helpperService;
-        private readonly IRoleRepository _roleRepository;
 
-        public AuthService(ICustomerRepository customerRepository, ICustomerTypeRepository customerTypeRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository, IHelpperService helpperService, IRoleRepository roleRepository)
+        public AuthService(ICustomerRepository customerRepository, ICustomerTypeRepository customerTypeRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository)
         {
             _customerRepository = customerRepository;
             _customerTypeRepository = customerTypeRepository;
             _configuration = configuration;
             _walletRepository = walletRepository;
             _userRepository = userRepository;
-            _helpperService = helpperService;
-            _roleRepository = roleRepository;
         }
 
         public async Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login)
@@ -45,7 +41,7 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
+                        Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                         IsSuccess = false,
                     };
                 }
@@ -54,7 +50,7 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY,
+                        Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY,
                         IsSuccess = false,
                     };
                 }
@@ -69,7 +65,7 @@ namespace FUParkingService
                     {
                         return new Return<LoginResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
+                            Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                             IsSuccess = false,
                         };
                     }
@@ -86,7 +82,7 @@ namespace FUParkingService
                         transaction.Dispose();
                         return new Return<LoginResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                            Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = result.InternalErrorMessage
                         };
@@ -104,7 +100,7 @@ namespace FUParkingService
                         transaction.Dispose();
                         return new Return<LoginResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                            Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = resultWallet.InternalErrorMessage
                         };
@@ -121,14 +117,14 @@ namespace FUParkingService
                                 Email = result.Data.Email
                             },
                             IsSuccess = true,
-                            SuccessfullyMessage = SuccessfullyEnumServer.SUCCESSFULLY
+                            Message = SuccessfullyEnumServer.SUCCESSFULLY
                         };
                     }
                     else
                     {
                         return new Return<LoginResDto>
                         {
-                            ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                            Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                             IsSuccess = false,
                             InternalErrorMessage = resultWallet.InternalErrorMessage + " " + result.InternalErrorMessage
                         };
@@ -145,283 +141,21 @@ namespace FUParkingService
                             Email = isUserRegistered.Data.Email
                         },
                         IsSuccess = true,
-                        SuccessfullyMessage = SuccessfullyEnumServer.SUCCESSFULLY
+                        Message = SuccessfullyEnumServer.SUCCESSFULLY
                     };
                 }
+                return new Return<LoginResDto>
+                {
+                    Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
+                    IsSuccess = false,
+                };
+            }
+            catch (Exception ex)
+            {
                 transaction.Dispose();
                 return new Return<LoginResDto>
                 {
-                    ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
-                    IsSuccess = false,
-                };
-            }
-            catch (Exception ex)
-            {
-                transaction.Dispose();
-                return new Return<LoginResDto>
-                {
-                    ErrorMessage = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
-                };
-            }
-        }
-
-        public async Task<Return<bool>> CreateStaffAsync(CreateUserReqDto req)
-        {
-            try
-            {
-                if (!_helpperService.IsTokenValid())
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());                
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
-                    };
-                }
-                if ((accountLogin.Data.Role ?? new Role()).Name is not RoleEnum.MANAGER and not RoleEnum.SUPERVISOR)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check the email is already registered
-                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
-                    };
-                }
-                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = roleStaff.InternalErrorMessage
-                    };
-                }
-                var user = new CreateUserPrimaryReqDto
-                {
-                    Email = req.Email,
-                    FullName = req.FullName,
-                    Password = req.Password,
-                    RoleId = roleStaff.Data.Id
-                };
-
-                var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = result.InternalErrorMessage
-                    };
-                }
-                return new Return<bool>
-                {
-                    Data = true,
-                    IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<bool>
-                {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
-                };
-            }
-        }
-
-        public async Task<Return<bool>> CreateSupervisorAsync(CreateUserReqDto req)
-        {
-            try
-            {
-                if (!_helpperService.IsTokenValid())
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
-                    };
-                }
-                if ((accountLogin.Data.Role ?? new Role()).Name is not RoleEnum.MANAGER)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check the email is already registered
-                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
-                    };
-                }
-                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = roleStaff.InternalErrorMessage
-                    };
-                }
-                var user = new CreateUserPrimaryReqDto
-                {
-                    Email = req.Email,
-                    FullName = req.FullName,
-                    Password = req.Password,
-                    RoleId = roleStaff.Data.Id
-                };
-
-                var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = result.InternalErrorMessage
-                    };
-                }
-                return new Return<bool>
-                {
-                    Data = true,
-                    IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<bool>
-                {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
-                };
-            }
-        }
-
-        public async Task<Return<bool>> CreateManagerAsync(CreateUserReqDto req)
-        {
-            try
-            {
-                if (!_helpperService.IsTokenValid())
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
-                    };
-                }
-                if ((accountLogin.Data.Role ?? new Role()).Name is not RoleEnum.MANAGER)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check the email is already registered
-                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
-                    };
-                }
-                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = roleStaff.InternalErrorMessage
-                    };
-                }
-                var user = new CreateUserPrimaryReqDto
-                {
-                    Email = req.Email,
-                    FullName = req.FullName,
-                    Password = req.Password,
-                    RoleId = roleStaff.Data.Id
-                };
-
-                var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = result.InternalErrorMessage
-                    };
-                }
-                return new Return<bool>
-                {
-                    Data = true,
-                    IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<bool>
-                {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -438,8 +172,8 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
-                        IsSuccess = false                        
+                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
+                        IsSuccess = false
                     };
                 }
                 // Check the password is correct
@@ -447,7 +181,7 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        ErrorMessage = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
+                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
                         IsSuccess = false
                     };
                 }
@@ -460,13 +194,14 @@ namespace FUParkingService
                         Email = isUserRegistered.Data.Email
                     },
                     IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<LoginResDto>
                 {
-                    ErrorMessage = ErrorEnumApplication.SERVER_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -474,54 +209,6 @@ namespace FUParkingService
         }
 
         #region Private methods
-        private async Task<Return<bool>> CreateUserAsync(CreateUserPrimaryReqDto user)
-        {
-            try
-            {
-                User newUser = new()
-                {
-                    Email = user.Email.ToLower(),
-                    FullName = user.FullName,
-                    RoleId = user.RoleId,
-                    PasswordHash = CreatePassHashAndPassSalt(user.Password, out byte[] passwordSalt),
-                    PasswordSalt = Convert.ToBase64String(passwordSalt),
-                    StatusUser = StatusUserEnum.ACTIVE
-                };
-                var result = await _userRepository.CreateUserAsync(newUser);
-                if (result.IsSuccess == false || result.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = result.InternalErrorMessage
-                    };
-                }
-                return new Return<bool>
-                {
-                    Data = true,
-                    IsSuccess = true,
-                    SuccessfullyMessage = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<bool>
-                {
-                    ErrorMessage = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
-                };
-            }
-        }
-        // Create Password Hash and Password Salt
-        private static string CreatePassHashAndPassSalt(string pass, out byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512();
-            passwordSalt = hmac.Key;
-            return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass)));
-        }
-
         // Verify Password Hash
         private static bool VerifyPasswordHash(string pass, byte[] passwordSalt, string passwordHash)
         {
@@ -547,7 +234,7 @@ namespace FUParkingService
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return token == null ? throw new Exception(ErrorEnumApplication.SERVER_ERROR) : tokenHandler.WriteToken(token);
-        }                
+        }
         #endregion
     }
 }
