@@ -12,6 +12,8 @@
         public const string EMAIL_IS_EXIST = "This email is already exist";
         public const string CRENEDTIAL_IS_WRONG = "Credential is wrong";
         public const string INVALID_INPUT = "Invalid input data";
+        public const string CUSTOMER_NOT_EXIST = "Customr not exist in the system";
+        public const string STATUS_IS_ALREADY_APPLY = "Status is already apply in the system";
     }
 
     public class MinioErrorServerDefineEnum
