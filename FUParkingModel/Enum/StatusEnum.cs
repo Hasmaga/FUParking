@@ -98,4 +98,9 @@
         public const string ACTIVE = "ACTIVE";
         public const string INACTIVE = "INACTIVE";
     }
+
+    public class DefaultType
+    {
+        public static DateTime DefaultDateTime = new(0, 0, 0);
+    }
 }

@@ -44,7 +44,7 @@ namespace FUParkingService
                         IsSuccess = false                        
                     };
                 }
-                if (Auth.AuthStaff.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
                 {
                     return new Return<bool>
                     {
@@ -131,7 +131,7 @@ namespace FUParkingService
                         InternalErrorMessage = accountLogin.InternalErrorMessage
                     };
                 }
-                if ((accountLogin.Data.Role ?? new Role()).Name is not RoleEnum.MANAGER)
+                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
                 {
                     return new Return<bool>
                     {
@@ -218,7 +218,7 @@ namespace FUParkingService
                         InternalErrorMessage = accountLogin.InternalErrorMessage
                     };
                 }
-                if ((accountLogin.Data.Role ?? new Role()).Name is not RoleEnum.MANAGER)
+                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
                 {
                     return new Return<bool>
                     {

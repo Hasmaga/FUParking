@@ -24,13 +24,15 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("login-google")]
+        [AllowAnonymous]
         public IActionResult Login()
         {
-            var props = new AuthenticationProperties { RedirectUri = "auth/signin-google" };
+            var props = new AuthenticationProperties { RedirectUri = "api/auth/signin-google" };
             return Challenge(props, GoogleDefaults.AuthenticationScheme);
         }
 
         [HttpGet("signin-google")]
+        [AllowAnonymous]
         public async Task<IActionResult> SignInGoogle()
         {
             try
@@ -63,6 +65,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> LoginAsync(LoginWithCredentialReqDto login)
         {
             if (!ModelState.IsValid)
