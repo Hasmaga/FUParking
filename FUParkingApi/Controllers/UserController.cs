@@ -1,4 +1,6 @@
-﻿using FUParkingModel.RequestObject;
+﻿using FUParkingModel.Enum;
+using FUParkingModel.RequestObject;
+using FUParkingModel.ReturnCommon;
 using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -15,24 +17,44 @@ namespace FUParkingApi.Controllers
         public UserController(IUserService userService)
         {
             _userService = userService;
-        }        
+        }
 
         [Authorize]
         [HttpPost("staff")]
         public async Task<IActionResult> CreateStaffAsync(CreateUserReqDto staff)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                        );
+                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                    {
+                        Data = errors,
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    });
+                }
+                var result = await _userService.CreateStaffAsync(staff);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
             }
-            var result = await _userService.CreateStaffAsync(staff);
-            if (result.IsSuccess)
+            catch (Exception)
             {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest(result);
+                return StatusCode(500, new Return<object>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
             }
         }
     }
