@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -7,6 +8,8 @@ namespace FUParkingModel.Object
     {
         [Column("ParkingAreaId")]
         public Guid ParkingAreaId { get; set; }
+        
+        [JsonIgnore]
         public ParkingArea? ParkingArea { get; set; }
 
         [Column("WPFCode")]
@@ -20,13 +23,20 @@ namespace FUParkingModel.Object
 
         [Column("GateTypeId")]
         public Guid GateTypeId { get; set; }
+
+        [JsonIgnore]
         public GateType? GateType { get; set; }
 
         [Column("StatusGate")]
         public string? StatusGate { get; set; }
 
+        [JsonIgnore]
         public ICollection<Camera>? Cameras { get; set; }
+
+        [JsonIgnore]
         public ICollection<Session>? SessionGateIns { get; set; }
+
+        [JsonIgnore]
         public ICollection<Session>? SessionGateOuts { get; set; }
     }
 }

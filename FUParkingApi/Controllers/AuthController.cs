@@ -8,11 +8,13 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using System.Reactive.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FUParkingApi.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [Authorize(AuthenticationSchemes = "Google")]
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;

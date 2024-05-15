@@ -40,9 +40,8 @@ namespace FUParkingService
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,
+                        IsSuccess = false                        
                     };
                 }
                 if (Auth.AuthStaff.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))

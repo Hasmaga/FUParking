@@ -3,6 +3,7 @@ using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
 {
@@ -35,6 +36,28 @@ namespace FUParkingRepository
                     IsSuccess = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Gate>>> GetAllGateAsync()
+        {
+            try
+            {
+                return new Return<IEnumerable<Gate>>
+                {
+                    Data = await _db.Gates.ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Gate>>
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }

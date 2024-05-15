@@ -48,15 +48,9 @@ namespace FUParkingService
             {
                 return false;
             }
-        }
+        }        
 
         public Guid GetAccIdFromLogged()
-        {
-            var AccId = _http.HttpContext?.User.FindFirst(ClaimTypes.Sid)?.Value;
-            return AccId == null ? throw new Exception(ErrorEnumApplication.SERVER_ERROR) : Guid.Parse(AccId);
-        }
-
-        public Guid GetAccIdFromLoogedNotThrow()
         {
             var AccId = _http.HttpContext?.User.FindFirst(ClaimTypes.Sid)?.Value;
             return AccId == null ? Guid.Empty : Guid.Parse(AccId);

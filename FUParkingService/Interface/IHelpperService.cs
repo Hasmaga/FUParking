@@ -4,7 +4,6 @@
     {
         bool CheckBearerTokenIsValidAndNotExpired(string token);
         Guid GetAccIdFromLogged();
-        bool IsTokenValid();
-        Guid GetAccIdFromLoogedNotThrow();
+        bool IsTokenValid();        
     }
 }

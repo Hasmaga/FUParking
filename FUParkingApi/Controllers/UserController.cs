@@ -7,6 +7,7 @@ namespace FUParkingApi.Controllers
 {
     [ApiController]
     [Route("api/users")]
+    [Authorize(AuthenticationSchemes = "Defaut")]
     public class UserController : Controller
     {
         private readonly IUserService _userService;

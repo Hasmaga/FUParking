@@ -83,13 +83,13 @@ builder.Services.AddAuthentication(opt =>
         opt.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
         opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie()
-    .AddGoogle(opt =>
+    .AddCookie()    
+    .AddGoogle("Google", opt =>
     {
         opt.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new Exception("ErrorGoogleClientId");
         opt.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? throw new Exception("ErrorGoogleClientSecret");
     })
-    .AddJwtBearer(options =>
+    .AddJwtBearer("Defaut", options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
