@@ -15,6 +15,7 @@
         public const string CUSTOMER_NOT_EXIST = "Customr not exist in the system";
         public const string STATUS_IS_ALREADY_APPLY = "Status is already apply in the system";
         public const string VEHICLE_TYPE_NOT_EXIST = "Vehicle type not exist in application";
+        public const string PRICE_TABLE_NOT_EXIST = "Price table is not exist in application";
     }
 
     public class MinioErrorServerDefineEnum

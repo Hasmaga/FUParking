@@ -37,5 +37,26 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<PriceTable>> GetPriceTableByIdAsync(Guid id)
+        {
+            try
+            {
+                return new Return<PriceTable>
+                {
+                    Data = await _db.PriceTables.FindAsync(id),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            } catch (Exception e)
+            {
+                return new Return<PriceTable>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
     }
 }

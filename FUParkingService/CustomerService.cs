@@ -44,7 +44,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (Auth.AuthStaff.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
                 {
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }

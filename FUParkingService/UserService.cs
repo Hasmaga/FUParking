@@ -4,6 +4,7 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -44,7 +45,7 @@ namespace FUParkingService
                         IsSuccess = false                        
                     };
                 }
-                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<bool>
                     {
@@ -131,7 +132,7 @@ namespace FUParkingService
                         InternalErrorMessage = accountLogin.InternalErrorMessage
                     };
                 }
-                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<bool>
                     {
@@ -218,7 +219,7 @@ namespace FUParkingService
                         InternalErrorMessage = accountLogin.InternalErrorMessage
                     };
                 }
-                if (!Auth.AuthManager.Contains((accountLogin.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<bool>
                     {

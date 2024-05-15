@@ -1,4 +1,7 @@
-﻿using FUParkingService.Interface;
+﻿using FUParkingModel.Enum;
+using FUParkingModel.RequestObject;
+using FUParkingModel.ReturnCommon;
+using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +17,40 @@ namespace FUParkingApi.Controllers
         public PriceItemController(IPriceItemService priceItemService)
         {
             _priceItemService = priceItemService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreatePriceItemAsync(CreatePriceItemResDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                    {
+                        Data = errors,
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    });
+                }
+                var result = await _priceItemService.CreatePriceItem(req);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR                    
+                });
+            }
         }
     }
 }

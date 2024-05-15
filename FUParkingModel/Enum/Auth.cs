@@ -4,17 +4,20 @@
     {
         public static readonly List<string> AuthStaff =
         [            
+            RoleEnum.STAFF,
+            RoleEnum.MANAGER,
+            RoleEnum.SUPERVISOR
         ];
 
         public static readonly List<string> AuthSupervisor =
         [
-            RoleEnum.STAFF            
+            RoleEnum.MANAGER,
+            RoleEnum.SUPERVISOR
         ];
 
         public static readonly List<string> AuthManager =
-        [
-            RoleEnum.STAFF,
-            RoleEnum.SUPERVISOR            
+        [            
+            RoleEnum.MANAGER
         ];
     }
 }
