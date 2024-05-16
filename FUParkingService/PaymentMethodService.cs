@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
+using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 
@@ -18,6 +19,114 @@ namespace FUParkingService
             _paymentMethodRepository = paymentMethodRepository;
             _userRepository = userRepository;
             _helpperService = helpperService;
+        }
+
+        public async Task<Return<bool>> ChangeStatusPaymentMethodAsync(ChangeStatusPaymentMethodReqDto req)
+        {
+            try
+            {
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                // Check PaymentMethodId is exist
+                var isPaymentMethodExist = await _paymentMethodRepository.GetPaymentMethodByIdAsync(req.PaymentMethodId);
+                if (isPaymentMethodExist.Data == null || isPaymentMethodExist.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                    };
+                }
+
+                if (req.IsActive)
+                {
+                    if (isPaymentMethodExist.Data.DeletedDate == null)
+                    {
+                        return new Return<bool>
+                        {
+                            IsSuccess = false,
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    else
+                    {
+                        isPaymentMethodExist.Data.DeletedDate = null;
+                        // Update status Account
+                        var isUpdate = await _paymentMethodRepository.UpdatePaymentMethodAsync(isPaymentMethodExist.Data);
+                        if (isUpdate.Data == null || isUpdate.IsSuccess == false)
+                        {
+                            return new Return<bool>
+                            {
+                                IsSuccess = false,
+                                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                            };
+                        }
+                        else
+                        {
+                            return new Return<bool> { IsSuccess = true, Data = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+                        }
+                    }
+                }
+                else
+                {
+                    if (isPaymentMethodExist.Data.DeletedDate != null)
+                    {
+                        return new Return<bool>
+                        {
+                            IsSuccess = false,
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    else
+                    {
+                        isPaymentMethodExist.Data.DeletedDate = DateTime.Now;
+                        // Update status Account
+                        var isUpdate = await _paymentMethodRepository.UpdatePaymentMethodAsync(isPaymentMethodExist.Data);
+                        if (isUpdate.Data == null || isUpdate.IsSuccess == false)
+                        {
+                            return new Return<bool>
+                            {
+                                IsSuccess = false,
+                                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                            };
+                        }
+                        else
+                        {
+                            return new Return<bool> { IsSuccess = true, Data = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+                        }
+                    }
+                }
+            } catch (Exception)
+            {
+                return new Return<bool>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
         }
 
         public async Task<Return<bool>> CreatePaymentMethodAsync(CreatePaymentMethodReqDto req)
