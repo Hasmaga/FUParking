@@ -6,5 +6,7 @@ namespace FUParkingRepository.Interface
     public interface IPriceItemRepository
     {
         Task<Return<PriceItem>> CreatePriceItemAsync(PriceItem priceItem);
+        Task<Return<bool>> DeletePriceItemAsync(PriceItem priceItem);
+        Task<Return<PriceItem>> GetPriceItemByIdAsync(Guid id);
     }
 }

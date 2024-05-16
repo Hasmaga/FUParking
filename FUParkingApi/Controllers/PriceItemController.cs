@@ -37,18 +37,41 @@ namespace FUParkingApi.Controllers
                         Message = ErrorEnumApplication.INVALID_INPUT
                     });
                 }
-                var result = await _priceItemService.CreatePriceItem(req);
+                var result = await _priceItemService.CreatePriceItemAsync(req);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
                 }
                 return BadRequest(result);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new Return<string>
                 {
                     IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR                    
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePriceItemAsync(Guid id)
+        {
+            try
+            {                
+                var result = await _priceItemService.DeletePriceItemAsync(id);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
         }

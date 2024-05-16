@@ -6,6 +6,7 @@
         public const string ADD_OBJECT_ERROR = "Add object error";
         public const string GET_OBJECT_ERROR = "Get object error";
         public const string UPDATE_OBJECT_ERROR = "Update object error";
+        public const string DELETE_OBJECT_ERROR = "Delete object error";
         public const string GOOGLE_LOGIN_FAILED = "Google login failed";
         public const string NOT_EMAIL_FPT_UNIVERSITY = "Only email FPT University is allow";
         public const string NOT_AUTHORITY = "You are not authority to use this function";
@@ -16,6 +17,7 @@
         public const string STATUS_IS_ALREADY_APPLY = "Status is already apply in the system";
         public const string VEHICLE_TYPE_NOT_EXIST = "Vehicle type not exist in application";
         public const string PRICE_TABLE_NOT_EXIST = "Price table is not exist in application";
+        public const string PRICE_ITEM_NOT_EXIST = "Price item is not exist in application";
     }
 
     public class MinioErrorServerDefineEnum
