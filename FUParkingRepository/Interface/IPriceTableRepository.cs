@@ -7,5 +7,6 @@ namespace FUParkingRepository.Interface
     {
         Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable);
         Task<Return<PriceTable>> GetPriceTableByIdAsync(Guid id);
+        Task<Return<PriceTable>> UpdatePriceTableAsync(PriceTable priceTable);
     }
 }

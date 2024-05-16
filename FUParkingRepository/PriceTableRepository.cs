@@ -58,5 +58,28 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<PriceTable>> UpdatePriceTableAsync(PriceTable priceTable)
+        {
+            try
+            {
+                _db.PriceTables.Update(priceTable);
+                await _db.SaveChangesAsync();
+                return new Return<PriceTable>
+                {
+                    Data = priceTable,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            } catch (Exception e)
+            {
+                return new Return<PriceTable>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
     }
 }

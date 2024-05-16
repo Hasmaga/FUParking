@@ -55,5 +55,42 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        [HttpPut("update-price-table-status")]
+        public async Task<IActionResult> UpdatePriceTableStatusAsync(ChangeStatusPriceTableResDto req)
+        {
+            try
+            {
+                if(!ModelState.IsValid)
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                    {
+                        Data = errors,
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    });
+                }
+                var result = await _priceTableService.UpdateStatusPriceTableAsync(req);
+                if(result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<object>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }
