@@ -88,5 +88,27 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPaymentMethodAsync()
+        {
+            try
+            {
+                var result = await _paymentMethodService.GetAllPaymentMethodAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }
