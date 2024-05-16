@@ -92,5 +92,29 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPriceTableAsync()
+        {
+            try
+            {
+                var result = await _priceTableService.GetAllPriceTableAsync();
+                if(result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<object>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }

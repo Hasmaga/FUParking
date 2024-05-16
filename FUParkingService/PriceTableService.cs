@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -88,13 +89,87 @@ namespace FUParkingService
                         IsSuccess = false,
                         Message = ErrorEnumApplication.ADD_OBJECT_ERROR
                     };
-                }                
-            } catch (Exception e)
+                }
+            }
+            catch (Exception e)
             {
                 return new Return<bool>
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync()
+        {
+            try
+            {
+                // Check token 
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                var result = await _priceTableRepository.GetAllPriceTableAsync();
+                if (result.IsSuccess && !(result.Data == null))
+                {
+                    var listPriceTable = new List<GetPriceTableResDto>();
+                    foreach (var item in result.Data)
+                    {
+                        listPriceTable.Add(new GetPriceTableResDto
+                        {
+                            PriceTableId = item.Id,
+                            Name = item.Name,
+                            ApplyFromDate = item.ApplyFromDate,
+                            ApplyToDate = item.ApplyToDate,
+                            Priority = item.Priority,
+                            StatusPriceTable = item.StatusPriceTable ?? "",
+                            VehicleType = item.VehicleType?.Name ?? ""
+                        });
+                    }
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        Data = listPriceTable,
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    };
+                }
+                else
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                    };
+                }
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<GetPriceTableResDto>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }
@@ -153,7 +228,7 @@ namespace FUParkingService
                     }
                     else
                     {
-                        isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.ACTIVE;                        
+                        isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.ACTIVE;
                         var isUpdate = await _priceTableRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
                         if (isUpdate.Data == null || isUpdate.IsSuccess == false)
                         {
@@ -198,7 +273,8 @@ namespace FUParkingService
                         }
                     }
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<bool>
                 {
