@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -7,6 +8,8 @@ namespace FUParkingModel.Object
     {
         [Column("PriceTableId")]
         public Guid PriceTableId { get; set; }
+
+        [JsonIgnore]
         public PriceTable? PriceTable { get; set; }
 
         [Column("ApplyFromHour")]

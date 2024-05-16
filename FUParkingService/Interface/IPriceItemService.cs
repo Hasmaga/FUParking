@@ -1,4 +1,5 @@
-﻿using FUParkingModel.RequestObject;
+﻿using FUParkingModel.Object;
+using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -7,5 +8,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<bool>> CreatePriceItemAsync(CreatePriceItemResDto req);
         Task<Return<bool>> DeletePriceItemAsync(Guid id);
+        Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
     }
 }
