@@ -20,7 +20,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePriceItemAsync(CreatePriceItemResDto req)
+        public async Task<IActionResult> CreatePriceItemAsync(CreatePriceItemReqDto req)
         {
             try
             {

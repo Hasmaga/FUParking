@@ -20,7 +20,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePriceTableAsync(CreatePriceTableResDto req)
+        public async Task<IActionResult> CreatePriceTableAsync(CreatePriceTableReqDto req)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPut("update-price-table-status")]
-        public async Task<IActionResult> UpdatePriceTableStatusAsync(ChangeStatusPriceTableResDto req)
+        public async Task<IActionResult> UpdatePriceTableStatusAsync(ChangeStatusPriceTableReqDto req)
         {
             try
             {

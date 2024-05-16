@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject
 {
-    public class CreatePriceTableResDto
+    public class CreatePriceTableReqDto
     {
         [Required(ErrorMessage = "Must have vehicle type")]
         public Guid VehicleTypeId { get; set; }

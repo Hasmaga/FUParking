@@ -7,8 +7,8 @@ namespace FUParkingService.Interface
 {
     public interface IPriceTableService
     {
-        Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableResDto req);
-        Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableResDto req);
+        Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableReqDto req);
+        Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableReqDto req);
         Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync();
     }
 }

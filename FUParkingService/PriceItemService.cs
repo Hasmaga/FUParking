@@ -22,7 +22,7 @@ namespace FUParkingService
             _helpperService = helpperService;
         }
 
-        public async Task<Return<bool>> CreatePriceItemAsync(CreatePriceItemResDto req)
+        public async Task<Return<bool>> CreatePriceItemAsync(CreatePriceItemReqDto req)
         {
             // Check token 
             try

@@ -23,7 +23,7 @@ namespace FUParkingService
             _vehicleTypeRepository = vehicleTypeRepository;
         }
 
-        public async Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableResDto req)
+        public async Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableReqDto req)
         {
             try
             {
@@ -175,7 +175,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableResDto req)
+        public async Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableReqDto req)
         {
             try
             {

@@ -2,7 +2,7 @@
 
 namespace FUParkingModel.RequestObject
 {
-    public class ChangeStatusPriceTableResDto
+    public class ChangeStatusPriceTableReqDto
     {
         [Required(ErrorMessage = "Price Table Id must not be null")]
         public Guid PriceTableId { get; set; }
