@@ -8,21 +8,240 @@ using FUParkingService.Interface;
 
 namespace FUParkingService
 {
-    public class PriceTableService : IPriceTableService
+    public class PriceSevice : IPriceService
     {
-        private readonly IPriceTableRepository _priceTableRepository;
+        private readonly IPriceRepository _priceRepository;
+        private readonly IVehicleRepository _vehicleRepository;
         private readonly IHelpperService _helpperService;
         private readonly IUserRepository _userRepository;
-        private readonly IVehicleTypeRepository _vehicleTypeRepository;
 
-        public PriceTableService(IPriceTableRepository priceTableRepository, IHelpperService helpperService, IUserRepository userRepository, IVehicleTypeRepository vehicleTypeRepository)
+        public PriceSevice(IPriceRepository priceRepository, IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository)
         {
-            _priceTableRepository = priceTableRepository;
+            _priceRepository = priceRepository;
+            _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _userRepository = userRepository;
-            _vehicleTypeRepository = vehicleTypeRepository;
         }
 
+        public async Task<Return<bool>> CreatePriceItemAsync(CreatePriceItemReqDto req)
+        {
+            // Check token 
+            try
+            {
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                // Check PriceTableId is exist
+                var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(req.PriceTableId);
+                if (isPriceTableExist.Data == null || isPriceTableExist.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.PRICE_TABLE_NOT_EXIST
+                    };
+                }
+
+                // Add PriceItem
+                var priceItem = new PriceItem
+                {
+                    PriceTableId = req.PriceTableId,
+                    ApplyFromHour = req.ApplyFromHour ?? DefaultType.DefaultTimeOnly,
+                    ApplyToHour = req.ApplyToHour ?? DefaultType.DefaultTimeOnly,
+                    MaxPrice = req.MaxPrice,
+                    MinPrice = req.MinPrice
+                };
+
+                var result = await _priceRepository.CreatePriceItemAsync(priceItem);
+                if (result.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    };
+                }
+                else
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+            }
+            catch (Exception e)
+            {
+                return new Return<bool>()
+                {
+                    InternalErrorMessage = e.Message,
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<bool>> DeletePriceItemAsync(Guid id)
+        {
+            try
+            {
+                // Check token 
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+                // Check PriceItem is exist
+                var isPriceItemExist = await _priceRepository.GetPriceItemByIdAsync(id);
+
+                if (isPriceItemExist.Data == null || isPriceItemExist.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.PRICE_ITEM_NOT_EXIST
+                    };
+                }
+                else
+                {
+                    var result = await _priceRepository.DeletePriceItemAsync(isPriceItemExist.Data);
+                    if (result.IsSuccess)
+                    {
+                        return new Return<bool>
+                        {
+                            IsSuccess = true,
+                            Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                        };
+                    }
+                    else
+                    {
+                        return new Return<bool>
+                        {
+                            IsSuccess = false,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return new Return<bool>
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
+        {
+            try
+            {
+                // Check token 
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<IEnumerable<PriceItem>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<IEnumerable<PriceItem>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<IEnumerable<PriceItem>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                // Check PriceTableId is exist
+                var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(PriceTableId);
+                if (isPriceTableExist.Data == null || isPriceTableExist.IsSuccess == false)
+                {
+                    return new Return<IEnumerable<PriceItem>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.PRICE_TABLE_NOT_EXIST
+                    };
+                }
+
+                var result = await _priceRepository.GetAllPriceItemByPriceTableAsync(PriceTableId);
+                if (result.IsSuccess)
+                {
+                    return new Return<IEnumerable<PriceItem>>
+                    {
+                        Data = result.Data,
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    };
+                }
+                else
+                {
+                    return new Return<IEnumerable<PriceItem>>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<PriceItem>>
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
         public async Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableReqDto req)
         {
             try
@@ -52,7 +271,7 @@ namespace FUParkingService
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 // Check VehicleType is exist
-                var isVehicleTypeExist = await _vehicleTypeRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
+                var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
                 if (isVehicleTypeExist.Data == null || isVehicleTypeExist.IsSuccess == false)
                 {
                     return new Return<bool>
@@ -72,7 +291,7 @@ namespace FUParkingService
                     StatusPriceTable = StatusPriceTableEnum.ACTIVE
                 };
 
-                var result = await _priceTableRepository.CreatePriceTableAsync(priceTable);
+                var result = await _priceRepository.CreatePriceTableAsync(priceTable);
                 if (result.IsSuccess)
                 {
                     return new Return<bool>
@@ -131,7 +350,7 @@ namespace FUParkingService
                     return new Return<IEnumerable<GetPriceTableResDto>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
-                var result = await _priceTableRepository.GetAllPriceTableAsync();
+                var result = await _priceRepository.GetAllPriceTableAsync();
                 if (result.IsSuccess && !(result.Data == null))
                 {
                     var listPriceTable = new List<GetPriceTableResDto>();
@@ -205,7 +424,7 @@ namespace FUParkingService
                 }
 
                 // Check PriceTable is exist
-                var isPriceTableExist = await _priceTableRepository.GetPriceTableByIdAsync(req.PriceTableId);
+                var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(req.PriceTableId);
                 if (isPriceTableExist.Data == null || isPriceTableExist.IsSuccess == false)
                 {
                     return new Return<bool>
@@ -229,7 +448,7 @@ namespace FUParkingService
                     else
                     {
                         isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.ACTIVE;
-                        var isUpdate = await _priceTableRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
+                        var isUpdate = await _priceRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
                         if (isUpdate.Data == null || isUpdate.IsSuccess == false)
                         {
                             return new Return<bool>
@@ -258,7 +477,7 @@ namespace FUParkingService
                     {
                         isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.ACTIVE;
                         // Update status Account
-                        var isUpdate = await _priceTableRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
+                        var isUpdate = await _priceRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
                         if (isUpdate.Data == null || isUpdate.IsSuccess == false)
                         {
                             return new Return<bool>

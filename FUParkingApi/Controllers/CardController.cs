@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/cards")]
+    [Route("api/card")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CardController : Controller
     {

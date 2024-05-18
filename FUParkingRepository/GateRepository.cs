@@ -61,5 +61,51 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<GateType>> CreateGateTypeAsync(GateType gateType)
+        {
+            try
+            {
+                await _db.GateTypes.AddAsync(gateType);
+                await _db.SaveChangesAsync();
+                return new Return<GateType>()
+                {
+                    Data = gateType,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GateType>()
+                {
+                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GateType>>> GetAllGateTypeAsync()
+        {
+            try
+            {
+                return new Return<IEnumerable<GateType>>
+                {
+                    Data = await _db.GateTypes.ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GateType>>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
     }
 }

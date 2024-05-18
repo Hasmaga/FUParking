@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/gates")]
+    [Route("api/gate")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class GateController : Controller
     {
@@ -20,7 +20,7 @@ namespace FUParkingApi.Controllers
         }
 
         [Authorize]
-        [HttpGet]
+        [HttpGet("/api/gates")]
         public async Task<IActionResult> GetListGate()
         {
             try

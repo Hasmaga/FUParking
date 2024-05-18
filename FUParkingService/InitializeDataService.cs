@@ -10,20 +10,20 @@ using System.Transactions;
 namespace FUParkingService
 {
     public class InitializeDataService : IInitializeDataService
-    {
-        private readonly ICustomerTypeRepository _customerTypeRepository;
-        private readonly IGateTypeRepository _gateTypeRepository;
-        private readonly IVehicleTypeRepository _vehicleTypeRepository;
+    {        
+        private readonly IGateRepository _gateRepository;
+        private readonly IVehicleRepository _vehicleRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ICustomerRepository _customerRepository;
 
-        public InitializeDataService(ICustomerTypeRepository customerTypeRepository, IGateTypeRepository gateTypeRepository, IVehicleTypeRepository vehicleTypeRepository, IRoleRepository roleRepository, IUserRepository userRepository)
+        public InitializeDataService(IGateRepository gateRepository, IVehicleRepository vehicleRepository, IRoleRepository roleRepository, IUserRepository userRepository, ICustomerRepository customerRepository)
         {
-            _customerTypeRepository = customerTypeRepository;
-            _gateTypeRepository = gateTypeRepository;
-            _vehicleTypeRepository = vehicleTypeRepository;
+            _gateRepository = gateRepository;
+            _vehicleRepository = vehicleRepository;
             _roleRepository = roleRepository;
             _userRepository = userRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<Return<bool>> InitializeDatabase()
@@ -32,7 +32,7 @@ namespace FUParkingService
             try
             {
                 // Initialize data Table CustomerType
-                var isCustomerTypeHadData = await _customerTypeRepository.GetAllCustomerType();
+                var isCustomerTypeHadData = await _customerRepository.GetAllCustomerTypeAsync();
                 if (isCustomerTypeHadData.Data == null || !isCustomerTypeHadData.Data.Any())
                 {
                     var customerType = new List<CustomerType>
@@ -48,7 +48,7 @@ namespace FUParkingService
                     };
                     foreach (var item in customerType)
                     {
-                        var isSuccessfully = await _customerTypeRepository.CreateCustomerTypeAsync(item);
+                        var isSuccessfully = await _customerRepository.CreateCustomerTypeAsync(item);
                         if (!isSuccessfully.IsSuccess)
                         {
                             transaction.Dispose();
@@ -63,7 +63,7 @@ namespace FUParkingService
                     }
                 }
                 // Initialize data Table GateType
-                var isGateTypeHadData = await _gateTypeRepository.GetAllGateTypeAsync();
+                var isGateTypeHadData = await _gateRepository.GetAllGateTypeAsync();
                 if (isGateTypeHadData.Data == null || !isGateTypeHadData.Data.Any())
                 {
                     var gateType = new List<GateType>
@@ -79,7 +79,7 @@ namespace FUParkingService
                     };
                     foreach (var item in gateType)
                     {
-                        var isSuccessfully = await _gateTypeRepository.CreateGateTypeAsync(item);
+                        var isSuccessfully = await _gateRepository.CreateGateTypeAsync(item);
                         if (!isSuccessfully.IsSuccess)
                         {
                             transaction.Dispose();
@@ -94,7 +94,7 @@ namespace FUParkingService
                     }
                 }
                 // Initialize data Table VehicleType
-                var isVehicleTypeHadData = await _vehicleTypeRepository.GetAllVehicleTypeAsync();
+                var isVehicleTypeHadData = await _vehicleRepository.GetAllVehicleTypeAsync();
                 if (isVehicleTypeHadData.Data == null || !isVehicleTypeHadData.Data.Any())
                 {
                     var vehicleType = new List<VehicleType>
@@ -126,7 +126,7 @@ namespace FUParkingService
                     };
                     foreach (var item in vehicleType)
                     {
-                        var isSuccessfully = await _vehicleTypeRepository.CreateVehicleTypeAsync(item);
+                        var isSuccessfully = await _vehicleRepository.CreateVehicleTypeAsync(item);
                         if (!isSuccessfully.IsSuccess)
                         {
                             transaction.Dispose();

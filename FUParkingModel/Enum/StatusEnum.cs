@@ -101,7 +101,7 @@
 
     public class DefaultType
     {
-        public static DateTime DefaultDateTime = new(0, 0, 0);
-        public static TimeOnly DefaultTimeOnly = new(0, 0);
+        public readonly static DateTime DefaultDateTime = new(0, 0, 0);
+        public readonly static TimeOnly DefaultTimeOnly = new(0, 0);
     }
 }

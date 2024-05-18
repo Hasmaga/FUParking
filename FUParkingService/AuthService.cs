@@ -17,16 +17,14 @@ namespace FUParkingService
 {
     public class AuthService : IAuthService
     {
-        private readonly ICustomerRepository _customerRepository;
-        private readonly ICustomerTypeRepository _customerTypeRepository;
+        private readonly ICustomerRepository _customerRepository;        
         private readonly IConfiguration _configuration;
         private readonly IWalletRepository _walletRepository;
         private readonly IUserRepository _userRepository;
 
-        public AuthService(ICustomerRepository customerRepository, ICustomerTypeRepository customerTypeRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository)
+        public AuthService(ICustomerRepository customerRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository)
         {
-            _customerRepository = customerRepository;
-            _customerTypeRepository = customerTypeRepository;
+            _customerRepository = customerRepository;            
             _configuration = configuration;
             _walletRepository = walletRepository;
             _userRepository = userRepository;
@@ -60,7 +58,7 @@ namespace FUParkingService
                 if (isUserRegistered.Data == null)
                 {
                     // Get the customer type
-                    var customerType = await _customerTypeRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
+                    var customerType = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
                     if (customerType.Data == null)
                     {
                         return new Return<LoginResDto>

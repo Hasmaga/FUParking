@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/roles")]
+    [Route("api/role")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class RoleController : Controller
     {

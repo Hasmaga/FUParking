@@ -10,5 +10,8 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<Customer>>> GetAllCustomerWithFilterAsync(Guid? CustomerTypeId = null, string? StatusCustomer = null);
         Task<Return<Customer>> UpdateCustomerAsync(Customer customer);
         Task<Return<Customer>> GetCustomerByEmail(string email);
+        Task<Return<CustomerType>> GetCustomerTypeByNameAsync(string name);
+        Task<Return<IEnumerable<CustomerType>>> GetAllCustomerTypeAsync();
+        Task<Return<CustomerType>> CreateCustomerTypeAsync(CustomerType customerType);
     }
 }

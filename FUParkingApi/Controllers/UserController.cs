@@ -1,14 +1,13 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/users")]
+    [Route("api/user")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class UserController : Controller
     {

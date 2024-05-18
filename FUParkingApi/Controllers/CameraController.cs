@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/cameras")]
+    [Route("api/camera")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CameraController : Controller
     {

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/customers")]
+    [Route("api/customer")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CustomerController : Controller
     {
@@ -20,7 +20,7 @@ namespace FUParkingApi.Controllers
         }
 
         [Authorize]
-        [HttpPut("update-customer-status")]
+        [HttpPut("status")]
         public async Task<IActionResult> UpdateCustomerStatusAsync(ChangeStatusCustomerReqDto req)
         {
             try
