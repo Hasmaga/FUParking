@@ -6,7 +6,7 @@ namespace FUParkingModel.Object
     public class Deposit : Common
     {
         [Column("Name")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
 
         [Column("Description")]
         public string? Description { get; set; }

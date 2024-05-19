@@ -6,7 +6,7 @@ namespace FUParkingModel.Object
     public class Package : Common
     {
         [Column("Name")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
 
         [Column("CoinAmount")]
         public int CoinAmount { get; set; }
