@@ -30,6 +30,7 @@ namespace FUParkingRepository
                     throw new KeyNotFoundException();
                 }
                 res.Data = wallet;
+                res.IsSuccess = true;
 
             }
             catch (Exception ex)
