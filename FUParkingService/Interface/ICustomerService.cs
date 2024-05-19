@@ -6,5 +6,7 @@ namespace FUParkingService.Interface
     public interface ICustomerService
     {
         Task<Return<bool>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req);
+
+        
     }
 }

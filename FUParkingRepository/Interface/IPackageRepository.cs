@@ -6,5 +6,6 @@ namespace FUParkingRepository.Interface
     public interface IPackageRepository
     {
         Task<Return<Package>> CreatePackageAsync(Package package);
+        Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id);
     }
 }
