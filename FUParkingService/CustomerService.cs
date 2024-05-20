@@ -33,6 +33,7 @@ namespace FUParkingService
         public async Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
         {
             Return<bool> res = new()
+
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
