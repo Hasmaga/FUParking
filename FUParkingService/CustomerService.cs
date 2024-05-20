@@ -74,7 +74,7 @@ namespace FUParkingService
                     WalletId = customerWallet.Id,
                     DepositId = createDepositRes.Data.Id,
                     Amount = existPackageRes.Data.CoinAmount,
-                    TransactionStatus = StatusTransactionEnum.PENDING,
+                    TransactionStatus = StatusTransactionEnum.SUCCEED,
                 };
                 var createTransactionRes = await _transactionRepository.CreateTransactionAsync(newTransaction);
                 if (createTransactionRes.Data == null)
