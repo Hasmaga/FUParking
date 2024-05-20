@@ -46,7 +46,7 @@
         public const string DONT_HAVE_ENOUGH_COIN = "DONT_HAVE_ENOUGH_COIN";
     }
 
-    public class StatusParkingLotEnum
+    public class StatusParkingEnum
     {
         public const string ACTIVE = "ACTIVE";
         public const string INACTIVE = "INACTIVE";
