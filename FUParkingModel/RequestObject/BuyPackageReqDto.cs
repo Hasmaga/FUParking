@@ -10,7 +10,7 @@ namespace FUParkingModel.RequestObject
     public class BuyPackageReqDto
     {
         [Required(ErrorMessage = "Package not valid")]
-        public string packageId { get; set; }
+        public Guid packageId { get; set; }
 
     }
 }

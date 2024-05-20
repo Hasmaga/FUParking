@@ -15,13 +15,13 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public async Task<Return<Deposit>> CreateDepositAsync(Deposit deposit)
+        public async Task<Return<Deposit?>> CreateDepositAsync(Deposit deposit)
         {
             try
             {
                 await _db.Deposits.AddAsync(deposit);
                 await _db.SaveChangesAsync();
-                return new Return<Deposit>
+                return new Return<Deposit?>
                 {
                     Data = deposit,
                     IsSuccess = true,
@@ -30,7 +30,7 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<Deposit>
+                return new Return<Deposit?>
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,

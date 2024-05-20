@@ -4,6 +4,8 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.Extensions.FileProviders;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -12,12 +14,94 @@ namespace FUParkingService
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHelpperService _helpperService;
+        private readonly IPackageRepository _packageRepository;
+        private readonly IDepositRepository _depositRepository;
+        private readonly ITransactionRepository _transactionRepository;
+        private readonly IWalletRepository _walletRepository;
 
-        public CustomerService(ICustomerRepository customerRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public CustomerService(ICustomerRepository customerRepository, IUserRepository userRepository, IHelpperService helpperService, IPackageRepository packageRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IWalletRepository walletRepository)
         {
             _customerRepository = customerRepository;
             _userRepository = userRepository;
             _helpperService = helpperService;
+            _packageRepository = packageRepository;
+            _depositRepository = depositRepository;
+            _transactionRepository = transactionRepository;
+            _walletRepository = walletRepository;
+        }
+
+        public async Task<Return<object>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
+        {
+            Return<object> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
+                if(customerRes.IsSuccess == false || customerRes.Data == null)
+                {
+                    throw new EntryPointNotFoundException(customerRes.Message);
+                }
+
+                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(req.packageId);
+
+                if (existPackageRes.Data == null)
+                {
+                    throw new EntryPointNotFoundException(existPackageRes.Message);
+                }
+
+                Deposit newDeposit = new()
+                {
+                    Name = existPackageRes.Data.Name,
+                    PackageId = existPackageRes.Data.Id,
+                    Description = DepositEnum.PACKAGE_DEPOSIT
+                };
+                Return<Deposit?> createDepositRes = await _depositRepository.CreateDepositAsync(newDeposit);
+                if (createDepositRes.Data == null)
+                {
+                    throw new OperationCanceledException(createDepositRes.Message);
+                }
+                Return<Wallet?> cusWalletRes = await _walletRepository.GetWalletByCustomerId(customerRes.Data.Id);
+                if (cusWalletRes.Data == null)
+                {
+                    throw new EntryPointNotFoundException(cusWalletRes.Message);
+                }
+                Wallet customerWallet = cusWalletRes.Data;
+                FUParkingModel.Object.Transaction newTransaction = new()
+                {
+                    WalletId = customerWallet.Id,
+                    DepositId = createDepositRes.Data.Id,
+                    Amount = existPackageRes.Data.CoinAmount,
+                    TransactionStatus = StatusTransactionEnum.PENDING,
+                };
+                var createTransactionRes = await _transactionRepository.CreateTransactionAsync(newTransaction);
+                if (createTransactionRes.Data == null)
+                {
+                    throw new OperationCanceledException(createDepositRes.Message);
+                }
+
+                transaction.Complete();
+                res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
+            }
+            catch (Exception ex)
+            {
+                transaction.Dispose();
+                // Help controller handle status codes
+                if(ex is EntryPointNotFoundException)
+                {
+                    throw new EntryPointNotFoundException(ex.Message);
+                }
+                if(ex is OperationCanceledException)
+                {
+                    throw new OperationCanceledException(ex.Message);
+                }
+                res.InternalErrorMessage = ex.Message;
+                return res;
+            }
         }
 
         public async Task<Return<bool>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)

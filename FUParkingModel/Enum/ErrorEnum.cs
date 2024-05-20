@@ -19,6 +19,7 @@
         public const string PRICE_TABLE_NOT_EXIST = "Price table is not exist in application";
         public const string PRICE_ITEM_NOT_EXIST = "Price item is not exist in application";
         public const string PACKAGE_NOT_EXIST = "Package is not exist";
+        public const string WALLET_NOT_EXIST = "Wallet not exist";
     }
 
     public class MinioErrorServerDefineEnum
