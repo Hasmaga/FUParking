@@ -27,7 +27,7 @@ namespace FUParkingApi.Controllers
         [Authorize]
         public async Task<IActionResult> CustomerBuyPackageAsync(BuyPackageReqDto request)
         {
-            Return<object> res = new()
+            Return<bool> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
@@ -44,24 +44,16 @@ namespace FUParkingApi.Controllers
                 }
                 Guid userId = new Guid(userIdToken);
                 res = await _customerService.BuyPackageAsync(request, userId);
+                if (!res.IsSuccess)
+                {
+                    BadRequest(res);
+                }
                 return Ok(res);
             }
             catch (Exception ex)
             {
-                if(ex is EntryPointNotFoundException)
-                {
-                    res.Message = ex.Message;
-
-                    return NotFound(res);
-                }
-
-                if(ex is OperationCanceledException)
-                {
-                    // Bad gateway server failed
-                    res.Message = ex.Message;
-                    return StatusCode(502, res);
-                }
-                return BadRequest(res);
+                res.InternalErrorMessage = ex.Message;
+                return StatusCode(502, res);
             }
         }
     }

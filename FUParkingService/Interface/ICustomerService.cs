@@ -7,7 +7,7 @@ namespace FUParkingService.Interface
     public interface ICustomerService
     {
         Task<Return<bool>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req);
-        Task<Return<object>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId);
+        Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId);
 
         
     }
