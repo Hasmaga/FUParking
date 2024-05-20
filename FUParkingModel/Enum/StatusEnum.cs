@@ -36,7 +36,7 @@
     public class StatusTransactionEnum
     {
         public const string PENDING = "PENDING";
-        public const string SUCCESSED = "SUCCESSED";
+        public const string SUCCEED = "SUCCEED";
         public const string FAILED = "FAILED";
     }
 
