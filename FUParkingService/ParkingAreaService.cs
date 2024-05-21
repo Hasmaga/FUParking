@@ -53,7 +53,7 @@ namespace FUParkingService
 
                 //create parking area
                 var parkingAreaList = await _parkingAreaRepository.GetParkingAreasAsync();
-                if(parkingAreaList.Data != null && parkingAreaList.IsSuccess)
+                if(parkingAreaList.Data != null || parkingAreaList.IsSuccess)
                 {
                     bool isParkingAreaNameExist = parkingAreaList.Data.Any(x => x.Name.Equals(req.Name, StringComparison.OrdinalIgnoreCase));
 
