@@ -9,8 +9,8 @@ namespace FUParkingModel.RequestObject
 {
     public class BuyPackageReqDto
     {
-        [Required(ErrorMessage = "Package not valid")]
-        public Guid packageId { get; set; }
+        [Required(ErrorMessage = "Missing Package")]
+        public required string packageId { get; set; }
 
     }
 }
