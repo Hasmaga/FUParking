@@ -6,7 +6,7 @@ namespace FUParkingModel.Object
     public class ParkingArea : Common
     {
         [Column("Name")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
 
         [Column("Description")]
         public string? Description { get; set; }
