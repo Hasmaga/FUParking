@@ -5,6 +5,6 @@ namespace FUParkingService.Interface
 {
     public interface IVehicleService
     {
-        Task<Return<bool>> CreateVehicleType(CreateVehicleTypeReqDto reqDto);
+        Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto);
     }
 }
