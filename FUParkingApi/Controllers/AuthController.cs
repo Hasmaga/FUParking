@@ -1,18 +1,16 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
 using FUParkingModel.RequestObject;
-using FUParkingModel.ReturnCommon;
 using FUParkingModel.ResponseObject;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
-using System.Reactive.Linq;
+
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
 namespace FUParkingApi.Controllers
 {
-    [ApiController]
     [Route("api/auth")]
     [Authorize(AuthenticationSchemes = "Google")]
     public class AuthController : Controller
@@ -66,22 +64,12 @@ namespace FUParkingApi.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> LoginAsync(LoginWithCredentialReqDto login)
+        public async Task<IActionResult> LoginAsync([FromBody]LoginWithCredentialReqDto login)
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                );
-                return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                {
-                    Data = errors,
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.INVALID_INPUT
-                });
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-
             var result = await _authService.LoginWithCredentialAsync(login);
             if (result.IsSuccess)
             {
@@ -91,6 +79,6 @@ namespace FUParkingApi.Controllers
             {
                 return BadRequest(result);
             }
-        }        
+        }
     }
 }

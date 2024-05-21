@@ -71,7 +71,7 @@ builder.Services.AddAuthentication(opt =>
         opt.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
         opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie()    
+    .AddCookie()
     .AddGoogle("Google", opt =>
     {
         opt.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new Exception("ErrorGoogleClientId");
@@ -94,7 +94,8 @@ builder.Services.AddSwaggerGen(option =>
         Description = "Standard Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
         In = ParameterLocation.Header,
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
     });
     option.OperationFilter<SecurityRequirementsOperationFilter>();
 });
