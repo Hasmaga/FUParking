@@ -54,7 +54,6 @@ namespace FUParkingApi.Controllers
             {
                 res.InternalErrorMessage = ex.Message;
                 return StatusCode(502, res);
-
             }
         }
     }
