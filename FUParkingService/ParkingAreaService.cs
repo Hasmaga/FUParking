@@ -73,6 +73,7 @@ namespace FUParkingService
                     Description = req.Description,
                     MaxCapacity = req.MaxCapacity,
                     Block = req.Block,
+                    Mode = req.Mode,
                 };
 
                 var result = await _parkingAreaRepository.CreateParkingAreaAsync(parkingArea);

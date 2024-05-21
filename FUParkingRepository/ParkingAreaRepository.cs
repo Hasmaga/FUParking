@@ -20,7 +20,6 @@ namespace FUParkingRepository
         {
             try
             {
-                parkingArea.Mode = ModeEnum.MODE1;
                 parkingArea.StatusParkingArea = StatusParkingEnum.ACTIVE;
                 await _db.ParkingAreas.AddAsync(parkingArea);
                 await _db.SaveChangesAsync();

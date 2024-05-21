@@ -11,13 +11,17 @@ namespace FUParkingModel.RequestObject
     public class CreateParkingAreaReqDto
     {
         [Required(ErrorMessage = "Must have parking area name")]
-        public required String Name { get; set; }
+        public required string Name { get; set; }
 
-        public String? Description { get; set; }
+        public string? Description { get; set; }
 
         [Required(ErrorMessage = "Must have parking area max capacity")]
         [Range(1, int.MaxValue, ErrorMessage = "Max capacity must be greater than 0")]
         public int MaxCapacity { get; set; }
+
+
+        [Required(ErrorMessage = "Must have parking area mode")]
+        public required string Mode { get; set; }
 
         [Required(ErrorMessage = "Must have parking area block")]
         [Range(1, int.MaxValue, ErrorMessage = "Block must be greater than 0")]
