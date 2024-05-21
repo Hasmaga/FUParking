@@ -21,7 +21,7 @@ namespace FUParkingService
             _userRepository = userRepository;
         }
 
-        public async Task<Return<bool>> CreateVehicleType(CreateVehicleTypeReqDto reqDto)
+        public async Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto)
         {
             try
             {
