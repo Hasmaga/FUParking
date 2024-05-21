@@ -37,7 +37,7 @@ namespace FUParkingApi.Controllers
                         Message = ErrorEnumApplication.INVALID_INPUT
                     });
                 }
-                var result = await _vehicleService.CreateVehicleType(reqDto);
+                var result = await _vehicleService.CreateVehicleTypeAsync(reqDto);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
