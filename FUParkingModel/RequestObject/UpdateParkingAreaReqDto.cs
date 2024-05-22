@@ -8,22 +8,20 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject
 {
-    public class CreateParkingAreaReqDto
+    public class UpdateParkingAreaReqDto
     {
-        [Required(ErrorMessage = "Must have parking area name")]
-        public required string Name { get; set; }
+        public Guid ParkingAreaId { get; set; }
+
+        public string? Name { get; set; }
 
         public string? Description { get; set; }
 
-        [Required]
-        public required string Mode { get; set; }
+        public string? Mode { get; set; }
 
-        [Required(ErrorMessage = "Must have parking area max capacity")]
         [Range(1, int.MaxValue, ErrorMessage = "Max capacity must be greater than 0")]
-        public int MaxCapacity { get; set; }
+        public int? MaxCapacity { get; set; }
 
-        [Required(ErrorMessage = "Must have parking area block")]
         [Range(1, int.MaxValue, ErrorMessage = "Block must be greater than 0")]
-        public int Block { get; set; }
+        public int? Block { get; set; }
     }
 }
