@@ -78,5 +78,35 @@ namespace FUParkingService
                 throw;
             }
         }
+
+        public async Task<Return<List<Feedback>>> GetFeedbacksByCustomerIdAsync(Guid customerId, int pageSize, int pageIndex)
+        {
+            Return<List<Feedback>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
+                if (customerRes.Data == null)
+                {
+                    res.Message = customerRes.Message;
+                    return res;
+                }
+
+                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                res = await _feedbackRepository.GetCustomerFeedbacksByCustomerIdAsync(customerId,pageIndex,pageSize);
+                return res;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }
