@@ -10,10 +10,8 @@ namespace FUParkingModel.RequestObject
 {
     public class UpdateParkingAreaReqDto
     {
-        //[Required(ErrorMessage = "Parking area Id must not be null")]
         public Guid ParkingAreaId { get; set; }
 
-        //[Required]
         public string? Name { get; set; }
 
         public string? Description { get; set; }

@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -56,25 +57,27 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateParkingAreaAsync([FromBody] UpdateParkingAreaReqDto req)
+        [HttpPut("/{id}")]
+        public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                    );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
-                var result = await _parkingAreaService.UpdateParkingAreaAsync(req);
+
+                UpdateParkingAreaReqDto updateParkingAreaReqDto = new UpdateParkingAreaReqDto
+                {
+                    ParkingAreaId = id,
+                    Name = req.Name,
+                    Description = req.Description,
+                    Block = req.Block,
+                    MaxCapacity = req.MaxCapacity,
+                    Mode = req.Mode,
+                }; 
+
+                var result = await _parkingAreaService.UpdateParkingAreaAsync(updateParkingAreaReqDto);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
