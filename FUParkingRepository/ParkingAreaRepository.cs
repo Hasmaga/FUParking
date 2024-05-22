@@ -20,6 +20,8 @@ namespace FUParkingRepository
         {
             try
             {
+                parkingArea.Mode = ModeEnum.MODE1;
+                parkingArea.StatusParkingArea = StatusParkingLotEnum.ACTIVE;
                 await _db.ParkingAreas.AddAsync(parkingArea);
                 await _db.SaveChangesAsync();
                 return new Return<ParkingArea>
@@ -102,6 +104,53 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+        
+        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync()
+        {
+            try
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Data = await _db.ParkingAreas.ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<ParkingArea>> UpdateParkingAreaAsync(ParkingArea parkingArea)
+        {
+            try
+            {
+                parkingArea.StatusParkingArea = StatusParkingLotEnum.ACTIVE;
+                _db.ParkingAreas.Update(parkingArea);
+                await _db.SaveChangesAsync();
+                return new Return<ParkingArea>
+                {
+                    Data = parkingArea,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<ParkingArea>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }
