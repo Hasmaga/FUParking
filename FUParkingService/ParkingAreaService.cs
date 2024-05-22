@@ -4,6 +4,7 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FUParkingService
 {
@@ -164,12 +165,26 @@ namespace FUParkingService
                     };
                 }
 
-                // Update parking area details
-                existingParkingArea.Name = req.Name;
-                existingParkingArea.Description = req.Description;
-                existingParkingArea.MaxCapacity = req.MaxCapacity;
-                existingParkingArea.Block = req.Block;
-                existingParkingArea.Mode = req.Mode;
+                if (!string.IsNullOrEmpty(req.Name))
+                {
+                    existingParkingArea.Name = req.Name;
+                }
+                if (!string.IsNullOrEmpty(req.Description))
+                {
+                    existingParkingArea.Description = req.Description;
+                }
+                if (req.MaxCapacity.HasValue)
+                {
+                    existingParkingArea.MaxCapacity = req.MaxCapacity.Value;
+                }
+                if (req.Block.HasValue)
+                {
+                    existingParkingArea.Block = req.Block.Value;
+                }
+                if (!string.IsNullOrEmpty(req.Mode))
+                {
+                    existingParkingArea.Mode = req.Mode;
+                }
 
                 var updateResult = await _parkingAreaRepository.UpdateParkingAreaAsync(existingParkingArea);
                 if (updateResult.IsSuccess)
