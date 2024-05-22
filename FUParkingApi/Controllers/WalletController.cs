@@ -21,7 +21,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("transaction")]
-        public async Task<IActionResult> GetWalletTransaction([FromQuery] int pageSize = 5, [FromQuery] int pageIndex = 1, [FromQuery]int numberOfDays = 7)
+        public async Task<IActionResult> GetWalletTransaction([FromQuery] int pageSize = Pagination.PAGE_SIZE, [FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery]int numberOfDays = 7)
         {
             Return<List<Transaction>> res = new()
             {
