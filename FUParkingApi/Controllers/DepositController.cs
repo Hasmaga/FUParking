@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -24,8 +25,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> CustomerBuyPackageAsync(BuyPackageReqDto request)
+        public async Task<IActionResult> CustomerBuyPackageAsync([FromBody]BuyPackageReqDto request)
         {
             Return<bool> res = new()
             {
@@ -35,7 +35,7 @@ namespace FUParkingApi.Controllers
             {
                 if(!ModelState.IsValid)
                 {
-                    return UnprocessableEntity();
+                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
                 string? userIdToken = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
                 if(userIdToken == null)
@@ -46,7 +46,7 @@ namespace FUParkingApi.Controllers
                 res = await _customerService.BuyPackageAsync(request, userId);
                 if (!res.IsSuccess)
                 {
-                    BadRequest(res);
+                    return BadRequest(res);
                 }
                 return Ok(res);
             }
@@ -54,7 +54,6 @@ namespace FUParkingApi.Controllers
             {
                 res.InternalErrorMessage = ex.Message;
                 return StatusCode(502, res);
-
             }
         }
     }

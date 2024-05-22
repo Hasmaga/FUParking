@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,9 +11,9 @@ namespace FUParkingModel.RequestObject
     public class CreateParkingAreaReqDto
     {
         [Required(ErrorMessage = "Must have parking area name")]
-        public required String Name { get; set; }
+        public required string Name { get; set; }
 
-        public String? Description { get; set; }
+        public string? Description { get; set; }
 
         [Required]
         public required string Mode { get; set; }

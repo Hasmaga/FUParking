@@ -41,6 +41,74 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<ParkingArea>> GetParkingAreaByIdAsync(Guid parkingId)
+        {
+            Return<ParkingArea> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                ParkingArea? parkingArea = await _db.ParkingAreas.FirstOrDefaultAsync(p => p.Id.Equals(parkingId));
+                if(parkingArea == null)
+                {
+                    res.Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST;
+                    return res;
+                }
+                res.Data = parkingArea;
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
+            }catch
+            {
+                return res;
+            }
+        }
+
+        public async Task<Return<ParkingArea>> GetParkingAreaByNameAsync(string name)
+        {
+            try
+            {
+                return new Return<ParkingArea>
+                {
+                    Data = await _db.ParkingAreas.FindAsync(name),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<ParkingArea>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync()
+        {
+            try
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Data = await _db.ParkingAreas.ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+        
         public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync()
         {
             try

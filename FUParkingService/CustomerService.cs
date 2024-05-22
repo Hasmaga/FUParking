@@ -33,7 +33,6 @@ namespace FUParkingService
         public async Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
         {
             Return<bool> res = new()
-
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
@@ -47,7 +46,14 @@ namespace FUParkingService
                     return res;
                 }
 
-                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(req.packageId);
+                if(!Guid.TryParse(req.packageId, out Guid packageGuid))
+                {
+                    transaction.Dispose();
+                    res.Message = ErrorEnumApplication.PACKAGE_NOT_EXIST;
+                    return res;
+                }
+
+                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(packageGuid);
 
                 if (existPackageRes.Data == null)
                 {
@@ -209,6 +215,36 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex.Message
                 };
+            }
+        }
+
+        public async Task<Return<Customer>> GetCustomerByIdAsync(Guid customerId)
+        {
+            Return<Customer> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            }; 
+            try
+            {
+                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
+
+                if(customerRes.Data == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                return customerRes;
+            }
+            catch (Exception)
+            {
+                return res;
             }
         }
     }

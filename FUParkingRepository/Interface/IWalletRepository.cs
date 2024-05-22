@@ -7,5 +7,6 @@ namespace FUParkingRepository.Interface
     {
         public Task<Return<Wallet>> CreateWalletAsync(Wallet wallet);
         public Task<Return<Wallet?>> GetWalletByCustomerId(Guid customerId);
+        public Task<Return<List<Transaction>>> GetWalletTransactionByWalletIdAsync(Guid walletId, int pageIndex, int pageSize, DateTime fromDate, DateTime toDate);
     }
 }

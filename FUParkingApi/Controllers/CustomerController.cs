@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Enum;
+using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -13,10 +14,44 @@ namespace FUParkingApi.Controllers
     public class CustomerController : Controller
     {
         private readonly ICustomerService _customerService;
+        private readonly IHelpperService _helperService;
 
-        public CustomerController(ICustomerService customerService)
+        public CustomerController(ICustomerService customerService, IHelpperService helpperService)
         {
             _customerService = customerService;
+            _helperService = helpperService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerProfile()
+        {
+            Return<Customer> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Guid customerGuid = _helperService.GetAccIdFromLogged();
+                if(customerGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+                res = await _customerService.GetCustomerByIdAsync(customerGuid);
+
+                if (res.Message.ToLower().Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+
+            }catch
+            {
+                return StatusCode(502, res);
+            }
         }
 
         [Authorize]

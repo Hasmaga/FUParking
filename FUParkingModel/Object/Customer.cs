@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -6,6 +7,7 @@ namespace FUParkingModel.Object
     public class Customer : Common
     {
         [Column("CustomerTypeId")]
+        [JsonIgnore]
         public Guid CustomerTypeId { get; set; }
         public CustomerType? CustomerType { get; set; }
 
@@ -19,13 +21,18 @@ namespace FUParkingModel.Object
         public string? Email { get; set; }
 
         [Column("PasswordHash")]
+        [JsonIgnore]
         public string? PasswordHash { get; set; }
 
         [Column("StatusCustomer")]
+        [JsonIgnore]
         public string? StatusCustomer { get; set; }
 
+        [JsonIgnore]
         public ICollection<Feedback>? Feedbacks { get; set; }
+        [JsonIgnore]
         public ICollection<Vehicle>? Vehicles { get; set; }
+        [JsonIgnore]
         public ICollection<Wallet>? Wallets { get; set; }
     }
 }
