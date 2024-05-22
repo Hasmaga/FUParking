@@ -97,6 +97,5 @@ namespace FUParkingApi.Controllers
                 return StatusCode(502, res);
             }
         }
-
     }
 }
