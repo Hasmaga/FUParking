@@ -1,3 +1,5 @@
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
@@ -75,5 +77,39 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        // PUT api/vehicles/types/{id}
+        [HttpPut("types/{id}")]
+        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+
+                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new UpdateVehicleTypeReqDto
+                {
+                    Id = id,
+                    Name = reqDto.Name,
+                    Description = reqDto.Description
+                };
+
+                var result = await _vehicleService.UpdateVehicleTypeAsync(updateVehicleTypeReqDto);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }   
     }
 }

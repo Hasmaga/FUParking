@@ -8,5 +8,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync();
         Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto);
+        Task<Return<bool>> UpdateVehicleTypeAsync(UpdateVehicleTypeReqDto reqDto);
     }
 }
