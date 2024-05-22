@@ -47,7 +47,7 @@ namespace FUParkingApi.Controllers
 
                 res = await _feedbackService.GetFeedbacksByCustomerIdAsync(customerGuid, pageSize, pageIndex);
 
-                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                if((res.Message ?? "").Equals(ErrorEnumApplication.BANNED))
                 {
                     return  Forbid();
                 }

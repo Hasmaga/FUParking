@@ -87,7 +87,7 @@ namespace FUParkingApi.Controllers
                     return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
 
-                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new UpdateVehicleTypeReqDto
+                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new()
                 {
                     Id = id,
                     Name = reqDto.Name,
