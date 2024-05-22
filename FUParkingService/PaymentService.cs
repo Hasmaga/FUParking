@@ -219,6 +219,8 @@ namespace FUParkingService
                 {
                     return new Return<IEnumerable<PaymentMethod>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
+
+                //get
                 return await _paymentRepository.GetAllPaymentMethodAsync();
             }
             catch (Exception)

@@ -8,5 +8,8 @@ namespace FUParkingService.Interface
     {
         Task<Return<bool>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
         Task<Return<bool>> ChangeStatusParkingAreaAsync(ChangeStatusParkingAreaReqDto req);
+        Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync();
+        //Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync();
+        Task<Return<bool>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
     }
 }

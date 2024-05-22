@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -17,6 +18,28 @@ namespace FUParkingApi.Controllers
         public VehicleController(IVehicleService vehicleService)
         {
             _vehicleService = vehicleService;
+        }
+
+        [HttpGet("types")]
+        public async Task<IActionResult> GetVehicleTypesAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetVehicleTypesAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
         }
 
         [HttpPost("types")]
@@ -52,5 +75,39 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        // PUT api/vehicles/types/{id}
+        [HttpPut("types/{id}")]
+        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+
+                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new()
+                {
+                    Id = id,
+                    Name = reqDto.Name,
+                    Description = reqDto.Description
+                };
+
+                var result = await _vehicleService.UpdateVehicleTypeAsync(updateVehicleTypeReqDto);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }   
     }
 }
