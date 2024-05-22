@@ -7,5 +7,6 @@ namespace FUParkingService.Interface
     public interface IParkingAreaService
     {
         Task<Return<bool>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
+        Task<Return<bool>> ChangeStatusParkingAreaAsync(ChangeStatusParkingAreaReqDto req);
     }
 }
