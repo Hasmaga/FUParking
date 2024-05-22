@@ -59,7 +59,7 @@ namespace FUParkingRepository
                 return res;
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return res;
             }

@@ -107,29 +107,7 @@ namespace FUParkingRepository
                     InternalErrorMessage = e.Message
                 };
             }
-        }
-        
-        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync()
-        {
-            try
-            {
-                return new Return<IEnumerable<ParkingArea>>
-                {
-                    Data = await _db.ParkingAreas.ToListAsync(),
-                    IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception e)
-            {
-                return new Return<IEnumerable<ParkingArea>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
-                };
-            }
-        }
+        }       
 
         public async Task<Return<ParkingArea>> UpdateParkingAreaAsync(ParkingArea parkingArea)
         {

@@ -1,7 +1,5 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
-﻿using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;

@@ -47,14 +47,15 @@ namespace FUParkingService
                 }
                 if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
-                    return new Return<IEnumerable<VehicleType>> 
-                    { 
-                        IsSuccess = false, 
+                    return new Return<IEnumerable<VehicleType>>
+                    {
+                        IsSuccess = false,
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 return await _vehicleRepository.GetAllVehicleTypeAsync();
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return new Return<IEnumerable<VehicleType>>
                 {
@@ -62,6 +63,7 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
+        }
 
         public async Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto)
         {
