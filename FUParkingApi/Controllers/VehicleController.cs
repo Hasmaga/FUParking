@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Enum;
+using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -17,6 +18,28 @@ namespace FUParkingApi.Controllers
         public VehicleController(IVehicleService vehicleService)
         {
             _vehicleService = vehicleService;
+        }
+
+        [HttpGet("types")]
+        public async Task<IActionResult> GetVehicleTypesAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetVehicleTypesAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
         }
 
         [HttpPost("types")]
