@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -6,11 +7,15 @@ namespace FUParkingModel.Object
     public class Feedback : Common
     {
         [Column("CustomerId")]
+        [JsonIgnore]
         public Guid CustomerId { get; set; }
+        [JsonIgnore]
         public Customer? Customer { get; set; }
 
         [Column("ParkingAreaId")]
+        [JsonIgnore]
         public Guid ParkingAreaId { get; set; }
+        [JsonIgnore]
         public ParkingArea? ParkingArea { get; set; }
 
         [Column("Title")]

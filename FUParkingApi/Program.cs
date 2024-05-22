@@ -6,6 +6,8 @@ using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
@@ -71,7 +73,7 @@ builder.Services.AddAuthentication(opt =>
         opt.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
         opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddCookie()    
+    .AddCookie()
     .AddGoogle("Google", opt =>
     {
         opt.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new Exception("ErrorGoogleClientId");
@@ -94,7 +96,8 @@ builder.Services.AddSwaggerGen(option =>
         Description = "Standard Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
         In = ParameterLocation.Header,
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
     });
     option.OperationFilter<SecurityRequirementsOperationFilter>();
 });
@@ -109,6 +112,22 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddHttpContextAccessor();
+#endregion
+
+#region Validation Middlewares
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var problemDetailsFactory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+            ValidationProblemDetails problemDetails = problemDetailsFactory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, 422);
+
+            return new ObjectResult(problemDetails)
+            {
+                StatusCode = 422,
+            };
+        }
+    );
 #endregion
 
 var app = builder.Build();

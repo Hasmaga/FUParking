@@ -30,9 +30,9 @@ namespace FUParkingService
             _walletRepository = walletRepository;
         }
 
-        public async Task<Return<object>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
+        public async Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
         {
-            Return<object> res = new()
+            Return<bool> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
@@ -40,16 +40,26 @@ namespace FUParkingService
             try
             {
                 Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-                if(customerRes.IsSuccess == false || customerRes.Data == null)
+                if (customerRes.IsSuccess == false || customerRes.Data == null)
                 {
-                    throw new EntryPointNotFoundException(customerRes.Message);
+                    res.Message = customerRes.Message;
+                    return res;
                 }
 
-                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(req.packageId);
+                if(!Guid.TryParse(req.packageId, out Guid packageGuid))
+                {
+                    transaction.Dispose();
+                    res.Message = ErrorEnumApplication.PACKAGE_NOT_EXIST;
+                    return res;
+                }
+
+                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(packageGuid);
 
                 if (existPackageRes.Data == null)
                 {
-                    throw new EntryPointNotFoundException(existPackageRes.Message);
+                    transaction.Dispose();
+                    res.Message = existPackageRes.Message;
+                    return res;
                 }
 
                 Deposit newDeposit = new()
@@ -61,12 +71,16 @@ namespace FUParkingService
                 Return<Deposit?> createDepositRes = await _depositRepository.CreateDepositAsync(newDeposit);
                 if (createDepositRes.Data == null)
                 {
-                    throw new OperationCanceledException(createDepositRes.Message);
+                    transaction.Dispose();
+                    res.Message = createDepositRes.Message;
+                    return res;
                 }
                 Return<Wallet?> cusWalletRes = await _walletRepository.GetWalletByCustomerId(customerRes.Data.Id);
                 if (cusWalletRes.Data == null)
                 {
-                    throw new EntryPointNotFoundException(cusWalletRes.Message);
+                    transaction.Dispose();
+                    res.Message = cusWalletRes.Message;
+                    return res;
                 }
                 Wallet customerWallet = cusWalletRes.Data;
                 FUParkingModel.Object.Transaction newTransaction = new()
@@ -74,14 +88,15 @@ namespace FUParkingService
                     WalletId = customerWallet.Id,
                     DepositId = createDepositRes.Data.Id,
                     Amount = existPackageRes.Data.CoinAmount,
-                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                    TransactionStatus = StatusTransactionEnum.PENDING,
                 };
                 var createTransactionRes = await _transactionRepository.CreateTransactionAsync(newTransaction);
                 if (createTransactionRes.Data == null)
                 {
-                    throw new OperationCanceledException(createDepositRes.Message);
+                    transaction.Dispose();
+                    res.Message = createDepositRes.Message;
+                    return res;
                 }
-
                 transaction.Complete();
                 res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
                 res.IsSuccess = true;
@@ -90,15 +105,6 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 transaction.Dispose();
-                // Help controller handle status codes
-                if(ex is EntryPointNotFoundException)
-                {
-                    throw new EntryPointNotFoundException(ex.Message);
-                }
-                if(ex is OperationCanceledException)
-                {
-                    throw new OperationCanceledException(ex.Message);
-                }
                 res.InternalErrorMessage = ex.Message;
                 return res;
             }
@@ -209,6 +215,36 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex.Message
                 };
+            }
+        }
+
+        public async Task<Return<Customer>> GetCustomerByIdAsync(Guid customerId)
+        {
+            Return<Customer> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            }; 
+            try
+            {
+                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
+
+                if(customerRes.Data == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                return customerRes;
+            }
+            catch (Exception)
+            {
+                return res;
             }
         }
     }

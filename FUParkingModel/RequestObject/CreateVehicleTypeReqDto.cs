@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject
 {
-    public class BuyPackageReqDto
+    public class CreateVehicleTypeReqDto
     {
-        [Required(ErrorMessage = "Missing Package")]
-        public required string packageId { get; set; }
+        [Required(ErrorMessage = "Must have vehicle type's name")]
+        public required String Name { get; set; }
 
+        public String? Description { get; set; }
     }
 }

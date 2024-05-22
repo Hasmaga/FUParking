@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -24,10 +25,9 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> CustomerBuyPackageAsync(BuyPackageReqDto request)
+        public async Task<IActionResult> CustomerBuyPackageAsync([FromBody]BuyPackageReqDto request)
         {
-            Return<object> res = new()
+            Return<bool> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
@@ -35,7 +35,7 @@ namespace FUParkingApi.Controllers
             {
                 if(!ModelState.IsValid)
                 {
-                    return UnprocessableEntity();
+                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
                 string? userIdToken = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
                 if(userIdToken == null)
@@ -44,24 +44,16 @@ namespace FUParkingApi.Controllers
                 }
                 Guid userId = new Guid(userIdToken);
                 res = await _customerService.BuyPackageAsync(request, userId);
+                if (!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
                 return Ok(res);
             }
             catch (Exception ex)
             {
-                if(ex is EntryPointNotFoundException)
-                {
-                    res.Message = ex.Message;
-
-                    return NotFound(res);
-                }
-
-                if(ex is OperationCanceledException)
-                {
-                    // Bad gateway server failed
-                    res.Message = ex.Message;
-                    return StatusCode(502, res);
-                }
-                return BadRequest(res);
+                res.InternalErrorMessage = ex.Message;
+                return StatusCode(502, res);
             }
         }
     }
