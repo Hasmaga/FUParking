@@ -58,6 +58,28 @@ namespace FUParkingApi.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetParkingAreasAsync()
+        {
+            try
+            {
+                var result = await _parkingAreaService.GetParkingAreasAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+        
         [HttpPut("/{id}")]
         public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
