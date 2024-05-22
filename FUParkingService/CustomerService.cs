@@ -46,7 +46,14 @@ namespace FUParkingService
                     return res;
                 }
 
-                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(req.packageId);
+                if(!Guid.TryParse(req.packageId, out Guid packageGuid))
+                {
+                    transaction.Dispose();
+                    res.Message = ErrorEnumApplication.PACKAGE_NOT_EXIST;
+                    return res;
+                }
+
+                Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(packageGuid);
 
                 if (existPackageRes.Data == null)
                 {

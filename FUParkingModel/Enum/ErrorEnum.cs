@@ -21,6 +21,8 @@
         public const string PRICE_ITEM_NOT_EXIST = "Price item is not exist in application";
         public const string PACKAGE_NOT_EXIST = "Package is not exist";
         public const string WALLET_NOT_EXIST = "Wallet not exist";
+        public const string PARKING_AREA_NOT_EXIST = "Parking Area is not exist";
+        public const string BANNED = "User is inactive";
     }
 
     public class MinioErrorServerDefineEnum

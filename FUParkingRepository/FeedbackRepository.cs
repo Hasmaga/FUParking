@@ -33,7 +33,7 @@ namespace FUParkingRepository
                 {
                      IsSuccess = false,
                      Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                     InternalErrorMessage = e.Message                   
+                     InternalErrorMessage = e.Message                  
                 };
             }
         }
