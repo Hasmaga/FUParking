@@ -24,6 +24,43 @@ namespace FUParkingApi.Controllers
             _vehicleService = vehicleService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerListAsync([FromQuery] int pageSize = Pagination.PAGE_SIZE, [FromQuery]int pageIndex = Pagination.PAGE_INDEX)
+        {
+            Return<List<Customer>> res = new() { 
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Guid userId =  _helperService.GetAccIdFromLogged();
+                if(userId == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _customerService.GetListCustomerAsync(userId,pageSize, pageIndex);
+                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+
+                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
+        }
+
         [HttpGet("vehicle")]
         public async Task<IActionResult> GetCustomerVehicleAsync()
         {

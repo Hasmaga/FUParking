@@ -247,5 +247,36 @@ namespace FUParkingService
                 return res;
             }
         }
+
+        public async Task<Return<List<Customer>>> GetListCustomerAsync(Guid userId, int pageSize, int pageIndex)
+        {
+            Return<List<Customer>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Return<User> userRes = await _userRepository.GetUserByIdAsync(userId);
+
+                if (userRes.Data == null || userRes.Data.Role.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                res = await _customerRepository.GetListCustomerAsync(pageSize, pageIndex);
+                return res;
+            }
+            catch
+            {
+                throw;
+            }
+        }
     }
 }
