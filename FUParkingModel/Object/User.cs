@@ -7,7 +7,7 @@ namespace FUParkingModel.Object
     {
         [Column("RoleId")]
         public Guid RoleId { get; set; }
-        public Role? Role { get; set; }
+        public required Role Role { get; set; }
 
         [Column("FullName")]
         public string? FullName { get; set; }
