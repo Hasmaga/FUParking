@@ -16,6 +16,48 @@ namespace FUParkingRepository
             _db = db;
         }
 
+        public async Task<Return<List<Package>>> GetAllPackagesAsync()
+        {
+            Return<List<Package>> res = new()
+            {
+                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+            };
+            try
+            {
+                List<Package> packages = await _db.Packages.ToListAsync();
+                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                res.IsSuccess = true;
+                res.Data = packages;
+                return res;
+            }
+            catch
+            {
+                return res;
+
+            }
+        }
+
+        public async Task<Return<List<Package>>> GetPackagesByStatusAsync(bool active)
+        {
+            Return<List<Package>> res = new()
+            {
+                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+            };
+            try
+            {
+                string status = active ? StatusPackageEnum.ACTIVE: StatusPackageEnum.INACTIVE;
+                List <Package> packages = await _db.Packages.Where(p => p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
+                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                res.IsSuccess = true;
+                res.Data = packages;
+                return res;
+            }catch
+            {
+                return res;
+
+            }
+        }
+
         public async Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id)
         {
             Return<Package?> res = new()
