@@ -20,6 +20,7 @@ namespace FUParkingApi.Controllers
             _vehicleService = vehicleService;
         }
 
+
         [HttpGet("type")]
         public async Task<IActionResult> GetVehicleTypesAsync()
         {
