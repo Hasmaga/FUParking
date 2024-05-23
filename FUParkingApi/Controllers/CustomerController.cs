@@ -15,11 +15,50 @@ namespace FUParkingApi.Controllers
     {
         private readonly ICustomerService _customerService;
         private readonly IHelpperService _helperService;
+        private readonly IVehicleService _vehicleService;
 
-        public CustomerController(ICustomerService customerService, IHelpperService helpperService)
+        public CustomerController(ICustomerService customerService, IHelpperService helpperService,IVehicleService vehicleService)
         {
             _customerService = customerService;
             _helperService = helpperService;
+            _vehicleService = vehicleService;
+        }
+
+        [HttpGet("vehicle")]
+        public async Task<IActionResult> GetCustomerVehicleAsync()
+        {
+            Return<List<Vehicle>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Guid customerGuid = _helperService.GetAccIdFromLogged();
+                if(customerGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _vehicleService.GetCustomerVehicleByCustomerIdAsync(customerGuid);
+                if (res.Message.ToLower().Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if (res.Message.ToLower().Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
         }
 
         [HttpGet]

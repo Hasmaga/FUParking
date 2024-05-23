@@ -93,7 +93,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Data = await _db.Customers.Include(c => c.CustomerType).FirstOrDefaultAsync(c => c.Id.Equals( customerId)),
+                    Data = await _db.Customers.Include(c => c.CustomerType).FirstOrDefaultAsync(c => c.Id.Equals(customerId)),
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
