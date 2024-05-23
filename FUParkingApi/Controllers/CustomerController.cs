@@ -24,8 +24,8 @@ namespace FUParkingApi.Controllers
             _vehicleService = vehicleService;
         }
 
-        [HttpGet("vehicle")]
-        public async Task<IActionResult> GetCustomerVehicleAsync()
+        [HttpGet("")]
+        public async Task<IActionResult> GetCustomerListAsync()
         {
             Return<List<Vehicle>> res = new()
             {

@@ -257,8 +257,8 @@ namespace FUParkingService
             try
             {
                 Return<User> userRes = await _userRepository.GetUserByIdAsync(userId);
-
-                if (userRes.Data == null || userRes.Data.Role.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()))
+                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
+                if (userRes.Data == null || isStaff)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
