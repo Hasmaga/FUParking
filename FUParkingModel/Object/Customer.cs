@@ -25,7 +25,6 @@ namespace FUParkingModel.Object
         public string? PasswordHash { get; set; }
 
         [Column("StatusCustomer")]
-        [JsonIgnore]
         public required string StatusCustomer { get; set; }
 
         [JsonIgnore]

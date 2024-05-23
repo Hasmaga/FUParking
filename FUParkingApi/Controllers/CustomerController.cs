@@ -98,7 +98,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("profile")]
         public async Task<IActionResult> GetCustomerProfile()
         {
             Return<Customer> res = new()
