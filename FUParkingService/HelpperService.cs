@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FUParkingService
@@ -65,5 +66,14 @@ namespace FUParkingService
             }
             return true;
         }
+
+        public Task<string> CreatePassHashAndPassSaltAsync(string pass, out byte[] passwordSalt)
+        {
+            using var hmac = new HMACSHA512();
+            passwordSalt = hmac.Key;
+            return Task.FromResult(Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass))));
+        }
+
+
     }
 }

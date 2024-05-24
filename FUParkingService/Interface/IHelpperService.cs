@@ -4,6 +4,7 @@
     {
         bool CheckBearerTokenIsValidAndNotExpired(string token);
         Guid GetAccIdFromLogged();
-        bool IsTokenValid();        
+        bool IsTokenValid();
+        Task<string> CreatePassHashAndPassSaltAsync(string pass, out byte[] passwordSalt);
     }
 }
