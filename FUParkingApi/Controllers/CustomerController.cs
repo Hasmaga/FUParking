@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
@@ -22,6 +23,50 @@ namespace FUParkingApi.Controllers
             _customerService = customerService;
             _helperService = helpperService;
             _vehicleService = vehicleService;
+        }
+
+        [HttpPost("free")]
+        public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
+        {
+            Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
+            try
+            {
+                if(!ModelState.IsValid)
+                {
+                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
+                }
+                Guid userGuid = _helperService.GetAccIdFromLogged();
+                if(userGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _customerService.CreateCustomerAsync(req, userGuid);
+                if(res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+
+                if (res.Message.Equals(ErrorEnumApplication.EMAIL_IS_EXIST))
+                {
+                    return Conflict(res);
+                }
+
+                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
         }
 
         [HttpGet]
