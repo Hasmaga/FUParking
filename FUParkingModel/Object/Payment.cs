@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -6,10 +7,12 @@ namespace FUParkingModel.Object
     public class Payment : Common
     {
         [Column("PaymentMethodId")]
+        [JsonIgnore]
         public Guid PaymentMethodId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
 
         [Column("SessionId")]
+        [JsonIgnore]
         public Guid SessionId { get; set; }
         public Session? Session { get; set; }
 
@@ -18,7 +21,7 @@ namespace FUParkingModel.Object
 
         [Column("StatusPayment")]
         public string? StatusPayment { get; set; }
-
+        [JsonIgnore]
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

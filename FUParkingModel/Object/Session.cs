@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -6,6 +7,7 @@ namespace FUParkingModel.Object
     public class Session : Common
     {
         [Column("CardId")]
+        [JsonIgnore]
         public Guid CardId { get; set; }
         public Card? Card { get; set; }
 
@@ -31,7 +33,7 @@ namespace FUParkingModel.Object
 
         [Column("TimeOut")]
         public DateTime TimeOut { get; set; }
-
+        [JsonIgnore]
         public ICollection<Payment>? Payments { get; set; }
     }
 }

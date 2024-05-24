@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -12,9 +13,11 @@ namespace FUParkingModel.Object
         public string? Description { get; set; }
 
         [Column("PackageId")]
+        [JsonIgnore]
         public Guid PackageId { get; set; }
-        public Package? Package { get; set; }       
-
+        [JsonIgnore]
+        public Package? Package { get; set; }
+        [JsonIgnore]
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }
