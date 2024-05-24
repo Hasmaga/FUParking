@@ -23,6 +23,7 @@
         public const string WALLET_NOT_EXIST = "Wallet not exist";
         public const string PARKING_AREA_NOT_EXIST = "Parking Area is not exist";
         public const string BANNED = "User is inactive";
+        public const string DATE_OVERLAPSED = "Date is overlapsed";
     }
 
     public class MinioErrorServerDefineEnum
