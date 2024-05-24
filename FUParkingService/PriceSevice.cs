@@ -266,7 +266,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
@@ -345,7 +345,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
                     return new Return<IEnumerable<GetPriceTableResDto>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
@@ -418,7 +418,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }

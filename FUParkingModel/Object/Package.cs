@@ -17,7 +17,7 @@ namespace FUParkingModel.Object
 
         [Column("PackageStatus")]
         [JsonIgnore]
-        public string? PackageStatus { get; set; }
+        public required string PackageStatus { get; set; }
         [JsonIgnore]
         public ICollection<Deposit>? Deposits { get; set; }
     }

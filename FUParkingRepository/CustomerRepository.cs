@@ -201,5 +201,28 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<List<Customer>>> GetListCustomerAsync(int pageSize, int pageIndex)
+        {
+            Return<List<Customer>> res = new()
+            {
+                Message = ErrorEnumApplication.GET_OBJECT_ERROR
+            };
+            try
+            {
+                res.Data = await _db.Customers.Include(c => c.CustomerType)
+                                                .OrderByDescending(t => t.CreatedDate)
+                                                .Skip((pageIndex - 1) * pageSize)
+                                                .Take(pageSize)
+                                                .ToListAsync();
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
     }
 }

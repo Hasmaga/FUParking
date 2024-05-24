@@ -134,7 +134,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role() { Name = RoleEnum.MANAGER}).Name))
                 {
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
@@ -245,6 +245,37 @@ namespace FUParkingService
             catch (Exception)
             {
                 return res;
+            }
+        }
+
+        public async Task<Return<List<Customer>>> GetListCustomerAsync(Guid userId, int pageSize, int pageIndex)
+        {
+            Return<List<Customer>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Return<User> userRes = await _userRepository.GetUserByIdAsync(userId);
+                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
+                if (userRes.Data == null || isStaff)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                res = await _customerRepository.GetListCustomerAsync(pageSize, pageIndex);
+                return res;
+            }
+            catch
+            {
+                throw;
             }
         }
     }
