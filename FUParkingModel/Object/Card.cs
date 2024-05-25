@@ -8,6 +8,9 @@ namespace FUParkingModel.Object
         [Column("PlateNumber")]
         public string? PlateNumber { get; set; }
 
+        [Column("CardNumber")]
+        public string? CardNumber { get; set; }
+
         public ICollection<Session>? Sessions { get; set; }
     }
 }
