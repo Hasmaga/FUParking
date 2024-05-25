@@ -45,16 +45,16 @@ namespace FUParkingRepository
             };
             try
             {
-                string status = active ? StatusPackageEnum.ACTIVE: StatusPackageEnum.INACTIVE;
-                List <Package> packages = await _db.Packages.Where(p => p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
+                string status = active ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
+                List<Package> packages = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
                 res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
                 res.Data = packages;
                 return res;
-            }catch
+            }
+            catch
             {
                 return res;
-
             }
         }
 
@@ -67,11 +67,7 @@ namespace FUParkingRepository
             };
             try
             {
-                Package? package = await _db.Packages.FirstOrDefaultAsync(p => p.Id.Equals(id));
-                if (package == null)
-                {
-                    throw new KeyNotFoundException();
-                }
+                Package? package = await _db.Packages.FirstOrDefaultAsync(p => p.Id.Equals(id)) ?? throw new KeyNotFoundException();
                 res.IsSuccess = package != null;
                 res.Data = package;
                 res.Message = SuccessfullyEnumServer.SUCCESSFULLY;

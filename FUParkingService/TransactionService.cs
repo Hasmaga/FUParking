@@ -23,14 +23,14 @@ namespace FUParkingService
             try
             {
                 Return<User> userRes = await _userRepository.GetUserByIdAsync(userGuid);
-                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
+                bool isStaff = userRes.Data?.Role?.Name?.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
                 if (userRes.Data == null || isStaff)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
 
-                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                if ((userRes.Data.StatusUser ?? "").ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
