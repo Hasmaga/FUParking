@@ -22,6 +22,6 @@ namespace FUParkingModel.Object
         public string? PasswordSalt { get; set; }
 
         [Column("StatusUser")]
-        public string? StatusUser { get; set; }
+        public required string StatusUser { get; set; }
     }
 }

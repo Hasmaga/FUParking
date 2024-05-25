@@ -46,7 +46,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                if(!Guid.TryParse(req.packageId, out Guid packageGuid))
+                if (!Guid.TryParse(req.packageId, out Guid packageGuid))
                 {
                     transaction.Dispose();
                     res.Message = ErrorEnumApplication.PACKAGE_NOT_EXIST;
@@ -134,7 +134,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role() { Name = RoleEnum.MANAGER }).Name))
                 {
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
@@ -218,17 +218,64 @@ namespace FUParkingService
             }
         }
 
+        public async Task<Return<Customer>> CreateCustomerAsync(CustomerReqDto customerReq, Guid userGuid)
+        {
+            Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
+            try
+            {
+                Return<User> userRes = await _userRepository.GetUserByIdAsync(userGuid);
+                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
+                if (userRes.Data == null || isStaff)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+                Return<Customer> foundCustomerRes = await _customerRepository.GetCustomerByEmailAsync(customerReq.Email);
+                if(foundCustomerRes.Data != null)
+                {
+                    res.Message = ErrorEnumApplication.EMAIL_IS_EXIST;
+                    return res;
+                }
+
+                Return<CustomerType> typeFreeRes = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.FREE);
+                if (typeFreeRes.Data == null)
+                {
+                    res.Message = typeFreeRes.Message;
+                    return res;
+                }
+                Customer newCustomer = new() {
+                    FullName = customerReq.Name,
+                    StatusCustomer = StatusCustomerEnum.ACTIVE, 
+                    CustomerTypeId = typeFreeRes.Data.Id, 
+                    Email = customerReq.Email, 
+                    Phone = customerReq.Phone,
+                    PasswordHash = await _helpperService.CreatePassHashAndPassSaltAsync(customerReq.Password, out byte[] outPasswordSalt) };
+                res = await _customerRepository.CreateNewCustomerAsync(newCustomer);
+                return res;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
         public async Task<Return<Customer>> GetCustomerByIdAsync(Guid customerId)
         {
             Return<Customer> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
-            }; 
+            };
             try
             {
                 Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
 
-                if(customerRes.Data == null)
+                if (customerRes.Data == null)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
@@ -245,6 +292,37 @@ namespace FUParkingService
             catch (Exception)
             {
                 return res;
+            }
+        }
+
+        public async Task<Return<List<Customer>>> GetListCustomerAsync(Guid userId, int pageSize, int pageIndex)
+        {
+            Return<List<Customer>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Return<User> userRes = await _userRepository.GetUserByIdAsync(userId);
+                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
+                if (userRes.Data == null || isStaff)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                res = await _customerRepository.GetListCustomerAsync(pageSize, pageIndex);
+                return res;
+            }
+            catch
+            {
+                throw;
             }
         }
     }

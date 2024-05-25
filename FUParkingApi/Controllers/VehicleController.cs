@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     //[ApiController]
-    [Route("api/vehicles")]
+    [Route("api/vehicle")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class VehicleController : Controller
     {
@@ -21,7 +21,8 @@ namespace FUParkingApi.Controllers
             _vehicleService = vehicleService;
         }
 
-        [HttpGet("types")]
+
+        [HttpGet("type")]
         public async Task<IActionResult> GetVehicleTypesAsync()
         {
             try
@@ -43,7 +44,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("types")]
+        [HttpPost("type")]
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -78,7 +79,7 @@ namespace FUParkingApi.Controllers
         }
 
         // PUT api/vehicles/types/{id}
-        [HttpPut("types/{id}")]
+        [HttpPut("type/{id}")]
         public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try

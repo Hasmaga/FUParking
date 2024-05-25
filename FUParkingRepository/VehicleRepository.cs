@@ -16,6 +16,26 @@ namespace FUParkingRepository
             _db = db;
         }
 
+        public async Task<Return<List<Vehicle>>> GetAllCustomerVehicleByCustomerIdAsync(Guid customerGuid)
+        {
+            Return<List<Vehicle>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                List<Vehicle> vehicles = await _db.Vehicles.Where(v => v.CustomerId.Equals(customerGuid)).ToListAsync();
+                res.Data = vehicles;
+                res.IsSuccess = true;
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
+
         public async Task<Return<Vehicle>> CreateVehicleAsync(Vehicle vehicle)
         {
             try

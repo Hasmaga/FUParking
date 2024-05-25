@@ -13,12 +13,14 @@ namespace FUParkingService
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IHelpperService _helpperService;
         private readonly IUserRepository _userRepository;
+        private readonly ICustomerRepository _customerRepository;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository,ICustomerRepository customerRepository)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _userRepository = userRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync()
@@ -243,7 +245,6 @@ namespace FUParkingService
                 };
             }
         }
-
         public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
         {
             try
@@ -281,6 +282,36 @@ namespace FUParkingService
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
+             }
+        }
+
+        public async Task<Return<List<Vehicle>>> GetCustomerVehicleByCustomerIdAsync(Guid customerGuid)
+        {
+            Return<List<Vehicle>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerGuid);
+                if(customerRes.Data == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+
+                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                {
+                    res.Message = ErrorEnumApplication.BANNED;
+                    return res;
+                }
+
+                res = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerGuid);
+                return res;
+            }
+            catch
+            {
+                throw;
             }
         }
     }

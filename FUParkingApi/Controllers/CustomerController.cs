@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
@@ -15,14 +16,134 @@ namespace FUParkingApi.Controllers
     {
         private readonly ICustomerService _customerService;
         private readonly IHelpperService _helperService;
+        private readonly IVehicleService _vehicleService;
 
-        public CustomerController(ICustomerService customerService, IHelpperService helpperService)
+        public CustomerController(ICustomerService customerService, IHelpperService helpperService,IVehicleService vehicleService)
         {
             _customerService = customerService;
             _helperService = helpperService;
+            _vehicleService = vehicleService;
+        }
+
+        [HttpPost("free")]
+        public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
+        {
+            Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
+            try
+            {
+                if(!ModelState.IsValid)
+                {
+                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
+                }
+                Guid userGuid = _helperService.GetAccIdFromLogged();
+                if(userGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _customerService.CreateCustomerAsync(req, userGuid);
+                if(res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+
+                if (res.Message.Equals(ErrorEnumApplication.EMAIL_IS_EXIST))
+                {
+                    return Conflict(res);
+                }
+
+                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetCustomerListAsync([FromQuery] int pageSize = Pagination.PAGE_SIZE, [FromQuery]int pageIndex = Pagination.PAGE_INDEX)
+        {
+            Return<List<Customer>> res = new() { 
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Guid userId =  _helperService.GetAccIdFromLogged();
+                if(userId == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _customerService.GetListCustomerAsync(userId,pageSize, pageIndex);
+                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+
+                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
+        }
+
+        [HttpGet("vehicle")]
+        public async Task<IActionResult> GetCustomerVehicleAsync()
+        {
+            Return<List<Vehicle>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Guid customerGuid = _helperService.GetAccIdFromLogged();
+                if(customerGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _vehicleService.GetCustomerVehicleByCustomerIdAsync(customerGuid);
+                if (res.Message.ToLower().Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if (res.Message.ToLower().Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+                if(!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(502, res);
+            }
+        }
+
+        [HttpGet("profile")]
         public async Task<IActionResult> GetCustomerProfile()
         {
             Return<Customer> res = new()
