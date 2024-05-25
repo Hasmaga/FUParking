@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
+using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -109,6 +110,28 @@ namespace FUParkingApi.Controllers
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
-        }   
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVehiclesAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetVehiclesAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }

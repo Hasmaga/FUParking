@@ -151,5 +151,28 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
+        {
+            try
+            {
+                var vehicles = await _db.Vehicles.Include(v => v.Customer).ToListAsync();
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    Data = vehicles,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                };
+            }
+        }
     }
 }
