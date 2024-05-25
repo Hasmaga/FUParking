@@ -24,7 +24,7 @@ namespace FUParkingApi.Controllers
             _helperService = helpperService;
             _vehicleService = vehicleService;
         }
-
+        
         [HttpPost("free")]
         public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
         {
