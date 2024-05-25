@@ -65,7 +65,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<Customer>> GetCustomerByEmail(string email)
+        public async Task<Return<Customer>> GetCustomerByEmailAsync(string email)
         {
             try
             {

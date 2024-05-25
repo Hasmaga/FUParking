@@ -16,7 +16,6 @@ namespace FUParkingModel.Object
         public decimal Price { get; set; }
 
         [Column("PackageStatus")]
-        [JsonIgnore]
         public required string PackageStatus { get; set; }
         [JsonIgnore]
         public ICollection<Deposit>? Deposits { get; set; }

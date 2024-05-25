@@ -16,14 +16,16 @@ namespace FUParkingService
         private readonly IRoleRepository _roleRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IHelpperService _helpperService;
 
-        public InitializeDataService(IGateRepository gateRepository, IVehicleRepository vehicleRepository, IRoleRepository roleRepository, IUserRepository userRepository, ICustomerRepository customerRepository)
+        public InitializeDataService(IHelpperService helpperService, IGateRepository gateRepository, IVehicleRepository vehicleRepository, IRoleRepository roleRepository, IUserRepository userRepository, ICustomerRepository customerRepository)
         {
             _gateRepository = gateRepository;
             _vehicleRepository = vehicleRepository;
             _roleRepository = roleRepository;
             _userRepository = userRepository;
             _customerRepository = customerRepository;
+            _helpperService = helpperService;
         }
 
         public async Task<Return<bool>> InitializeDatabase()
@@ -200,7 +202,7 @@ namespace FUParkingService
                     User newStaff = new()
                     {
                         Email = "staff@localhost.com",
-                        PasswordHash = CreatePassHashAndPassSalt(passwordStaff, out byte[] passwordSaltStaff),
+                        PasswordHash = await _helpperService.CreatePassHashAndPassSaltAsync(passwordStaff, out byte[] passwordSaltStaff),
                         PasswordSalt = Convert.ToBase64String(passwordSaltStaff),
                         RoleId = roleStaff.Data.Id,
                         FullName = "Staff",
@@ -236,7 +238,7 @@ namespace FUParkingService
                     User newManager = new()
                     {
                         Email = "manager@localhost.com",
-                        PasswordHash = CreatePassHashAndPassSalt(passwordManager, out byte[] passwordSaltManager),
+                        PasswordHash = await _helpperService.CreatePassHashAndPassSaltAsync(passwordManager, out byte[] passwordSaltManager),
                         PasswordSalt = Convert.ToBase64String(passwordSaltManager),
                         RoleId = roleManager.Data.Id,
                         FullName = "Manager",
@@ -272,7 +274,7 @@ namespace FUParkingService
                     User newSupervisor = new()
                     {
                         Email = "supervisor@localhost.com",
-                        PasswordHash = CreatePassHashAndPassSalt(passwordSupervisor, out byte[] passwordSaltSupervisor),
+                        PasswordHash = await _helpperService.CreatePassHashAndPassSaltAsync(passwordSupervisor, out byte[] passwordSaltSupervisor),
                         PasswordSalt = Convert.ToBase64String(passwordSaltSupervisor),
                         RoleId = roleSupervisor.Data.Id,
                         FullName = "Supervisor",
@@ -312,11 +314,6 @@ namespace FUParkingService
             }
         }
 
-        private static string CreatePassHashAndPassSalt(string pass, out byte[] passwordSalt)
-        {
-            using var hmac = new HMACSHA512();
-            passwordSalt = hmac.Key;
-            return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass)));
-        }
+       
     }
 }

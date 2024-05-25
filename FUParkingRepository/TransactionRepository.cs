@@ -3,6 +3,7 @@ using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
 {
@@ -27,7 +28,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<Transaction>
                 {
@@ -35,6 +37,25 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
+            }
+        }
+
+        public async Task<Return<List<Transaction>>> GetTransactionListAsync(DateTime FromDate, DateTime ToDate, int pageSize, int pageIndex)
+        {
+            Return<List<Transaction>> res = new() { Message = ErrorEnumApplication.GET_OBJECT_ERROR };
+            try { 
+                res.Data = await _db.Transactions.Include(t => t.Deposit).Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)
+                                                                .OrderByDescending(t => t.CreatedDate)
+                                                                .Skip((pageIndex - 1) * pageSize)
+                                                                .Take(pageSize)
+                                                                .ToListAsync();
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
+            }
+            catch
+            {
+                return res;
             }
         }
     }
