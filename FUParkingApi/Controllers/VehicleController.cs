@@ -133,5 +133,28 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+         // DELETE api/vehicles/types/{id}
+        [HttpDelete("types/{id}")]
+        public async Task<IActionResult> DeleteVehicleType([FromRoute] Guid id)
+        {
+            try
+            {
+                var result = await _vehicleService.DeleteVehicleTypeAsync(id);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }
