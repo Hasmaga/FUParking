@@ -39,5 +39,25 @@ namespace FUParkingApi.Controllers
                 return StatusCode(502, res);
             }
         }
+
+        [HttpDelete("{packageId}")]
+        public async Task<IActionResult> DeleteCoinPackage(Guid packageId)
+        {
+            Return<bool> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                res = await _packageService.DeleteCoinPackage(packageId);
+                if (!res.IsSuccess)
+                    return BadRequest(res);
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(500, res);
+            }
+        }
     }
 }

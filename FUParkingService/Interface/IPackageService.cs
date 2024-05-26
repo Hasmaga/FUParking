@@ -6,5 +6,6 @@ namespace FUParkingService.Interface
     public interface IPackageService
     {
         Task<Return<List<Package>>> GetAvailablePackageAsync();
+        Task<Return<bool>> DeleteCoinPackage(Guid packageId);
     }
 }
