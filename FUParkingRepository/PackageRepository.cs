@@ -108,5 +108,26 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<bool>> UpdateCoinPackage(Package package)
+        {
+            Return<bool> res = new()
+            {
+                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+            };
+            try
+            {
+                _db.Packages.Update(package);
+                await _db.SaveChangesAsync();
+                res.IsSuccess = true;
+                res.Data = true;
+                res.Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
     }
 }

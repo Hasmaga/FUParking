@@ -9,5 +9,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id);
         Task<Return<List<Package>>> GetPackagesByStatusAsync(bool active);
         Task<Return<List<Package>>> GetAllPackagesAsync();
+        Task<Return<bool>> UpdateCoinPackage(Package package);
     }
 }
