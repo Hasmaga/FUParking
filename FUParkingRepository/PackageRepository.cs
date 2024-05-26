@@ -16,6 +16,42 @@ namespace FUParkingRepository
             _db = db;
         }
 
+        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status)
+        {
+            try
+            {
+                List<Package> packages;
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    packages = await _db.Packages.ToListAsync();
+                }
+                else
+                {
+                    packages = await _db.Packages
+                                        .Where(p => p.PackageStatus.Equals(status))
+                                        .ToListAsync();
+                }
+
+                return new Return<IEnumerable<Package>>
+                {
+                    Data = packages,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Package>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+
         public async Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id)
         {
             Return<Package?> res = new()
