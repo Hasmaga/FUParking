@@ -25,7 +25,6 @@ namespace FUParkingService
         {
             try
             {
-                // Check token 
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
                 {
@@ -35,10 +34,9 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
                 // Check role 
                 var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.IsSuccess)
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
                 {
                     return new Return<bool>
                     {
@@ -46,13 +44,9 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role()).Name ?? ""))
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
                 // Check if ParkingAreaId exists
