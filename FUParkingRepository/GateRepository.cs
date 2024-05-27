@@ -107,5 +107,29 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Gate>> UpdateGateAsync(Gate gate)
+        {
+            try
+            {
+                _db.Gates.Update(gate);
+                await _db.SaveChangesAsync();
+                return new Return<Gate>
+                {
+                    Data = gate,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Gate>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
     }
 }

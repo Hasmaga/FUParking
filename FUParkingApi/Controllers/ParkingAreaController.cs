@@ -80,7 +80,7 @@ namespace FUParkingApi.Controllers
             }
         }
         
-        [HttpPut("/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
             try
