@@ -7,7 +7,7 @@ namespace FUParkingService.Interface
     public interface IParkingAreaService
     {
         Task<Return<bool>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
-        Task<Return<bool>> ChangeStatusParkingAreaAsync(ChangeStatusParkingAreaReqDto req);
+        Task<Return<bool>> DeleteParkingArea(Guid id);
         Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync();
         //Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync();
         Task<Return<bool>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
