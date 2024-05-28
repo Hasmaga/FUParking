@@ -16,6 +16,26 @@ namespace FUParkingRepository
             _db = db;
         }
 
+        public async Task<Return<List<Vehicle>>> GetAllCustomerVehicleByCustomerIdAsync(Guid customerGuid)
+        {
+            Return<List<Vehicle>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                List<Vehicle> vehicles = await _db.Vehicles.Where(v => v.CustomerId.Equals(customerGuid)).ToListAsync();
+                res.Data = vehicles;
+                res.IsSuccess = true;
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
+
         public async Task<Return<Vehicle>> CreateVehicleAsync(Vehicle vehicle)
         {
             try
@@ -128,6 +148,51 @@ namespace FUParkingRepository
                     IsSuccess = false,
                     InternalErrorMessage = e.Message,
                     Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
+        {
+            try
+            {
+                var vehicles = await _db.Vehicles.Include(v => v.Customer).ToListAsync();
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    Data = vehicles,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesByVehicleTypeId(Guid id)
+        {
+            try
+            {
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    Data = await _db.Vehicles.Where(v => v.VehicleTypeId == id).ToListAsync(),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
         }

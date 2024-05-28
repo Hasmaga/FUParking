@@ -53,7 +53,7 @@ namespace FUParkingService
                     };
                 }
                 // Check if the user is already registered
-                var isUserRegistered = await _customerRepository.GetCustomerByEmail(login.Email);
+                var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(login.Email);
                 // If the user is not registered, create a new user
                 if (isUserRegistered.Data == null)
                 {

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -17,6 +18,7 @@ namespace FUParkingModel.Object
         [Column("PackageStatus")]
         public required string PackageStatus { get; set; }
 
+        [JsonIgnore]
         public ICollection<Deposit>? Deposits { get; set; }
     }
 }

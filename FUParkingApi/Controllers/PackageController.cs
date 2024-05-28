@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Enum;
+using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,27 @@ namespace FUParkingApi.Controllers
             _packageService = packageService;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAvailablePackageAsync()
+        {
+            Return<List<Package>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                res = await _packageService.GetAvailablePackageAsync();
+                if (!res.IsSuccess)
+                    return BadRequest(res);
+                return Ok(res);
+            }
+            catch 
+            {
+                return StatusCode(502, res);
+            }
+        }
+        
         [HttpGet]
         public async Task<IActionResult> GetCoinPackages()
         {

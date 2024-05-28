@@ -20,6 +20,8 @@ namespace FUParkingRepository
         {
             try
             {
+                parkingArea.Mode = ModeEnum.MODE1;
+                parkingArea.StatusParkingArea = StatusParkingEnum.ACTIVE;
                 await _db.ParkingAreas.AddAsync(parkingArea);
                 await _db.SaveChangesAsync();
                 return new Return<ParkingArea>
@@ -102,6 +104,31 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }       
+
+        public async Task<Return<ParkingArea>> UpdateParkingAreaAsync(ParkingArea parkingArea)
+        {
+            try
+            {
+                parkingArea.StatusParkingArea = StatusParkingEnum.ACTIVE;
+                _db.ParkingAreas.Update(parkingArea);
+                await _db.SaveChangesAsync();
+                return new Return<ParkingArea>
+                {
+                    Data = parkingArea,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<ParkingArea>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }

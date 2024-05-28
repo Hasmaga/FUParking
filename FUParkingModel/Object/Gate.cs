@@ -16,7 +16,7 @@ namespace FUParkingModel.Object
         public Guid WPFCode { get; set; } = Guid.NewGuid();
 
         [Column("Name")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
 
         [Column("Description")]
         public string? Description { get; set; }

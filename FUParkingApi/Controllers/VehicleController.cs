@@ -1,6 +1,8 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
+using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     //[ApiController]
-    [Route("api/vehicles")]
+    [Route("api/vehicle")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class VehicleController : Controller
     {
@@ -19,7 +21,30 @@ namespace FUParkingApi.Controllers
             _vehicleService = vehicleService;
         }
 
-        [HttpPost("types")]
+
+        [HttpGet("type")]
+        public async Task<IActionResult> GetVehicleTypesAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetVehicleTypesAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpPost("type")]
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -44,6 +69,85 @@ namespace FUParkingApi.Controllers
                 }
                 return BadRequest(result);
             } catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        // PUT api/vehicles/types/{id}
+        [HttpPut("type/{id}")]
+        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+
+                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new()
+                {
+                    Id = id,
+                    Name = reqDto.Name,
+                    Description = reqDto.Description
+                };
+
+                var result = await _vehicleService.UpdateVehicleTypeAsync(updateVehicleTypeReqDto);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            } catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVehiclesAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetVehiclesAsync();
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+         // DELETE api/vehicles/types/{id}
+        [HttpDelete("types/{id}")]
+        public async Task<IActionResult> DeleteVehicleType([FromRoute] Guid id)
+        {
+            try
+            {
+                var result = await _vehicleService.DeleteVehicleTypeAsync(id);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new Return<string>
                 {

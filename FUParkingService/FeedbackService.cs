@@ -35,7 +35,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                if(customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE))
+                if((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
@@ -94,7 +94,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                if ((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;

@@ -16,41 +16,47 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status)
+        public async Task<Return<List<Package>>> GetAllPackagesAsync()
         {
+            Return<List<Package>> res = new()
+            {
+                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+            };
             try
             {
-                List<Package> packages;
-
-                if (string.IsNullOrEmpty(status))
-                {
-                    packages = await _db.Packages.ToListAsync();
-                }
-                else
-                {
-                    packages = await _db.Packages
-                                        .Where(p => p.PackageStatus.Equals(status))
-                                        .ToListAsync();
-                }
-
-                return new Return<IEnumerable<Package>>
-                {
-                    Data = packages,
-                    IsSuccess = true,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
-                };
+                List<Package> packages = await _db.Packages.ToListAsync();
+                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                res.IsSuccess = true;
+                res.Data = packages;
+                return res;
             }
-            catch (Exception e)
+            catch
             {
-                return new Return<IEnumerable<Package>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e.Message
-                };
+                return res;
+
             }
         }
 
+        public async Task<Return<List<Package>>> GetPackagesByStatusAsync(bool active)
+        {
+            Return<List<Package>> res = new()
+            {
+                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+            };
+            try
+            {
+                string status = active ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
+                List<Package> packages = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
+                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                res.IsSuccess = true;
+                res.Data = packages;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
 
         public async Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id)
         {
@@ -61,11 +67,7 @@ namespace FUParkingRepository
             };
             try
             {
-                Package? package = await _db.Packages.FirstOrDefaultAsync(p => p.Id.Equals(id));
-                if (package == null)
-                {
-                    throw new KeyNotFoundException();
-                }
+                Package? package = await _db.Packages.FirstOrDefaultAsync(p => p.Id.Equals(id)) ?? throw new KeyNotFoundException();
                 res.IsSuccess = package != null;
                 res.Data = package;
                 res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
@@ -102,6 +104,41 @@ namespace FUParkingRepository
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+        
+        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status)
+        {
+            try
+            {
+                List<Package> packages;
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    packages = await _db.Packages.ToListAsync();
+                }
+                else
+                {
+                    packages = await _db.Packages
+                                        .Where(p => p.PackageStatus.Equals(status))
+                                        .ToListAsync();
+                }
+
+                return new Return<IEnumerable<Package>>
+                {
+                    Data = packages,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Package>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }

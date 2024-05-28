@@ -42,7 +42,7 @@ namespace FUParkingApi.Controllers
                 {
                     return Unauthorized();
                 }
-                Guid userId = new Guid(userIdToken);
+                Guid userId = new(userIdToken);
                 res = await _customerService.BuyPackageAsync(request, userId);
                 if (!res.IsSuccess)
                 {
