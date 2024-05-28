@@ -21,7 +21,8 @@ namespace FUParkingApi.Controllers
             _gateService = gateService;
         }
 
-        [HttpGet]
+        [Authorize]
+        [HttpGet("/api/gates")]
         public async Task<IActionResult> GetListGate()
         {
             try
@@ -43,6 +44,43 @@ namespace FUParkingApi.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateGateAsync([FromBody] CreateGateReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                    {
+                        Data = errors,
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    });
+                }
+                var result = await _gateService.CreateGateAsync(req);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+
+                    InternalErrorMessage = e.Message,
+                });
+            }
+        }
+        
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateGateAsync([FromRoute] Guid id, [FromBody] UpdateGateReqDto req)
         {

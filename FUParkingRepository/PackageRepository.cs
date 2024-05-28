@@ -33,7 +33,6 @@ namespace FUParkingRepository
             catch
             {
                 return res;
-
             }
         }
 
@@ -106,6 +105,62 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
+            }
+        }
+        
+        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status)
+        {
+            try
+            {
+                List<Package> packages;
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    packages = await _db.Packages.ToListAsync();
+                }
+                else
+                {
+                    packages = await _db.Packages
+                                        .Where(p => p.PackageStatus.Equals(status))
+                                        .ToListAsync();
+                }
+
+                return new Return<IEnumerable<Package>>
+                {
+                    Data = packages,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Package>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+        
+        public async Task<Return<bool>> UpdateCoinPackage(Package package)
+        {
+            Return<bool> res = new()
+            {
+                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+            };
+            try
+            {
+                _db.Packages.Update(package);
+                await _db.SaveChangesAsync();
+                res.IsSuccess = true;
+                res.Data = true;
+                res.Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY;
+                return res;
+            }
+            catch
+            {
+                return res;
             }
         }
     }
