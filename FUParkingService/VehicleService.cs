@@ -121,24 +121,14 @@ namespace FUParkingService
                 };
 
                 var result = await _vehicleRepository.CreateVehicleTypeAsync(vehicleType);
-                if (result.IsSuccess)
+                return new Return<bool>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = true,
-                        Data = true,
-                        Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                    };
-                }
-                else
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-            } catch (Exception)
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess,
+                    Message = result.IsSuccess ? SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+            catch (Exception)
             {
                 return new Return<bool>
                 {
@@ -312,6 +302,93 @@ namespace FUParkingService
             catch
             {
                 throw;
+            }
+        }
+
+        public async Task<Return<bool>> DeleteVehicleTypeAsync(Guid id)
+        {
+            try
+            {
+                // check token validity
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role = Manager
+                var userLogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userLogged.Data == null || !userLogged.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+
+                if (!Auth.AuthManager.Contains(userLogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+
+                // Check if the vehicle type id exists
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(id);
+                if (vehicleType.Data == null || !vehicleType.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                    };
+                }
+
+                // Check if any vehicle is using the vehicle type
+                var vehiclesUsingType = await _vehicleRepository.GetVehiclesByVehicleTypeId(id);
+                if (vehiclesUsingType.Data != null && vehiclesUsingType.Data.Any())
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.IN_USE
+                    };
+                }
+
+                // Update DeletedDate to delete the vehicle type
+                vehicleType.Data.DeletedDate = DateTime.Now;
+                var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
+                if (result.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = true,
+                        Data = true,
+                        Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                    };
+                }
+                else
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.DELETE_OBJECT_ERROR
+                    };
+                }
+            }
+            catch (Exception)
+            {
+                return new Return<bool>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
             }
         }
     }

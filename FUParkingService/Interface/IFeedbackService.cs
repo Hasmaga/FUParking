@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -8,5 +9,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<Feedback>> CreateFeedbackAsync(FeedbackReqDto request, Guid customerId);        
         Task<Return<List<Feedback>>> GetFeedbacksByCustomerIdAsync(Guid customerId, int pageSize, int pageIndex);
+        Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex, Guid userGuid);
     }
 }
