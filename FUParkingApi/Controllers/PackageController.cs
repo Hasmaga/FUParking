@@ -41,7 +41,7 @@ namespace FUParkingApi.Controllers
             }
         }
         
-        [HttpGet]
+        [HttpGet("/api/packages/all")]
         public async Task<IActionResult> GetCoinPackages()
         {
             try
