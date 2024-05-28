@@ -121,24 +121,14 @@ namespace FUParkingService
                 };
 
                 var result = await _vehicleRepository.CreateVehicleTypeAsync(vehicleType);
-                if (result.IsSuccess)
+                return new Return<bool>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = true,
-                        Data = true,
-                        Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                    };
-                }
-                else
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-            } catch (Exception)
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess,
+                    Message = result.IsSuccess ? SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+            catch (Exception)
             {
                 return new Return<bool>
                 {

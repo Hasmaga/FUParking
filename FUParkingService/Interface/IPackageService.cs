@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -7,5 +8,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status);
         Task<Return<List<Package>>> GetAvailablePackageAsync();
+        Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto);
     }
 }
