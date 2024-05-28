@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService;
 using FUParkingService.Interface;
@@ -11,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     [ApiController]
-    [Route("api/feedback")]
+    [Route("api/feedbacks")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class FeedbackController : Controller
     {
@@ -24,7 +25,7 @@ namespace FUParkingApi.Controllers
             _helpperService = helpperService;
         }
 
-        [HttpGet]
+        [HttpGet("customers")]
         public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery]int pageIndex=Pagination.PAGE_INDEX, [FromQuery]int pageSize=Pagination.PAGE_SIZE)
         {
             Return<List<Feedback>> res = new()
@@ -63,7 +64,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("customers")]
         public async Task<IActionResult> CustomerCreateFeedbackAsync([FromBody] FeedbackReqDto request)
         {
             Return<Feedback> res = new()
@@ -93,6 +94,44 @@ namespace FUParkingApi.Controllers
                 return Ok(createFeedbackRes);
             }
             catch (Exception)
+            {
+                return StatusCode(502, res);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
+        {
+            Return<IEnumerable<GetListFeedbacksResDto>> res = new() { 
+                Message = ErrorEnumApplication.SERVER_ERROR 
+            };
+            try
+            {
+                Guid userGuid = _helpperService.GetAccIdFromLogged();
+                if (userGuid == Guid.Empty)
+                {
+                    return Unauthorized();
+                }
+
+                res = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex, userGuid);
+
+                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                {
+                    return Unauthorized(res);
+                }
+
+                if (res.Message.Equals(ErrorEnumApplication.BANNED))
+                {
+                    return Forbid();
+                }
+
+                if (!res.IsSuccess)
+                {
+                    return BadRequest(res);
+                }
+                return Ok(res);
+            }
+            catch
             {
                 return StatusCode(502, res);
             }

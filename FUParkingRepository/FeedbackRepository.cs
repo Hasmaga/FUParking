@@ -64,5 +64,35 @@ namespace FUParkingRepository
                 return res;
             }
         }
+
+        public async Task<Return<List<Feedback>>> GetFeedbacksAsync(int pageSize, int pageIndex)
+        {
+            try
+            {
+                var feedbacks = await _db.Feedbacks
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Include(f => f.Customer)
+                    .Include(f => f.ParkingArea)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return new Return<List<Feedback>>()
+                {
+                    Data = feedbacks,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<List<Feedback>>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                };
+            }
+        }
     }
 }
