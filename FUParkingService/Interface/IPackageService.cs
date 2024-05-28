@@ -6,6 +6,7 @@ namespace FUParkingService.Interface
 {
     public interface IPackageService
     {
+        Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status);
         Task<Return<List<Package>>> GetAvailablePackageAsync();
         Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto);
     }
