@@ -33,7 +33,6 @@ namespace FUParkingRepository
             catch
             {
                 return res;
-
             }
         }
 

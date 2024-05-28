@@ -10,5 +10,6 @@ namespace FUParkingService.Interface
         Task<Return<List<Package>>> GetAvailablePackageAsync();
         Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto);
         Task<Return<bool>> UpdateCoinPackage(Guid packageId, UpdateCoinPackageReqDto updateCoinPackageReqDto);
+        Task<Return<bool>> DeleteCoinPackage(Guid packageId);
     }
 }
