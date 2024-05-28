@@ -40,7 +40,72 @@ namespace FUParkingApi.Controllers
                 return StatusCode(502, res);
             }
         }
+        
+        [HttpGet]
+        public async Task<IActionResult> GetCoinPackages()
+        {
+            try
+            {
+                var result = await _packageService.GetCoinPackages(null);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
 
+        [HttpGet("active")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveCoinPackages()
+        {
+            try
+            {
+                var result = await _packageService.GetCoinPackages(StatusPackageEnum.ACTIVE);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
+        {
+            Return<bool> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                res = await _packageService.CreateCoinPackage(reqDto);
+                if (!res.IsSuccess)
+                    return BadRequest(res);
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(500, res);
+            }
+        }
+        
         [HttpPut("{packageId}")]
         public async Task<IActionResult> UpdateCoinPackage([FromRoute] Guid packageId, [FromBody] UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
