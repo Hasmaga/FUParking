@@ -80,7 +80,7 @@ namespace FUParkingApi.Controllers
             }
         }
         
-        [HttpPut("/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
             try
@@ -115,6 +115,37 @@ namespace FUParkingApi.Controllers
                     Message = ErrorEnumApplication.SERVER_ERROR,
 
                     InternalErrorMessage = e.Message,
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteParkingArea([FromRoute] Guid id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(500, Helper.GetValidationErrors(ModelState));
+                }
+
+                var result = await _parkingAreaService.DeleteParkingArea(id);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<object>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
         }

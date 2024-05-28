@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
+using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 
@@ -18,6 +19,68 @@ namespace FUParkingService
             _parkingAreaRepository = parkingAreaRepository;
             _helpperService = helpperService;
             _userRepository = userRepository;
+        }
+
+        public async Task<Return<bool>> DeleteParkingArea(Guid id)
+        {
+            try
+            {
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                // Check if ParkingAreaId exists
+                var existedParking = await _parkingAreaRepository.GetParkingAreaByIdAsync(id);
+                if (existedParking.Data == null || existedParking.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST
+                    };
+                }
+
+                existedParking.Data.StatusParkingArea = StatusParkingEnum.INACTIVE;
+                existedParking.Data.DeletedDate = DateTime.Now;
+
+                var result = await _parkingAreaRepository.UpdateParkingAreaAsync(existedParking.Data);
+
+                return new Return<bool>
+                {
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess,
+                    Message = result.IsSuccess ? SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex.Message
+                };
+            }
         }
 
         public async Task<Return<bool>> CreateParkingAreaAsync(CreateParkingAreaReqDto req)
