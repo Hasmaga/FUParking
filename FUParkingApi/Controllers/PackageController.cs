@@ -105,5 +105,25 @@ namespace FUParkingApi.Controllers
                 return StatusCode(500, res);
             }
         }
+        
+        [HttpPut("{packageId}")]
+        public async Task<IActionResult> UpdateCoinPackage([FromRoute] Guid packageId, [FromBody] UpdateCoinPackageReqDto updateCoinPackageReqDto)
+        {
+            Return<bool> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                res = await _packageService.UpdateCoinPackage(packageId, updateCoinPackageReqDto);
+                if (!res.IsSuccess)
+                    return BadRequest(res);
+                return Ok(res);
+            }
+            catch
+            {
+                return StatusCode(500, res);
+            }
+        }
     }
 }

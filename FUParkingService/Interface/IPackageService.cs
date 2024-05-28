@@ -9,5 +9,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status);
         Task<Return<List<Package>>> GetAvailablePackageAsync();
         Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto);
+        Task<Return<bool>> UpdateCoinPackage(Guid packageId, UpdateCoinPackageReqDto updateCoinPackageReqDto);
     }
 }
