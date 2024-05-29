@@ -240,5 +240,67 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<bool>> DeleteGate(Guid id)
+        {
+            try
+            {
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check role 
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                {
+                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }
+
+                // Check if gateId exists
+                var existedGate = await _gateRepository.GetGateByIdAsync(id);
+                if (existedGate.Data == null || existedGate.IsSuccess == false)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.GATE_NOT_EXIST
+                    };
+                }
+
+                existedGate.Data.StatusGate = StatusParkingEnum.INACTIVE;
+                existedGate.Data.DeletedDate = DateTime.Now;
+
+                var result = await _gateRepository.UpdateGateAsync(existedGate.Data);
+
+                return new Return<bool>
+                {
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess,
+                    Message = result.IsSuccess ? SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
     }
 }

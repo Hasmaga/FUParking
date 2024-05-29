@@ -10,5 +10,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<GateType>>> GetAllGateTypeAsync();
         Task<Return<GateType>> CreateGateTypeAsync(GateType gateType);
         Task<Return<Gate>> UpdateGateAsync(Gate gate);
+        Task<Return<Gate>> GetGateByIdAsync(Guid id);
     }
 }

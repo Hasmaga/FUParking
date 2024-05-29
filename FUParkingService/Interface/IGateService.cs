@@ -9,5 +9,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<Gate>>> GetAllGate();
         Task<Return<bool>> UpdateGateAsync(UpdateGateReqDto req, Guid id);
         Task<Return<bool>> CreateGateAsync(CreateGateReqDto req);
+        Task<Return<bool>> DeleteGate(Guid id);
     }
 }

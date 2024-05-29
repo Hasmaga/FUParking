@@ -131,5 +131,30 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Gate>> GetGateByIdAsync(Guid id)
+        {
+            Return<Gate> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+            try
+            {
+                Gate? gate = await _db.Gates.FirstOrDefaultAsync(p => p.Id.Equals(id));
+                if (gate == null)
+                {
+                    res.Message = ErrorEnumApplication.GATE_NOT_EXIST;
+                    return res;
+                }
+                res.Data = gate;
+                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
+            }
+            catch
+            {
+                return res;
+            }
+        }
     }
 }
