@@ -18,6 +18,10 @@ namespace FUParkingModel.Object
         [Column("WalletStatus")]
         [JsonIgnore]
         public string? WalletStatus { get; set; }
+
+        [Column("EXPDate")]
+        public DateTime? EXPDate { get; set; }
+
         [JsonIgnore]
         public ICollection<Transaction>? Transactions { get; set; }
     }

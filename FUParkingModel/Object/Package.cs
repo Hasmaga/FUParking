@@ -12,6 +12,12 @@ namespace FUParkingModel.Object
         [Column("CoinAmount")]
         public int CoinAmount { get; set; }
 
+        [Column("ExtraCoin")]
+        public int? ExtraCoin { get; set; }
+
+        [Column("FreeCoinEXP")]
+        public DateTime? FreeCoinEXP { get; set; }
+
         [Column("Price")]
         public decimal Price { get; set; }
 

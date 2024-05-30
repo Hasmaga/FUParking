@@ -20,8 +20,14 @@ namespace FUParkingModel.Object
         public Guid VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
-        [Column("ImageUrl")]
-        public string ImageUrl { get; set; } = null!;
+        [Column("PlateImage")]
+        public string? PlateImage { get; set; }
+
+        [Column("HeadImage")]
+        public string? HeadImage { get; set; }
+
+        [Column("BodyImage")]
+        public string? BodyImage { get; set; }
 
         [Column("StatusVehicle")]
         public string? StatusVehicle { get; set; }
