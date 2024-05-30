@@ -8,5 +8,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login);        
         Task<Return<LoginResDto>> LoginWithCredentialAsync(LoginWithCredentialReqDto req);
+        Task<Return<LoginResDto>> CheckRoleByTokenAsync();
     }
 }

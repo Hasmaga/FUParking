@@ -68,7 +68,7 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Data = await _db.Users.FirstOrDefaultAsync(u => u.Email == email),
+                    Data = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Email == email),
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };

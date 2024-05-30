@@ -26,6 +26,7 @@
         public const string BANNED = "User is inactive";
         public const string DATE_OVERLAPSED = "Date is overlapsed";
         public const string IN_USE = "This object is in use";
+        public const string USER_NOT_EXIST = "User is not exist";
     }
 
     public class MinioErrorServerDefineEnum

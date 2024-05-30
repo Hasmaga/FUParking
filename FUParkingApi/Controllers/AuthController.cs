@@ -80,5 +80,20 @@ namespace FUParkingApi.Controllers
                 return BadRequest(result);
             }
         }
+
+        [HttpGet("role")]
+        [Authorize(AuthenticationSchemes = "Defaut")]
+        public async Task<IActionResult> CheckRoleByTokenAsync()
+        {
+            var result = await _authService.CheckRoleByTokenAsync();
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
     }
 }

@@ -21,13 +21,15 @@ namespace FUParkingService
         private readonly IConfiguration _configuration;
         private readonly IWalletRepository _walletRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IHelpperService _helpperService;
 
-        public AuthService(ICustomerRepository customerRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository)
+        public AuthService(ICustomerRepository customerRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository, IHelpperService helpperService)
         {
-            _customerRepository = customerRepository;            
+            _customerRepository = customerRepository;
             _configuration = configuration;
             _walletRepository = walletRepository;
             _userRepository = userRepository;
+            _helpperService = helpperService;
         }
 
         public async Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login)
@@ -189,7 +191,61 @@ namespace FUParkingService
                     {
                         BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
                         Name = isUserRegistered.Data.FullName,
-                        Email = isUserRegistered.Data.Email
+                        Email = isUserRegistered.Data.Email,
+                        Role = isUserRegistered.Data.Role?.Name
+                    },
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<LoginResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<LoginResDto>> CheckRoleByTokenAsync()
+        {
+            try
+            {
+                // Check token is valid
+                var isValid = _helpperService.IsTokenValid();
+                if (isValid == false)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,
+                        IsSuccess = false
+                    };
+                }
+                var id = _helpperService.GetAccIdFromLogged();
+                if (id == Guid.Empty)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,
+                        IsSuccess = false
+                    };
+                }
+                var user = await _userRepository.GetUserByIdAsync(id);
+                if (user.IsSuccess == false || user.Data == null)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.USER_NOT_EXIST,
+                        IsSuccess = false
+                    };
+                }
+                return new Return<LoginResDto>
+                {
+                    Data = new LoginResDto
+                    {
+                        Role = user.Data.Role?.Name
                     },
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.SUCCESSFULLY
