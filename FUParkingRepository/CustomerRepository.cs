@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -202,7 +203,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<List<Customer>>> GetListCustomerAsync(int pageSize, int pageIndex)
+        public async Task<Return<List<Customer>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req)
         {
             Return<List<Customer>> res = new()
             {
@@ -210,11 +211,33 @@ namespace FUParkingRepository
             };
             try
             {
-                res.Data = await _db.Customers.Include(c => c.CustomerType)
-                                                .OrderByDescending(t => t.CreatedDate)
-                                                .Skip((pageIndex - 1) * pageSize)
-                                                .Take(pageSize)
-                                                .ToListAsync();
+                var query = _db.Customers.Include(c => c.CustomerType).AsQueryable();
+                if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
+                {
+                    switch (req.Attribute.ToLower())
+                    {
+                        case "fullname":
+                            query = query.Where(c => c.FullName != null && c.FullName.Contains(req.SearchInput));
+                            break;
+                        case "email":
+                            query = query.Where(c => c.Email != null && c.Email.Contains(req.SearchInput));
+                            break;
+                        case "customertype":
+                            query = query.Where(c => c.CustomerType != null && c.CustomerType.Name != null && c.CustomerType.Name.Contains(req.SearchInput));
+                            break;
+                        case "statuscustomer":
+                            query = query.Where(c => c.StatusCustomer != null && c.StatusCustomer.Contains(req.SearchInput));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                // Apply pagination
+                res.Data = await query
+                     .OrderByDescending(t => t.CreatedDate)
+                     .Skip((req.PageIndex - 1) * req.PageSize)
+                     .Take(req.PageSize)
+                     .ToListAsync();
                 res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
                 res.IsSuccess = true;
                 return res;

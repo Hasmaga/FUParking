@@ -2,6 +2,8 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Customer;
+using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FUParkingApi.Controllers
 {
-    [ApiController]
-    [Route("api/customer")]
+    [Route("api/customers")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CustomerController : Controller
     {
@@ -70,20 +71,27 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCustomerListAsync([FromQuery] int pageSize = Pagination.PAGE_SIZE, [FromQuery]int pageIndex = Pagination.PAGE_INDEX)
+        public async Task<IActionResult> GetCustomerListAsync(GetCustomersWithFillerReqDto req)
         {
-            Return<List<Customer>> res = new() { 
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+                return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                {
+                    Data = errors,
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.INVALID_INPUT
+                });
+            }
+            Return<List<GetCustomersWithFillerResDto>> res = new() { 
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                Guid userId =  _helperService.GetAccIdFromLogged();
-                if(userId == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
-
-                res = await _customerService.GetListCustomerAsync(userId,pageSize, pageIndex);
+                res = await _customerService.GetListCustomerAsync(req);
                 if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
                 {
                     return Unauthorized(res);
