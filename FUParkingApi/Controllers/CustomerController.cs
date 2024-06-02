@@ -185,7 +185,7 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPut("status")]
-        public async Task<IActionResult> UpdateCustomerStatusAsync(ChangeStatusCustomerReqDto req)
+        public async Task<IActionResult> UpdateCustomerStatusAsync([FromBody] ChangeStatusCustomerReqDto req)
         {
             try
             {

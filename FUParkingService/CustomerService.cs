@@ -191,7 +191,7 @@ namespace FUParkingService
                     }
                     else
                     {
-                        isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.ACTIVE;
+                        isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.INACTIVE;
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
                         if (isUpdate.Data == null || isUpdate.IsSuccess == false)
