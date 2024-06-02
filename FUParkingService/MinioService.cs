@@ -71,15 +71,15 @@ namespace FUParkingService
                 if (isExist.IsSuccess)
                 {
                     if (isExist.Message == MinioErrorApplicationDefineEnum.NOT_FOUND)
-                    {
+                    {                        
                         var uploadObjectArgs = new PutObjectArgs()
                             .WithBucket(req.BucketName)
                             .WithContentType(req.ObjFile.ContentType)
-                            .WithObjectSize(req.ObjFile.Length)
-                            .WithFileName(req.ObjName)
+                            .WithObjectSize(req.ObjFile.Length)                            
+                            .WithObject(req.ObjName)                            
                             .WithStreamData(req.ObjFile.OpenReadStream());
-                        await minio.PutObjectAsync(uploadObjectArgs);
 
+                        await minio.PutObjectAsync(uploadObjectArgs);
                         // Check file is exist after upload
                         var isExistAfterUpload = await CheckFileIsExistInBucket(req.ObjName, req.BucketName, minio);
                         if (isExistAfterUpload.IsSuccess)
@@ -127,6 +127,71 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<ReturnObjectUrlResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<bool>> DeleteObjectAsync(DeleteObjectReqDto req)
+        {
+            try
+            {
+                var minio = GetMinioClient();
+                var isExist = await CheckFileIsExistInBucket(req.ObjName, req.BucketName, minio);
+                if (isExist.IsSuccess)
+                {
+                    if (isExist.Message == MinioErrorApplicationDefineEnum.NOT_FOUND)
+                    {
+                        return new Return<bool>
+                        {
+                            Message = ErrorEnumApplication.SERVER_ERROR,
+                            IsSuccess = false,
+                            InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
+                        };
+                    }
+                    else
+                    {
+                        RemoveObjectArgs removeObjectArgs = new RemoveObjectArgs()
+                            .WithBucket(req.BucketName)
+                            .WithObject(req.ObjName);
+                        await minio.RemoveObjectAsync(removeObjectArgs);
+
+                        // Check file is exist after delete
+                        var isExistAfterDelete = await CheckFileIsExistInBucket(req.ObjName, req.BucketName, minio);
+                        if (isExistAfterDelete.IsSuccess)
+                        {
+                            return new Return<bool>
+                            {
+                                IsSuccess = false,
+                                Message = ErrorEnumApplication.SERVER_ERROR
+                            };
+                        }
+                        else
+                        {
+                            return new Return<bool>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                            };
+                        }
+                    }
+                }
+                else
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        IsSuccess = false,
+                        InternalErrorMessage = isExist.InternalErrorMessage
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,

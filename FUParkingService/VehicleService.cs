@@ -1,6 +1,8 @@
-﻿using FUParkingModel.Enum;
+﻿using CommunityToolkit.HighPerformance;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.CustomerVehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository;
 using FUParkingRepository.Interface;
@@ -14,13 +16,15 @@ namespace FUParkingService
         private readonly IHelpperService _helpperService;
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IMinioService _minioService;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository,ICustomerRepository customerRepository)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository, ICustomerRepository customerRepository, IMinioService minioService)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _userRepository = userRepository;
             _customerRepository = customerRepository;
+            _minioService = minioService;
         }
 
         public async Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync()
@@ -178,7 +182,7 @@ namespace FUParkingService
                         IsSuccess = false,
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
-                }   
+                }
 
                 // Check for duplicate vehicle type name with other vehicle types (except the current vehicle type)
                 var vehicleTypes = await _vehicleRepository.GetAllVehicleTypeAsync();
@@ -272,7 +276,7 @@ namespace FUParkingService
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
-             }
+            }
         }
 
         public async Task<Return<List<Vehicle>>> GetCustomerVehicleByCustomerIdAsync(Guid customerGuid)
@@ -284,7 +288,7 @@ namespace FUParkingService
             try
             {
                 Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerGuid);
-                if(customerRes.Data == null)
+                if (customerRes.Data == null)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
@@ -387,6 +391,141 @@ namespace FUParkingService
                 return new Return<bool>
                 {
                     IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<bool>> CreateCustomerVehicleAsync(CreateCustomerVehicleReqDto reqDto)
+        {
+            try
+            {
+                // Check token is valid
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userLogged.Data == null || !userLogged.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.VehicleTypeId);
+                if (vehicleType.Data == null || !vehicleType.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                    };
+                }
+                // Upload Image to minio 
+                var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
+                var objNamePlateNumber = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
+                UploadObjectReqDto imagePlateNumber = new()
+                {
+                    ObjFile = reqDto.PlateImage,
+                    ObjName = objNamePlateNumber,
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                };
+                // Upload 3 images head, body, plateNumber of vehicle to bucket if fail then delete image success previous and return error
+                var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imagePlateNumber);
+                if (!resultUploadImagePlateNumber.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
+                    };
+                }
+
+                var fileExtensionHead = Path.GetExtension(reqDto.HeadImage.FileName);
+                var objNameHead = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_head" + fileExtensionHead;
+
+                UploadObjectReqDto imageHead = new()
+                {
+                    ObjFile = reqDto.HeadImage,
+                    ObjName = objNameHead,
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                };
+
+                var resultUploadImageHead = await _minioService.UploadObjectAsync(imageHead);
+                if (!resultUploadImageHead.IsSuccess)
+                {
+                    var resultDeleteImagePlateNumber = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
+                        ObjName = imagePlateNumber.ObjName
+                    });
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
+                    };
+                }
+
+                var fileExtensionBody = Path.GetExtension(reqDto.BodyImage.FileName);
+                var objNameBody = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_body" + fileExtensionBody;
+                UploadObjectReqDto imageBody = new()
+                {
+                    ObjFile = reqDto.BodyImage,
+                    ObjName = objNameBody,
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                };
+
+                var resultUploadImageBody = await _minioService.UploadObjectAsync(imageBody);
+                if (!resultUploadImageBody.IsSuccess)
+                {
+                    var resultDeleteImagePlateNumber = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
+                        ObjName = imagePlateNumber.ObjName
+                    });
+                    var resultDeleteImageHead = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
+                        ObjName = imageHead.ObjName
+                    });
+                    return new Return<bool>
+                    {
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
+                    };
+                }
+                var vehicle = new Vehicle
+                {
+                    PlateNumber = reqDto.PlateNumber,
+                    VehicleTypeId = reqDto.VehicleTypeId,
+                    CustomerId = userLogged.Data.Id,
+                    PlateImage = imagePlateNumber.ObjName,
+                    HeadImage = imageHead.ObjName,
+                    BodyImage = imageBody.ObjName,
+                    StatusVehicle = StatusVehicleEnum.PENDING
+                };
+                
+                var result = await _vehicleRepository.CreateVehicleAsync(vehicle);
+                return new Return<bool>
+                {
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess,
+                    Message = result.IsSuccess ? SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

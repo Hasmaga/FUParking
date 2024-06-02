@@ -6,7 +6,6 @@ using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Microsoft.Extensions.FileProviders;
 using System.Transactions;
 
 namespace FUParkingService

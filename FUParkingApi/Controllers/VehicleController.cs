@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.CustomerVehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingService;
 using FUParkingService.Interface;
@@ -68,7 +69,8 @@ namespace FUParkingApi.Controllers
                     return Ok(result);
                 }
                 return BadRequest(result);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new Return<string>
                 {
@@ -102,7 +104,8 @@ namespace FUParkingApi.Controllers
                     return Ok(result);
                 }
                 return BadRequest(result);
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new Return<string>
                 {
@@ -134,13 +137,48 @@ namespace FUParkingApi.Controllers
             }
         }
 
-         // DELETE api/vehicles/types/{id}
+        // DELETE api/vehicles/types/{id}
         [HttpDelete("types/{id}")]
         public async Task<IActionResult> DeleteVehicleType([FromRoute] Guid id)
         {
             try
             {
                 var result = await _vehicleService.DeleteVehicleTypeAsync(id);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new Return<string>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+        
+        [HttpPost("customer")]
+        public async Task<IActionResult> CreateCustomerVehicle(CreateCustomerVehicleReqDto reqDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.ToDictionary(
+                        error => error.Key,
+                        error => error.Value?.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
+                    {
+                        Data = errors,
+                        IsSuccess = false,
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    });
+                }
+                var result = await _vehicleService.CreateCustomerVehicleAsync(reqDto);
                 if (result.IsSuccess)
                 {
                     return Ok(result);

@@ -8,5 +8,6 @@ namespace FUParkingService.Interface
     {
         Task<Return<ReturnObjectUrlResDto>> GetObjectUrlByObjectNameAsync(GetObjectReqDto req);
         Task<Return<ReturnObjectUrlResDto>> UploadObjectAsync(UploadObjectReqDto req);
+        Task<Return<bool>> DeleteObjectAsync(DeleteObjectReqDto req);
     }
 }
