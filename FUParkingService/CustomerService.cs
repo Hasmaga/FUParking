@@ -250,13 +250,14 @@ namespace FUParkingService
                     res.Message = typeFreeRes.Message;
                     return res;
                 }
-                Customer newCustomer = new() {
+                Customer newCustomer = new()
+                {
                     FullName = customerReq.Name,
-                    StatusCustomer = StatusCustomerEnum.ACTIVE, 
-                    CustomerTypeId = typeFreeRes.Data.Id, 
-                    Email = customerReq.Email, 
-                    Phone = customerReq.Phone,
-                    PasswordHash = await _helpperService.CreatePassHashAndPassSaltAsync(customerReq.Password, out byte[] outPasswordSalt) };
+                    StatusCustomer = StatusCustomerEnum.ACTIVE,
+                    CustomerTypeId = typeFreeRes.Data.Id,
+                    Email = customerReq.Email,
+                    Phone = customerReq.Phone
+                };
                 res = await _customerRepository.CreateNewCustomerAsync(newCustomer);
                 return res;
             }

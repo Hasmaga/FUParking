@@ -16,9 +16,6 @@ namespace FUParkingModel.RequestObject
         public required string Email { get; set; }
 
         [RegularExpression(@"0\d{9}", ErrorMessage = "Not a valid phone number")]
-        public string? Phone { get; set; }
-        [Required(ErrorMessage ="Password is missing")]
-        [MinLength(5, ErrorMessage ="Password must be 5 or more characters")]
-        public required string Password { get; set; }
+        public string? Phone { get; set; }        
     }
 }
