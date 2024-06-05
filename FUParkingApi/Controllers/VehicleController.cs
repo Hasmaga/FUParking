@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.CustomerVehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingService;
@@ -11,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     //[ApiController]
-    [Route("api/vehicle")]
+    [Route("api/vehicles")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class VehicleController : Controller
     {
@@ -23,12 +24,12 @@ namespace FUParkingApi.Controllers
         }
 
 
-        [HttpGet("type")]
-        public async Task<IActionResult> GetVehicleTypesAsync()
+        [HttpGet("types")]
+        public async Task<IActionResult> GetVehicleTypesAsync(GetListObjectWithFiller req)
         {
             try
             {
-                var result = await _vehicleService.GetVehicleTypesAsync();
+                var result = await _vehicleService.GetVehicleTypesAsync(req);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -45,7 +46,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("type")]
+        [HttpPost("types")]
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -81,7 +82,7 @@ namespace FUParkingApi.Controllers
         }
 
         // PUT api/vehicles/types/{id}
-        [HttpPut("type/{id}")]
+        [HttpPut("types/{id}")]
         public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try

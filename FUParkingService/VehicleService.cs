@@ -1,10 +1,9 @@
-﻿using CommunityToolkit.HighPerformance;
-using FUParkingModel.Enum;
+﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.CustomerVehicle;
 using FUParkingModel.ReturnCommon;
-using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 
@@ -27,7 +26,7 @@ namespace FUParkingService
             _minioService = minioService;
         }
 
-        public async Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync()
+        public async Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
         {
             try
             {
@@ -59,7 +58,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                return await _vehicleRepository.GetAllVehicleTypeAsync();
+                return await _vehicleRepository.GetAllVehicleTypeAsync(req);
             }
             catch (Exception)
             {
@@ -102,13 +101,11 @@ namespace FUParkingService
                     return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
-                // Check if the vehicle type name already exists
-                var vehicleTypes = await _vehicleRepository.GetAllVehicleTypeAsync();
+                var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name);
+
                 if (vehicleTypes.Data != null && vehicleTypes.IsSuccess)
                 {
-                    bool isVehicleTypeExist = vehicleTypes.Data.Any(v => v.Name.Equals(reqDto.Name, StringComparison.OrdinalIgnoreCase));
-
-                    if (isVehicleTypeExist)
+                    if (vehicleTypes.Data.Name != null)
                     {
                         return new Return<bool>
                         {
@@ -185,7 +182,7 @@ namespace FUParkingService
                 }
 
                 // Check for duplicate vehicle type name with other vehicle types (except the current vehicle type)
-                var vehicleTypes = await _vehicleRepository.GetAllVehicleTypeAsync();
+                var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name);
 
                 if (vehicleTypes.Data == null || vehicleTypes.IsSuccess == false)
                 {
@@ -194,18 +191,17 @@ namespace FUParkingService
                         IsSuccess = false,
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
-                }
-
-                bool isVehicleTypeExist = vehicleTypes.Data.Any(v => v.Name.Equals(reqDto.Name, StringComparison.OrdinalIgnoreCase) && !v.Id.Equals(reqDto.Id));
-
-                if (isVehicleTypeExist)
+                } else if (vehicleTypes.Data != null && vehicleTypes.IsSuccess)
                 {
-                    return new Return<bool>
+                    if (vehicleTypes.Data.Name != null)
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.OBJECT_EXISTED
-                    };
-                }
+                        return new Return<bool>
+                        {
+                            IsSuccess = false,
+                            Message = ErrorEnumApplication.OBJECT_EXISTED
+                        };
+                    }
+                }                
 
                 // Update from here
                 vehicleType.Data.Name = reqDto.Name;

@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Object;
 ﻿using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.CustomerVehicle;
 using FUParkingModel.ReturnCommon;
 
@@ -7,7 +8,7 @@ namespace FUParkingService.Interface
 {
     public interface IVehicleService
     {
-        Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync();
+        Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync(GetListObjectWithFiller req);
         Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto);
         Task<Return<bool>> UpdateVehicleTypeAsync(UpdateVehicleTypeReqDto reqDto);
         Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync();
