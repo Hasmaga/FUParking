@@ -211,7 +211,7 @@ namespace FUParkingRepository
             };
             try
             {
-                var query = _db.Customers.Include(c => c.CustomerType).AsQueryable();
+                var query = _db.Customers.Include(c => c.CustomerType).Where(c => c.DeletedDate == null).AsQueryable();
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {
                     switch (req.Attribute.ToLower())

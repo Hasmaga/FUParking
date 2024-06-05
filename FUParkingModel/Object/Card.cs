@@ -9,7 +9,7 @@ namespace FUParkingModel.Object
         public string? PlateNumber { get; set; }
 
         [Column("CardNumber")]
-        public string? CardNumber { get; set; }
+        public string CardNumber { get; set; } = null!;
 
         public ICollection<Session>? Sessions { get; set; }
     }

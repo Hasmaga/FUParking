@@ -28,6 +28,8 @@
         public const string IN_USE = "This object is in use";
         public const string USER_NOT_EXIST = "User is not exist";
         public const string UPLOAD_IMAGE_FAILED = "Upload image fail";
+        public const string CARD_IS_EXIST = "Card Number is exist in system";
+        public const string CARD_NOT_EXIST = "Card is not exist in system";
     }
 
     public class MinioErrorServerDefineEnum
