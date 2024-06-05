@@ -331,9 +331,9 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
-                    b.Property<int?>("EXPPackage")
+                    b.Property<int?>("ExtraEXP")
                         .HasColumnType("int")
-                        .HasColumnName("EXPPackage");
+                        .HasColumnName("ExtraEXP");
 
                     b.Property<int?>("ExtraCoin")
                         .HasColumnType("int")
