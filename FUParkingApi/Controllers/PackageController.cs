@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
@@ -20,7 +21,7 @@ namespace FUParkingApi.Controllers
             _packageService = packageService;
         }
 
-        [HttpGet]
+        [HttpGet("available")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAvailablePackageAsync()
         {
@@ -41,7 +42,7 @@ namespace FUParkingApi.Controllers
             }
         }
         
-        [HttpGet("/api/packages/all")]
+        [HttpGet("")]
         public async Task<IActionResult> GetCoinPackages()
         {
             try
@@ -95,6 +96,11 @@ namespace FUParkingApi.Controllers
             };
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+
                 res = await _packageService.CreateCoinPackage(reqDto);
                 if (!res.IsSuccess)
                     return BadRequest(res);
@@ -115,6 +121,11 @@ namespace FUParkingApi.Controllers
             };
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+
                 res = await _packageService.UpdateCoinPackage(packageId, updateCoinPackageReqDto);
                 if (!res.IsSuccess)
                     return BadRequest(res);

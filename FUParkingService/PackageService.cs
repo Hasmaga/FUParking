@@ -3,10 +3,8 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using System.Collections.Generic;
 
 namespace FUParkingService
 {
@@ -178,6 +176,8 @@ namespace FUParkingService
                     Name = reqDto.Name,
                     Price = reqDto.Price,
                     CoinAmount = reqDto.CoinAmount,
+                    ExtraCoin = reqDto.ExtraCoin,
+                    EXPPackage = reqDto.EXPPackage,
                     PackageStatus = StatusPackageEnum.ACTIVE,
                     CreatedDate = DateTime.Now,
                 };
