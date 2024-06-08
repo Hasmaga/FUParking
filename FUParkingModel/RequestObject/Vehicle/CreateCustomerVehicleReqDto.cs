@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using static FUParkingModel.RequestObject.CustomerVehicle.FileSizeAttribute;
+using static FUParkingModel.RequestObject.Vehicle.FileSizeAttribute;
 
-namespace FUParkingModel.RequestObject.CustomerVehicle
+namespace FUParkingModel.RequestObject.Vehicle
 {
     public class CreateCustomerVehicleReqDto
     {

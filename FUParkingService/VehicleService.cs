@@ -2,7 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.RequestObject.CustomerVehicle;
+using FUParkingModel.RequestObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -139,7 +139,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> UpdateVehicleTypeAsync(UpdateVehicleTypeReqDto reqDto)
+        public async Task<Return<bool>> UpdateVehicleTypeAsync(Guid Id, UpdateVehicleTypeReqDto reqDto)
         {
             try
             {
@@ -171,7 +171,7 @@ namespace FUParkingService
                 }
 
                 // Check the vehicle type id exists
-                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.Id);
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(Id);
                 if (vehicleType.Data == null || vehicleType.IsSuccess == false)
                 {
                     return new Return<bool>
@@ -182,30 +182,25 @@ namespace FUParkingService
                 }
 
                 // Check for duplicate vehicle type name with other vehicle types (except the current vehicle type)
-                var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name);
-
-                if (vehicleTypes.Data == null || vehicleTypes.IsSuccess == false)
+                var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name ?? "");
+                if (vehicleTypes.Data != null)
                 {
                     return new Return<bool>
                     {
                         IsSuccess = false,
-                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                        Message = ErrorEnumApplication.OBJECT_EXISTED
                     };
-                } else if (vehicleTypes.Data != null && vehicleTypes.IsSuccess)
-                {
-                    if (vehicleTypes.Data.Name != null)
-                    {
-                        return new Return<bool>
-                        {
-                            IsSuccess = false,
-                            Message = ErrorEnumApplication.OBJECT_EXISTED
-                        };
-                    }
-                }                
+                }
 
                 // Update from here
-                vehicleType.Data.Name = reqDto.Name;
-                vehicleType.Data.Description = reqDto.Description;
+                if (reqDto.Name != null && reqDto.Name != "")
+                {
+                    vehicleType.Data.Name = reqDto.Name;
+                }
+                if (reqDto.Description != null && reqDto.Description != "")
+                {
+                    vehicleType.Data.Description = reqDto.Description;                    
+                }
 
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (result.IsSuccess)
@@ -507,7 +502,7 @@ namespace FUParkingService
                     BodyImage = imageBody.ObjName,
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
-                
+
                 var result = await _vehicleRepository.CreateVehicleAsync(vehicle);
                 return new Return<bool>
                 {

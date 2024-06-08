@@ -2,7 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.RequestObject.CustomerVehicle;
+using FUParkingModel.RequestObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingService;
 using FUParkingService.Interface;
@@ -83,7 +83,7 @@ namespace FUParkingApi.Controllers
 
         // PUT api/vehicles/types/{id}
         [HttpPut("types/{id}")]
-        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
+        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] UpdateVehicleTypeReqDto reqDto)
         {
             try
             {
@@ -91,15 +91,7 @@ namespace FUParkingApi.Controllers
                 {
                     return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
-
-                UpdateVehicleTypeReqDto updateVehicleTypeReqDto = new()
-                {
-                    Id = id,
-                    Name = reqDto.Name,
-                    Description = reqDto.Description
-                };
-
-                var result = await _vehicleService.UpdateVehicleTypeAsync(updateVehicleTypeReqDto);
+                var result = await _vehicleService.UpdateVehicleTypeAsync(id, reqDto);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
