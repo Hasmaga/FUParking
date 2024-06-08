@@ -200,7 +200,7 @@ namespace FUParkingService
             }
         }
         
-        public async Task<Return<bool>> UpdateCoinPackage(Guid packageId, UpdateCoinPackageReqDto updateCoinPackageReqDto)
+        public async Task<Return<bool>> UpdateCoinPackage(UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
             try
             {
@@ -234,7 +234,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
+                Guid packageId = updateCoinPackageReqDto.PackageId;
                 // Check if the package exists
                 var packageResponse = await _packageRepository.GetPackageByPackageIdAsync(packageId);
                 if (packageResponse.Data == null || !packageResponse.IsSuccess)
@@ -270,7 +270,7 @@ namespace FUParkingService
                 // Update package details
                 var package = packageResponse.Data;
                 package.Name = updateCoinPackageReqDto.Name;
-                package.PackageStatus = updateCoinPackageReqDto.isActive ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
+                package.PackageStatus = updateCoinPackageReqDto.IsActive ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
 
                 var updateResponse = await _packageRepository.UpdateCoinPackage(package);
                 return updateResponse;
