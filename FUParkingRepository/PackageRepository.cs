@@ -24,7 +24,7 @@ namespace FUParkingRepository
             };
             try
             {
-                List<Package> packages = await _db.Packages.ToListAsync();
+                List<Package> packages = await _db.Packages.OrderByDescending(t => t.CreatedDate).ToListAsync();
                 res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
                 res.Data = packages;
@@ -108,27 +108,42 @@ namespace FUParkingRepository
             }
         }
         
-        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status)
+        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
         {
             try
             {
                 List<Package> packages;
+                int totalRecord = 0;
 
                 if (string.IsNullOrEmpty(status))
                 {
-                    packages = await _db.Packages.ToListAsync();
+                    packages = await _db.Packages
+                        .OrderByDescending(t => t.CreatedDate)
+                        .Skip(pageSize * (pageIndex - 1))
+                        .Take(pageSize)
+                        .ToListAsync();
+
+                    totalRecord = await _db.Packages.CountAsync();
                 }
                 else
                 {
                     packages = await _db.Packages
                                         .Where(p => p.PackageStatus.Equals(status))
+                                        .OrderByDescending(t => t.CreatedDate)
+                                        .Skip(pageSize * (pageIndex - 1))
+                                        .Take(pageSize)
                                         .ToListAsync();
+
+                    totalRecord = await _db.Packages
+                                        .Where(p => p.PackageStatus.Equals(status))
+                                        .CountAsync();
                 }
 
                 return new Return<IEnumerable<Package>>
                 {
                     Data = packages,
                     IsSuccess = true,
+                    TotalRecord = totalRecord,
                     Message = SuccessfullyEnumServer.SUCCESSFULLY
                 };
             }

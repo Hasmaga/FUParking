@@ -21,14 +21,14 @@ namespace FUParkingService
             _helpperService = helpperService;        
         }
 
-        public async Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status)
+        public async Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
         {
             try
             {
                 if (status == StatusPackageEnum.ACTIVE)
                 {
                     // Token is invalid, treat as customer and return active packages
-                    var activePackagesResult = await _packageRepository.GetCoinPackages(StatusPackageEnum.ACTIVE);
+                    var activePackagesResult = await _packageRepository.GetCoinPackages(StatusPackageEnum.ACTIVE, pageSize, pageIndex);
 
                     return new Return<IEnumerable<dynamic>>
                     {
@@ -37,7 +37,9 @@ namespace FUParkingService
                         {
                             Name = package.Name,
                             CoinAmount = package.CoinAmount.ToString(),
-                            Price = package.Price
+                            Price = package.Price,
+                            ExtraCoin = package.ExtraCoin,
+                            EXPPackage = package.EXPPackage
                         }),
                         Message = activePackagesResult.IsSuccess ? SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
                     };
@@ -78,7 +80,7 @@ namespace FUParkingService
                     }
 
                     // User is manager or supervisor, return all packages
-                    var allPackagesResult = await _packageRepository.GetCoinPackages(null);
+                    var allPackagesResult = await _packageRepository.GetCoinPackages(null,  pageSize, pageIndex);
                     return new Return<IEnumerable<dynamic>>
                     {
                         IsSuccess = allPackagesResult.IsSuccess,
@@ -87,14 +89,17 @@ namespace FUParkingService
                             Name = package.Name,
                             CoinAmount = package.CoinAmount.ToString(),
                             Price = package.Price,
+                            ExtraCoin = package.ExtraCoin,
+                            EXPPackage = package.EXPPackage,
                             PackageStatus = package.PackageStatus,
-                            CreateDate = package.CreatedDate.ToString("dd/MM/yyyy")
+                            CreateDate = package.CreatedDate.ToString("dd/MM/yyyy"),
+                            DeletedDate = package.DeletedDate?.ToString("dd/MM/yyyy")
                         }),
                         Message = allPackagesResult.IsSuccess ? SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
                     };
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new Return<IEnumerable<dynamic>>
                 {
