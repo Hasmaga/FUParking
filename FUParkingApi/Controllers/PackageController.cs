@@ -126,7 +126,9 @@ namespace FUParkingApi.Controllers
                     return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
 
-                res = await _packageService.UpdateCoinPackage(packageId, updateCoinPackageReqDto);
+                updateCoinPackageReqDto.PackageId = packageId;
+
+                res = await _packageService.UpdateCoinPackage(updateCoinPackageReqDto);
                 if (!res.IsSuccess)
                     return BadRequest(res);
                 return Ok(res);
