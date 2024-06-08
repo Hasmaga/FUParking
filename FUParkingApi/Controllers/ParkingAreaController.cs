@@ -59,11 +59,11 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetParkingAreasAsync()
+        public async Task<IActionResult> GetParkingAreasAsync(int pageIndex, int pageSize)
         {
             try
             {
-                var result = await _parkingAreaService.GetParkingAreasAsync();
+                var result = await _parkingAreaService.GetParkingAreasAsync(pageIndex, pageSize);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
