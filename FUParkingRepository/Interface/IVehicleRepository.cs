@@ -15,5 +15,6 @@ namespace FUParkingRepository.Interface
         Task<Return<List<Vehicle>>> GetAllCustomerVehicleByCustomerIdAsync(Guid customerGuid);
         Task<Return<IEnumerable<Vehicle>>> GetVehiclesByVehicleTypeId(Guid id);
         Task<Return<VehicleType>> GetVehicleTypeByName(string VehicleTypeName);
+        Task<Return<IEnumerable<Vehicle>>> GetAllVehiclesAsync(int pageIndex, int pageSize);
     }
 }

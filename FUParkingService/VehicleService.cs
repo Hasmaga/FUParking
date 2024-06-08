@@ -235,7 +235,7 @@ namespace FUParkingService
                 };
             }
         }
-        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
+        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync(int pageIndex, int pageSize)
         {
             try
             {
@@ -263,7 +263,7 @@ namespace FUParkingService
                     return new Return<IEnumerable<Vehicle>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
-                return await _vehicleRepository.GetVehiclesAsync();
+                return await _vehicleRepository.GetAllVehiclesAsync(pageIndex, pageSize);
             }
             catch
             {

@@ -236,5 +236,34 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<Vehicle>>> GetAllVehiclesAsync(int pageIndex, int pageSize)
+        {
+            try
+            {
+                var vehicles = await _db.Vehicles
+                                        .Include(v => v.Customer)
+                                        .OrderByDescending(t => t.CreatedDate)
+                                        .Skip((pageIndex - 1) * pageSize)
+                                        .Take(pageSize)
+                                        .ToListAsync();
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    Data = vehicles,
+                    IsSuccess = true,
+                    TotalRecord = await _db.Vehicles.CountAsync(),
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Vehicle>>()
+                {
+                    IsSuccess = false,
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                };
+            }
+        }
     }
 }
