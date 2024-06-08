@@ -132,5 +132,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(int pageIndex, int pageSize)
+        {
+            try
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Data = await _db.ParkingAreas
+                                    .OrderByDescending(t => t.CreatedDate)
+                                    .Skip((pageIndex - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync(),
+                    IsSuccess = true,
+                    TotalRecord = await _db.ParkingAreas.CountAsync(),
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
     }
 }

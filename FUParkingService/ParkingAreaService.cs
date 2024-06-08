@@ -166,7 +166,7 @@ namespace FUParkingService
 
         }
 
-        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync()
+        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync(int pageIndex, int pageSize)
         {
             try
             {
@@ -194,7 +194,7 @@ namespace FUParkingService
                     return new Return<IEnumerable<ParkingArea>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
-                return await _parkingAreaRepository.GetParkingAreasAsync();
+                return await _parkingAreaRepository.GetAllParkingAreasAsync(pageIndex, pageSize);
             }
             catch
             {
