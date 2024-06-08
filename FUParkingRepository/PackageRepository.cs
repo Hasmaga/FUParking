@@ -113,6 +113,7 @@ namespace FUParkingRepository
             try
             {
                 List<Package> packages;
+                int totalRecord = 0;
 
                 if (string.IsNullOrEmpty(status))
                 {
@@ -121,6 +122,8 @@ namespace FUParkingRepository
                         .Skip(pageSize * (pageIndex - 1))
                         .Take(pageSize)
                         .ToListAsync();
+
+                    totalRecord = await _db.Packages.CountAsync();
                 }
                 else
                 {
@@ -130,12 +133,17 @@ namespace FUParkingRepository
                                         .Skip(pageSize * (pageIndex - 1))
                                         .Take(pageSize)
                                         .ToListAsync();
+
+                    totalRecord = await _db.Packages
+                                        .Where(p => p.PackageStatus.Equals(status))
+                                        .CountAsync();
                 }
 
                 return new Return<IEnumerable<Package>>
                 {
                     Data = packages,
                     IsSuccess = true,
+                    TotalRecord = totalRecord,
                     Message = SuccessfullyEnumServer.SUCCESSFULLY
                 };
             }
