@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUParkingApi.Controllers
 {
     //[ApiController]
-    [Route("api/vehicle")]
+    [Route("api/vehicles")]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class VehicleController : Controller
     {
@@ -23,12 +23,15 @@ namespace FUParkingApi.Controllers
         }
 
 
-        [HttpGet("type")]
-        public async Task<IActionResult> GetVehicleTypesAsync()
+        [HttpGet("types")]
+        public async Task<IActionResult> GetVehicleTypesAsync([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
         {
             try
             {
-                var result = await _vehicleService.GetVehicleTypesAsync();
+                int effectivePageIndex = pageIndex ?? Pagination.PAGE_INDEX;
+                int effectivePageSize = pageSize ?? Pagination.PAGE_SIZE;
+
+                var result = await _vehicleService.GetAllVehicleTypePagingAsync(effectivePageSize, effectivePageIndex);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -45,7 +48,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("type")]
+        [HttpPost("types")]
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -81,7 +84,7 @@ namespace FUParkingApi.Controllers
         }
 
         // PUT api/vehicles/types/{id}
-        [HttpPut("type/{id}")]
+        [HttpPut("types/{id}")]
         public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -160,7 +163,7 @@ namespace FUParkingApi.Controllers
             }
         }
         
-        [HttpPost("customer")]
+        [HttpPost("customers")]
         public async Task<IActionResult> CreateCustomerVehicle(CreateCustomerVehicleReqDto reqDto)
         {
             try
