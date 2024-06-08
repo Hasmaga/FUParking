@@ -43,11 +43,14 @@ namespace FUParkingApi.Controllers
         }
         
         [HttpGet("")]
-        public async Task<IActionResult> GetCoinPackages()
+        public async Task<IActionResult> GetCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
         {
             try
             {
-                var result = await _packageService.GetCoinPackages(null);
+                int effectivePageIndex = pageIndex ?? Pagination.PAGE_INDEX;
+                int effectivePageSize = pageSize ?? Pagination.PAGE_SIZE;
+
+                var result = await _packageService.GetCoinPackages(null, effectivePageSize, effectivePageIndex);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -66,11 +69,14 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("active")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetActiveCoinPackages()
+        public async Task<IActionResult> GetActiveCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
         {
             try
             {
-                var result = await _packageService.GetCoinPackages(StatusPackageEnum.ACTIVE);
+                int effectivePageIndex = pageIndex ?? Pagination.PAGE_INDEX;
+                int effectivePageSize = pageSize ?? Pagination.PAGE_SIZE;
+
+                var result = await _packageService.GetCoinPackages(StatusPackageEnum.ACTIVE, effectivePageSize, effectivePageIndex);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
