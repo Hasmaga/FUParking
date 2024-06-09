@@ -33,6 +33,10 @@ namespace FUParkingModel.Object
 
         [Column("TimeOut")]
         public DateTime TimeOut { get; set; }
+
+        [Column("Mode")]
+        public string Mode { get; set; } = null!;
+
         [JsonIgnore]
         public ICollection<Payment>? Payments { get; set; }
     }
