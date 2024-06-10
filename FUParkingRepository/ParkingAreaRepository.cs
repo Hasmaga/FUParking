@@ -159,5 +159,20 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<ParkingArea>> GetParkingAreaByGateIdAsync(Guid gateId)
+        {
+            try
+            {
+                var query = from parkingArea in _db.ParkingAreas
+                            join gate in _db.Gates on parkingArea.Id equals gate.ParkingAreaId
+                            where gate.Id == gateId
+                            select parkingArea;
+                return new Return<ParkingArea> { Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY, IsSuccess = true, Data = await query.FirstOrDefaultAsync() };
+            } catch (Exception e)
+            {
+                return new Return<ParkingArea> { Message = ErrorEnumApplication.GET_OBJECT_ERROR, IsSuccess = false, InternalErrorMessage = e.Message };
+            }
+        }
     }
 }

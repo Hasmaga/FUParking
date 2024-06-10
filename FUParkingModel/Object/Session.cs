@@ -16,7 +16,7 @@ namespace FUParkingModel.Object
         public Gate? GateIn { get; set; }
 
         [Column("GateOutId")]
-        public Guid GateOutId { get; set; }
+        public Guid? GateOutId { get; set; }
         public Gate? GateOut { get; set; }
 
         [Column("PlateNumber")]

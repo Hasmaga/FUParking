@@ -30,6 +30,8 @@
         public const string UPLOAD_IMAGE_FAILED = "Upload image fail";
         public const string CARD_IS_EXIST = "Card Number is exist in system";
         public const string CARD_NOT_EXIST = "Card is not exist in system";
+        public const string CARD_IN_USE = "This card is already use";
+        public const string PLATE_NUMBER_IN_USE = "This plate number is already in system";
     }
 
     public class MinioErrorServerDefineEnum
