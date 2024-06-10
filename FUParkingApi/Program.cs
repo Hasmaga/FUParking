@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
+using FUParkingService.Cloudflare;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +138,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    AccessCloudflare.Access();
 }
 
 app.UseHttpsRedirection();
