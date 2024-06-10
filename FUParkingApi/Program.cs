@@ -138,9 +138,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    AccessCloudflare.Access();
 }
-
-AccessCloudflare.Access();
 
 app.UseHttpsRedirection();
 
