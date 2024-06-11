@@ -1,11 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace FUParkingService.Cloudflare
 {
@@ -18,7 +12,7 @@ namespace FUParkingService.Cloudflare
                 IConfiguration config = new ConfigurationBuilder()
                                               .SetBasePath(Directory.GetCurrentDirectory())
                                               .AddJsonFile("appsettings.json", true, true)
-                                               .Build();
+                                              .Build();
 
                 var cf = config.GetSection("AppSettings:Cloudflare").Value;
                 if (cf == null)

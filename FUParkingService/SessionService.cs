@@ -62,6 +62,10 @@ namespace FUParkingService
                 if (gateIn.IsSuccess == false || gateIn.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST, IsSuccess = false };
 
+                var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
+                if (parkingArea.IsSuccess == false || parkingArea.Data == null)
+                    return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST, IsSuccess = false };
+
                 // Object name = PlateNumber + TimeIn + extension file
                 var objName = req.PlateNumber + DateTime.Now.ToString("yyyyMMddHHmmss") + Path.GetExtension(req.ImageIn.FileName);
 
@@ -69,7 +73,7 @@ namespace FUParkingService
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
                     BucketName = "parking",
-                    ObjFile= req.ImageIn,
+                    ObjFile = req.ImageIn,
                     ObjName = objName
                 };
 
@@ -77,9 +81,6 @@ namespace FUParkingService
                 var imageInUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                 if (imageInUrl.IsSuccess == false || imageInUrl.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED, IsSuccess = false };
-
-                // Get parking area by GateInId
-                var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
 
                 // Create session
                 var newSession = new Session
@@ -96,9 +97,10 @@ namespace FUParkingService
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (newsession.IsSuccess == false || newsession.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.ADD_OBJECT_ERROR, IsSuccess = false };
-                
+
                 return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, IsSuccess = false, InternalErrorMessage = ex.Message };
             }
