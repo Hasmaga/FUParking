@@ -8,7 +8,7 @@ namespace FUParkingModel.Object
     {
         [Column("ParkingAreaId")]
         public Guid ParkingAreaId { get; set; }
-        
+
         [JsonIgnore]
         public ParkingArea? ParkingArea { get; set; }
 
@@ -29,9 +29,6 @@ namespace FUParkingModel.Object
 
         [Column("StatusGate")]
         public string? StatusGate { get; set; }
-
-        [JsonIgnore]
-        public ICollection<Camera>? Cameras { get; set; }
 
         [JsonIgnore]
         public ICollection<Session>? SessionGateIns { get; set; }

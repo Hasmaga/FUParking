@@ -36,7 +36,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                if(fromDate > toDate)
+                if (fromDate > toDate)
                 {
                     res.Message = ErrorEnumApplication.DATE_OVERLAPSED;
                     return res;

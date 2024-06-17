@@ -85,7 +85,7 @@
         public const string ELECTRIC_BICYCLE = "Electric Bicycle";
         public const string BICYCLE = "Bicycle";
     }
-    
+
     public class RoleEnum
     {
         public const string STAFF = "STAFF";
@@ -103,5 +103,18 @@
     {
         public readonly static DateTime DefaultDateTime = new(0, 0, 0);
         public readonly static TimeOnly DefaultTimeOnly = new(0, 0);
+    }
+
+    public class WalletType
+    {
+        public const string MAIN = "MAIN";
+        public const string EXTRA = "EXTRA";
+    }
+
+    public class PaymentMethods
+    {
+        public const string CASH = "CASH";
+        public const string WALLET = "WALLET";
+        public const string ZALOPAY = "ZALOPAY";
     }
 }

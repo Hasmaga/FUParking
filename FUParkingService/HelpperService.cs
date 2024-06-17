@@ -49,7 +49,7 @@ namespace FUParkingService
             {
                 return false;
             }
-        }        
+        }
 
         public Guid GetAccIdFromLogged()
         {

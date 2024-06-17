@@ -19,7 +19,7 @@ namespace FUParkingModel.Object
         public int? EXPPackage { get; set; }
 
         [Column("Price")]
-        public decimal Price { get; set; }
+        public int Price { get; set; }
 
         [Column("PackageStatus")]
         public required string PackageStatus { get; set; }

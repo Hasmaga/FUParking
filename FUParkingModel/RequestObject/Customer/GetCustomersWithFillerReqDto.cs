@@ -23,7 +23,7 @@ namespace FUParkingModel.RequestObject.Customer
             if (!string.IsNullOrEmpty(SearchInput) && string.IsNullOrEmpty(Attribute))
             {
                 yield return new ValidationResult("Attribute is required when SearchInput is present.", [nameof(Attribute)]);
-            }            
+            }
         }
     }
 }

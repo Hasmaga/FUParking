@@ -59,12 +59,6 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.CustomerTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<Deposit>()
-                .HasMany(e => e.Transactions)
-                .WithOne(e => e.Deposit)
-                .HasForeignKey(e => e.DepositId)
-                .OnDelete(DeleteBehavior.NoAction);
-
             modelBuilder.Entity<Gate>()
                 .HasMany(e => e.SessionGateIns)
                 .WithOne(e => e.GateIn)
@@ -77,22 +71,10 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.GateOutId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<Gate>()
-                .HasMany(e => e.Cameras)
-                .WithOne(e => e.Gate)
-                .HasForeignKey(e => e.GateId)
-                .OnDelete(DeleteBehavior.NoAction);
-
             modelBuilder.Entity<GateType>()
                 .HasMany(e => e.Gates)
                 .WithOne(e => e.GateType)
                 .HasForeignKey(e => e.GateTypeId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Package>()
-                .HasMany(e => e.Deposits)
-                .WithOne(e => e.Package)
-                .HasForeignKey(e => e.PackageId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ParkingArea>()
@@ -149,14 +131,33 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.WalletId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Deposit>()
+                .HasMany(e => e.Transactions)
+                .WithOne(e => e.Deposit)
+                .HasForeignKey(e => e.DepositId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Customer>()
+                .HasMany(e => e.Deposits)
+                .WithOne(e => e.Customer)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PaymentMethod>()
+                .HasMany(e => e.Deposits)
+                .WithOne(e => e.PaymentMethod)
+                .HasForeignKey(e => e.PaymentMethodId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<Package>()
-                .Property(e => e.Price)
-                .HasColumnType("decimal(18, 0)");
+                .HasMany(e => e.Deposits)
+                .WithOne(e => e.Package)
+                .HasForeignKey(e => e.PackageId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             OnModelCreatingPartial(modelBuilder);
         }
 
-        public virtual DbSet<Camera> Cameras { get; set; }
         public virtual DbSet<Card> Cards { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<CustomerType> CustomerTypes { get; set; }

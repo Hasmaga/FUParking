@@ -5,7 +5,7 @@
 namespace FUParkingModel.Migrations
 {
     /// <inheritdoc />
-    public partial class v15 : Migration
+    public partial class V15 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,7 +25,7 @@ namespace FUParkingModel.Migrations
             migrationBuilder.DropColumn(
                 name: "Mode",
                 schema: "dbo",
-                table: "Session");            
+                table: "Session");
         }
     }
 }

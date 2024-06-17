@@ -3,7 +3,6 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 
@@ -17,7 +16,7 @@ namespace FUParkingService
         private readonly IParkingAreaRepository _parkingAreaRepository;
         private readonly IUserRepository _userRepository;
 
-        public FeedbackService(IFeedbackRepository feedbackRepository, ICustomerRepository customerRepository,IParkingAreaRepository parkingAreaRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public FeedbackService(IFeedbackRepository feedbackRepository, ICustomerRepository customerRepository, IParkingAreaRepository parkingAreaRepository, IUserRepository userRepository, IHelpperService helpperService)
         {
             _feedbackRepository = feedbackRepository;
             _customerRepository = customerRepository;
@@ -35,26 +34,27 @@ namespace FUParkingService
             try
             {
                 Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-                if(customerRes.Data == null)
+                if (customerRes.Data == null)
                 {
                     res.Message = customerRes.Message;
                     return res;
                 }
 
-                if((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE))
+                if ((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
 
-                if(!Guid.TryParse(request.ParkingAreaId, out var parkingAreaGuId)) {
+                if (!Guid.TryParse(request.ParkingAreaId, out var parkingAreaGuId))
+                {
                     res.Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST;
                     return res;
                 }
 
                 Return<ParkingArea> foundParkingAreaRes = await _parkingAreaRepository.GetParkingAreaByIdAsync(parkingAreaGuId);
 
-                if(foundParkingAreaRes.Data == null)
+                if (foundParkingAreaRes.Data == null)
                 {
                     res.Message = foundParkingAreaRes.Message;
                     return res;
@@ -68,7 +68,7 @@ namespace FUParkingService
                     Title = request.Title?.Trim() ?? "Untitled"
                 };
                 Return<Feedback> createFeedbackRes = await _feedbackRepository.CreateFeedbackAsync(newFeedback);
-                if(createFeedbackRes.Data == null)
+                if (createFeedbackRes.Data == null)
                 {
                     res.Message = createFeedbackRes.Message;
                     return res;
@@ -79,7 +79,8 @@ namespace FUParkingService
                 res.Data = createFeedbackRes.Data;
 
                 return res;
-            }catch (Exception)
+            }
+            catch (Exception)
             {
                 throw;
             }
@@ -106,7 +107,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                res = await _feedbackRepository.GetCustomerFeedbacksByCustomerIdAsync(customerId,pageIndex,pageSize);
+                res = await _feedbackRepository.GetCustomerFeedbacksByCustomerIdAsync(customerId, pageIndex, pageSize);
                 return res;
             }
             catch (Exception)
@@ -159,7 +160,7 @@ namespace FUParkingService
                         ParkingAreaName = fb.ParkingArea?.Name ?? "N/A",
                         Title = fb.Title ?? "N/A",
                         Description = fb.Description ?? "N/A",
-                        createdDate = fb.CreatedDate.ToString("dd/MM/yyyy")
+                        CreatedDate = fb.CreatedDate.ToString("dd/MM/yyyy")
                     }),
                     Message = res.Message
                 };

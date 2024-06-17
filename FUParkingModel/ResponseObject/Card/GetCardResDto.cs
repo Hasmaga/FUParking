@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FUParkingModel.ResponseObject.Card
+﻿namespace FUParkingModel.ResponseObject.Card
 {
     public class GetCardResDto
     {

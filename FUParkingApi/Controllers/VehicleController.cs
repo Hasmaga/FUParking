@@ -4,7 +4,6 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
 using FUParkingModel.ReturnCommon;
-using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -152,7 +151,7 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
-        
+
         [HttpPost("customer")]
         public async Task<IActionResult> CreateCustomerVehicle(CreateCustomerVehicleReqDto reqDto)
         {

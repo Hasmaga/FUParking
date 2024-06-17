@@ -14,5 +14,8 @@ namespace FUParkingModel.Object
 
         [JsonIgnore]
         public ICollection<Payment>? Payments { get; set; }
+
+        [JsonIgnore]
+        public ICollection<Deposit>? Deposits { get; set; }
     }
 }

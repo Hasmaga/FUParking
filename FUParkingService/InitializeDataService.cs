@@ -1,16 +1,15 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using System.Security.Cryptography;
-using System.Text;
 using System.Transactions;
 
 namespace FUParkingService
 {
     public class InitializeDataService : IInitializeDataService
-    {        
+    {
         private readonly IGateRepository _gateRepository;
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IRoleRepository _roleRepository;
@@ -96,52 +95,57 @@ namespace FUParkingService
                     }
                 }
                 // Initialize data Table VehicleType
-                //var isVehicleTypeHadData = await _vehicleRepository.GetAllVehicleTypeAsync();
-                //if (isVehicleTypeHadData.Data == null || !isVehicleTypeHadData.Data.Any())
-                //{
-                //    var vehicleType = new List<VehicleType>
-                //    {
-                //        new() {
-                //            Name = VehicleTypeEnum.BICYCLE,
-                //            Description = "Xe đạp"
-                //        },
-                //        new()
-                //        {
-                //            Name = VehicleTypeEnum.AUTOMATIC_TRANSMISSION_MOTORCYCLE,
-                //            Description = "Xe Tay Ga"
-                //        },
-                //        new()
-                //        {
-                //            Name = VehicleTypeEnum.MANUAL_TRANSMISSION_MOTORCYCLE,
-                //            Description = "Xe Máy Số"
-                //        },
-                //        new()
-                //        {
-                //            Name = VehicleTypeEnum.ELECTRIC_BICYCLE,
-                //            Description = "Xe đạp điện"
-                //        },
-                //        new()
-                //        {
-                //            Name = VehicleTypeEnum.ELECTRIC_MOTORCYCLE,
-                //            Description = "Xe máy điện"
-                //        }
-                //    };
-                //    foreach (var item in vehicleType)
-                //    {
-                //        var isSuccessfully = await _vehicleRepository.CreateVehicleTypeAsync(item);
-                //        if (!isSuccessfully.IsSuccess)
-                //        {
-                //            transaction.Dispose();
-                //            return new Return<bool>
-                //            {
-                //                Data = false,
-                //                Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                //                IsSuccess = false,
-                //                InternalErrorMessage = isSuccessfully.InternalErrorMessage
-                //            };
-                //        }
-                //    }
-                //}
+                GetListObjectWithFiller getListObjectWithFiller = new()
+                {
+                    PageIndex = 1,
+                    PageSize = 10,
+                };
+                var isVehicleTypeHadData = await _vehicleRepository.GetAllVehicleTypeAsync(getListObjectWithFiller);
+                if (isVehicleTypeHadData.Data == null || !isVehicleTypeHadData.Data.Any())
+                {
+                    var vehicleType = new List<VehicleType>
+                    {
+                        new() {
+                            Name = VehicleTypeEnum.BICYCLE,
+                            Description = "Xe đạp"
+                        },
+                        new()
+                        {
+                            Name = VehicleTypeEnum.AUTOMATIC_TRANSMISSION_MOTORCYCLE,
+                            Description = "Xe Tay Ga"
+                        },
+                        new()
+                        {
+                            Name = VehicleTypeEnum.MANUAL_TRANSMISSION_MOTORCYCLE,
+                            Description = "Xe Máy Số"
+                        },
+                        new()
+                        {
+                            Name = VehicleTypeEnum.ELECTRIC_BICYCLE,
+                            Description = "Xe đạp điện"
+                        },
+                        new()
+                        {
+                            Name = VehicleTypeEnum.ELECTRIC_MOTORCYCLE,
+                            Description = "Xe máy điện"
+                        }
+                    };
+                    foreach (var item in vehicleType)
+                    {
+                        var isSuccessfully = await _vehicleRepository.CreateVehicleTypeAsync(item);
+                        if (!isSuccessfully.IsSuccess)
+                        {
+                            transaction.Dispose();
+                            return new Return<bool>
+                            {
+                                Data = false,
+                                Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                                IsSuccess = false,
+                                InternalErrorMessage = isSuccessfully.InternalErrorMessage
+                            };
+                        }
+                    }
+                }
                 // Initialize data Table Role
                 var isRoleHadData = await _roleRepository.GetAllRoleAsync();
                 if (isRoleHadData.Data == null || !isRoleHadData.Data.Any())
@@ -314,6 +318,6 @@ namespace FUParkingService
             }
         }
 
-       
+
     }
 }

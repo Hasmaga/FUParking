@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FUParkingModel.ResponseObject
+﻿namespace FUParkingModel.ResponseObject
 {
     public class CustomerGetCoinPackageResDto
     {
@@ -18,7 +12,7 @@ namespace FUParkingModel.ResponseObject
     public class SupervisorGetCoinPackageResDto : CustomerGetCoinPackageResDto
     {
         public required string PackageStatus { get; set; }
-        public string? CreateDate { get; set;}
+        public string? CreateDate { get; set; }
         public string? DeletedDate { get; set; }
     }
 }

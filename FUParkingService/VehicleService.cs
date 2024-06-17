@@ -199,7 +199,7 @@ namespace FUParkingService
                 }
                 if (reqDto.Description != null && reqDto.Description != "")
                 {
-                    vehicleType.Data.Description = reqDto.Description;                    
+                    vehicleType.Data.Description = reqDto.Description;
                 }
 
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);

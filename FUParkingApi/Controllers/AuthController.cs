@@ -1,13 +1,14 @@
 ﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Mvc;
-
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FUParkingApi.Controllers
 {
@@ -16,9 +17,12 @@ namespace FUParkingApi.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
-        public AuthController(IAuthService authService)
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
 
         [HttpGet("login-google")]
@@ -54,17 +58,28 @@ namespace FUParkingApi.Controllers
                 }
                 else
                 {
-                    return BadRequest(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.GOOGLE_LOGIN_FAILED:
+                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
+                        case ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
+                        default:
+                            _logger.LogInformation("Error at login with google {email}: {ex}", login.Email, result.InternalErrorMessage);
+                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
-            }            
+                _logger.LogInformation("Error at login with google: {ex}", ex);
+                return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+            }
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> LoginAsync([FromBody]LoginWithCredentialReqDto login)
+        public async Task<IActionResult> LoginAsync([FromBody] LoginWithCredentialReqDto login)
         {
             if (!ModelState.IsValid)
             {

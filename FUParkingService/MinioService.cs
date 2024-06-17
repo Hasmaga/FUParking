@@ -1,7 +1,7 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
-using FUParkingModel.ReturnCommon;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Minio;
 using Minio.DataModel;
@@ -71,12 +71,12 @@ namespace FUParkingService
                 if (isExist.IsSuccess)
                 {
                     if (isExist.Message == MinioErrorApplicationDefineEnum.NOT_FOUND)
-                    {                        
+                    {
                         var uploadObjectArgs = new PutObjectArgs()
                             .WithBucket(req.BucketName)
                             .WithContentType(req.ObjFile.ContentType)
-                            .WithObjectSize(req.ObjFile.Length)                            
-                            .WithObject(req.ObjName)                            
+                            .WithObjectSize(req.ObjFile.Length)
+                            .WithObject(req.ObjName)
                             .WithStreamData(req.ObjFile.OpenReadStream());
 
                         await minio.PutObjectAsync(uploadObjectArgs);

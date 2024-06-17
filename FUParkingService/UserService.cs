@@ -4,7 +4,6 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -42,7 +41,7 @@ namespace FUParkingService
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false                        
+                        IsSuccess = false
                     };
                 }
                 if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))

@@ -1,5 +1,5 @@
 ﻿using FUParkingModel.Object;
-﻿using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
 using FUParkingModel.ReturnCommon;

@@ -134,8 +134,8 @@ namespace FUParkingService
                 var res = await _cardRepository.GetAllCardsAsync(req);
                 if (res.IsSuccess)
                 {
-                    List<GetCardResDto> listCard = new();
-                    foreach (var item in res.Data ?? new List<Card>())
+                    List<GetCardResDto> listCard = [];
+                    foreach (var item in res.Data ?? [])
                     {
                         listCard.Add(new GetCardResDto
                         {

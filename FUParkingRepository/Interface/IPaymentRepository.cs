@@ -10,5 +10,6 @@ namespace FUParkingRepository.Interface
         Task<Return<PaymentMethod>> UpdatePaymentMethodAsync(PaymentMethod paymentMethod);
         Task<Return<PaymentMethod>> GetPaymentMethodByIdAsync(Guid paymentMethodId);
         Task<Return<IEnumerable<PaymentMethod>>> GetAllPaymentMethodAsync();
+        Task<Return<PaymentMethod>> GetPaymentMethodByNameAsync(string name);
     }
 }

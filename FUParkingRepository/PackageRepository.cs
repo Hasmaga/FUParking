@@ -107,7 +107,7 @@ namespace FUParkingRepository
                 };
             }
         }
-        
+
         public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
         {
             try
@@ -157,7 +157,7 @@ namespace FUParkingRepository
                 };
             }
         }
-        
+
         public async Task<Return<bool>> UpdateCoinPackage(Package package)
         {
             Return<bool> res = new()

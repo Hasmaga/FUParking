@@ -13,7 +13,7 @@ namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
     [Migration("20240525082350_v1.2")]
-    partial class v12
+    partial class V12
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

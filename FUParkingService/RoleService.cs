@@ -1,15 +1,14 @@
-﻿using FUParkingRepository.Interface;
-using FUParkingService.Interface;
+﻿using FUParkingService.Interface;
 
 namespace FUParkingService
 {
     public class RoleService : IRoleService
     {
-        private readonly IRoleRepository _roleRepository;
+        //private readonly IRoleRepository _roleRepository;
 
-        public RoleService(IRoleRepository roleRepository)
-        {
-            _roleRepository = roleRepository;
-        }
+        //public RoleService(IRoleRepository roleRepository)
+        //{
+        //    _roleRepository = roleRepository;
+        //}
     }
 }

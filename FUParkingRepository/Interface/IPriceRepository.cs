@@ -1,10 +1,5 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FUParkingRepository.Interface
 {

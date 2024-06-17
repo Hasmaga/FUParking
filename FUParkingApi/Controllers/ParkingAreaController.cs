@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +78,7 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
-        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
@@ -98,7 +97,7 @@ namespace FUParkingApi.Controllers
                     Block = req.Block,
                     MaxCapacity = req.MaxCapacity,
                     Mode = req.Mode,
-                }; 
+                };
 
                 var result = await _parkingAreaService.UpdateParkingAreaAsync(updateParkingAreaReqDto);
                 if (result.IsSuccess)

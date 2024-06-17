@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace FUParkingModel.RequestObject
+﻿namespace FUParkingModel.RequestObject
 {
     public class CreateUserPrimaryReqDto
     {

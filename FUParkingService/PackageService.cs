@@ -18,7 +18,7 @@ namespace FUParkingService
         {
             _packageRepository = packageRepository;
             _userRepository = userRepository;
-            _helpperService = helpperService;        
+            _helpperService = helpperService;
         }
 
         public async Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
@@ -80,7 +80,7 @@ namespace FUParkingService
                     }
 
                     // User is manager or supervisor, return all packages
-                    var allPackagesResult = await _packageRepository.GetCoinPackages(null,  pageSize, pageIndex);
+                    var allPackagesResult = await _packageRepository.GetCoinPackages(null, pageSize, pageIndex);
                     return new Return<IEnumerable<dynamic>>
                     {
                         IsSuccess = allPackagesResult.IsSuccess,
@@ -108,7 +108,7 @@ namespace FUParkingService
                 };
             }
         }
-        
+
         public async Task<Return<List<Package>>> GetAvailablePackageAsync()
         {
             Return<List<Package>> res = new()
@@ -118,7 +118,8 @@ namespace FUParkingService
             try
             {
                 Return<List<Package>> packagesRes = await _packageRepository.GetPackagesByStatusAsync(true);
-                if(!packagesRes.IsSuccess) {
+                if (!packagesRes.IsSuccess)
+                {
                     return res;
                 }
                 return packagesRes;
@@ -128,7 +129,7 @@ namespace FUParkingService
                 throw;
             }
         }
-        
+
         public async Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
         {
             try
@@ -204,7 +205,7 @@ namespace FUParkingService
                 };
             }
         }
-        
+
         public async Task<Return<bool>> UpdateCoinPackage(UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
             try
@@ -289,7 +290,7 @@ namespace FUParkingService
                 };
             }
         }
-        
+
         public async Task<Return<bool>> DeleteCoinPackage(Guid packageId)
         {
             try

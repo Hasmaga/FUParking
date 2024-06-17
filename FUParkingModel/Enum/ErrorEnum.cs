@@ -44,7 +44,7 @@
     {
         public const string NOT_FOUND = "Not found";
         public const string FILE_NAME_IS_EXIST = "File name is exist";
-    }    
+    }
 
     public class LoginEnum
     {

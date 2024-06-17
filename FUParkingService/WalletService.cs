@@ -3,7 +3,6 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using System.IO.Pipelines;
 
 namespace FUParkingService
 {
@@ -29,14 +28,14 @@ namespace FUParkingService
 
             try
             {
-                if(customerId == null)
+                if (customerId == null)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
                 Guid customerGuid = new(customerId);
                 Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerGuid);
-                if(customerRes.Data == null)
+                if (customerRes.Data == null)
                 {
                     res.Message = customerRes.Message;
                     return res;
@@ -49,7 +48,7 @@ namespace FUParkingService
                     return res;
                 }
                 Return<List<Transaction>> transactionRes = await _walletRepository.GetWalletTransactionByWalletIdAsync(foundWalletRes.Data.Id, pageIndex, pageSize, now, lastDate);
-                if(transactionRes.Data == null && !transactionRes.IsSuccess)
+                if (transactionRes.Data == null && !transactionRes.IsSuccess)
                 {
                     res.Message = transactionRes.Message;
                     return res;

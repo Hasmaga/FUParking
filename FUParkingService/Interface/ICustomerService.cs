@@ -12,6 +12,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId);
         Task<Return<Customer>> GetCustomerByIdAsync(Guid customerId);
         Task<Return<List<GetCustomersWithFillerResDto>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req);
-        Task<Return<Customer>> CreateCustomerAsync(CustomerReqDto customer, Guid userGuid);        
+        Task<Return<Customer>> CreateCustomerAsync(CustomerReqDto customer, Guid userGuid);
     }
 }

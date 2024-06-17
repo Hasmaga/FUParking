@@ -8,6 +8,6 @@ namespace FUParkingModel.RequestObject
         public string Name { get; set; } = null!;
 
         [Required(ErrorMessage = "Must have Description")]
-        public string Description { get; set; } = null!;        
+        public string Description { get; set; } = null!;
     }
 }

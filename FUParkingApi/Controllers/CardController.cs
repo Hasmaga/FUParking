@@ -66,7 +66,7 @@ namespace FUParkingApi.Controllers
 
         [HttpPut("{CardId}")]
         [Authorize]
-        public async Task<IActionResult> UpdatePlateNumberCard([FromBody] UpdatePlateNumberReqDto req, [FromRoute]Guid CardId)
+        public async Task<IActionResult> UpdatePlateNumberCard([FromBody] UpdatePlateNumberReqDto req, [FromRoute] Guid CardId)
         {
             try
             {

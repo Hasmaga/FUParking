@@ -108,6 +108,27 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<PaymentMethod>> GetPaymentMethodByNameAsync(string name)
+        {
+            try
+            {
+                return new Return<PaymentMethod>
+                {
+                    Data = await _db.PaymentMethods.FirstOrDefaultAsync(pm => pm.Name == name),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<PaymentMethod>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
         public async Task<Return<PaymentMethod>> UpdatePaymentMethodAsync(PaymentMethod paymentMethod)
         {
             try

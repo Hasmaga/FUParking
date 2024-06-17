@@ -1,23 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
     [Table("Deposit", Schema = "dbo")]
     public class Deposit : Common
     {
-        [Column("Name")]
-        public required string Name { get; set; }
-
-        [Column("Description")]
-        public string? Description { get; set; }
+        [Column("PaymentMethodId")]
+        public Guid PaymentMethodId { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; }
 
         [Column("PackageId")]
-        [JsonIgnore]
         public Guid PackageId { get; set; }
-        [JsonIgnore]
         public Package? Package { get; set; }
-        [JsonIgnore]
+
+        [Column("CustomerId")]
+        public Guid CustomerId { get; set; }
+        public Customer? Customer { get; set; }
+
+        [Column("Amount")]
+        public int Amount { get; set; }
+
+        [Column("AppTranId")]
+        public string AppTranId { get; set; } = null!;
+
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

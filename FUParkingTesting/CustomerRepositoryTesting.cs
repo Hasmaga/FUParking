@@ -1,19 +1,16 @@
-﻿using FUParkingModel.DatabaseContext;
-using FUParkingRepository;
-
-namespace FUParkingTesting
+﻿namespace FUParkingTesting
 {
     [TestClass]
     public class CustomerRepositoryTesting
     {
-        private readonly CustomerRepository _customerRepository;
-        private readonly FUParkingDatabaseContext _db;
+        //private readonly CustomerRepository _customerRepository;
+        //private readonly FUParkingDatabaseContext _db;
 
-        public CustomerRepositoryTesting()
-        {
-            _db = new FUParkingDatabaseContext();
-            _customerRepository = new CustomerRepository(_db);
-        }
+        //public CustomerRepositoryTesting()
+        //{
+        //    _db = new FUParkingDatabaseContext();
+        //    _customerRepository = new CustomerRepository(_db);
+        //}
 
         //[TestMethod]
         //public async Task GetAllCustomer_ShouldReturnListCustomer()

@@ -14,9 +14,6 @@ namespace FUParkingModel.Object
         [Column("FullName")]
         public string? FullName { get; set; }
 
-        [Column("Phone")]
-        public string? Phone { get; set; }
-
         [Column("Email")]
         public string? Email { get; set; }
 
@@ -33,5 +30,7 @@ namespace FUParkingModel.Object
         public ICollection<Vehicle>? Vehicles { get; set; }
         [JsonIgnore]
         public ICollection<Wallet>? Wallets { get; set; }
+        [JsonIgnore]
+        public ICollection<Deposit>? Deposits { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
-using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,24 +28,24 @@ namespace FUParkingApi.Controllers
             try
             {
                 Guid userGuid = _helpperService.GetAccIdFromLogged();
-                if(userGuid == Guid.Empty)
+                if (userGuid == Guid.Empty)
                 {
                     return Unauthorized();
                 }
 
                 res = await _transactionService.GetTransactionsAsync(fromDate, toDate, pageSize, pageIndex, userGuid);
 
-                if(res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
                 {
                     return Unauthorized(res);
                 }
 
-                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                if (res.Message.Equals(ErrorEnumApplication.BANNED))
                 {
                     return Forbid();
                 }
 
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }

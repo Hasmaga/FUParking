@@ -9,20 +9,21 @@ namespace FUParkingModel.Object
         [Column("WalletId")]
         [JsonIgnore]
         public Guid WalletId { get; set; }
+
         [JsonIgnore]
         public Wallet? Wallet { get; set; }
-
-        [Column("DepositId")]
-        [JsonIgnore]
-        public Guid? DepositId { get; set; }
-        [JsonIgnore]
-        public Deposit? Deposit { get; set; }
 
         [Column("PaymentId")]
         [JsonIgnore]
         public Guid? PaymentId { get; set; }
+
         [JsonIgnore]
         public Payment? Payment { get; set; }
+
+        [Column("DepositId")]
+        [JsonIgnore]
+        public Guid? DepositId { get; set; }
+        public Deposit? Deposit { get; set; }
 
         [Column("Amount")]
         public int Amount { get; set; }

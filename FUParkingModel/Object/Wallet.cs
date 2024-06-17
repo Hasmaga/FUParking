@@ -7,11 +7,15 @@ namespace FUParkingModel.Object
     public class Wallet : Common
     {
         [Column("Balance")]
-        public int Balance { get; set; }
-        [JsonIgnore]
+        public int Balance { get; set; } = 0;
 
+        [Column("WalletType")]
+        public required string WalletType { get; set; }
+
+        [JsonIgnore]
         [Column("CustomerId")]
-        public Guid CustomerId { get; set; }
+        public required Guid CustomerId { get; set; }
+
         [JsonIgnore]
         public Customer? Customer { get; set; }
 

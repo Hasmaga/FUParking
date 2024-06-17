@@ -4,7 +4,6 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
-using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +25,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("customers")]
-        public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery]int pageIndex=Pagination.PAGE_INDEX, [FromQuery]int pageSize=Pagination.PAGE_SIZE)
+        public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
             Return<List<Feedback>> res = new()
             {
@@ -48,17 +47,17 @@ namespace FUParkingApi.Controllers
 
                 res = await _feedbackService.GetFeedbacksByCustomerIdAsync(customerGuid, pageSize, pageIndex);
 
-                if((res.Message ?? "").Equals(ErrorEnumApplication.BANNED))
+                if ((res.Message ?? "").Equals(ErrorEnumApplication.BANNED))
                 {
-                    return  Forbid();
+                    return Forbid();
                 }
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }
                 return Ok(res);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(502, res);
             }
@@ -80,14 +79,14 @@ namespace FUParkingApi.Controllers
                     return Unauthorized(res);
                 };
 
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
 
                 Return<Feedback> createFeedbackRes = await _feedbackService.CreateFeedbackAsync(request, customerGuid);
                 res.Message = createFeedbackRes.Message;
-                if(!createFeedbackRes.IsSuccess)
+                if (!createFeedbackRes.IsSuccess)
                 {
                     return BadRequest(res);
                 }
@@ -102,8 +101,9 @@ namespace FUParkingApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            Return<IEnumerable<GetListFeedbacksResDto>> res = new() { 
-                Message = ErrorEnumApplication.SERVER_ERROR 
+            Return<IEnumerable<GetListFeedbacksResDto>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {

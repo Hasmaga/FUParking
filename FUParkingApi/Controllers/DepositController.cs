@@ -5,8 +5,6 @@ using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace FUParkingApi.Controllers
@@ -16,16 +14,14 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class DepositController : Controller
     {
-        private readonly IDepositService _depositService;
         private readonly ICustomerService _customerService;
-        public DepositController(IDepositService depositService,ICustomerService customerService)
+        public DepositController(ICustomerService customerService)
         {
-            _depositService = depositService;
             _customerService = customerService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CustomerBuyPackageAsync([FromBody]BuyPackageReqDto request)
+        public async Task<IActionResult> CustomerBuyPackageAsync([FromBody] BuyPackageReqDto request)
         {
             Return<bool> res = new()
             {
@@ -33,12 +29,12 @@ namespace FUParkingApi.Controllers
             };
             try
             {
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
                 string? userIdToken = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
-                if(userIdToken == null)
+                if (userIdToken == null)
                 {
                     return Unauthorized();
                 }

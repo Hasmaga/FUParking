@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FUParkingModel.RequestObject
 {
@@ -18,7 +12,7 @@ namespace FUParkingModel.RequestObject
 
         [Required(ErrorMessage = "Must have Name")]
         public string Name { get; set; } = null!;
-                
+
         public DateTime? ApplyFromDate { get; set; }
 
         public DateTime? ApplyToDate { get; set; }

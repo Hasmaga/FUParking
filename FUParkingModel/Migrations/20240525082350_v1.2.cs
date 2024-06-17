@@ -5,7 +5,7 @@
 namespace FUParkingModel.Migrations
 {
     /// <inheritdoc />
-    public partial class v12 : Migration
+    public partial class V12 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

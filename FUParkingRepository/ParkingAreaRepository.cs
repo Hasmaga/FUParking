@@ -30,7 +30,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<ParkingArea>
                 {
@@ -50,7 +51,7 @@ namespace FUParkingRepository
             try
             {
                 ParkingArea? parkingArea = await _db.ParkingAreas.FirstOrDefaultAsync(p => p.Id.Equals(parkingId));
-                if(parkingArea == null)
+                if (parkingArea == null)
                 {
                     res.Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST;
                     return res;
@@ -59,7 +60,8 @@ namespace FUParkingRepository
                 res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
                 res.IsSuccess = true;
                 return res;
-            }catch
+            }
+            catch
             {
                 return res;
             }
@@ -107,7 +109,7 @@ namespace FUParkingRepository
                     InternalErrorMessage = e.Message
                 };
             }
-        }       
+        }
 
         public async Task<Return<ParkingArea>> UpdateParkingAreaAsync(ParkingArea parkingArea)
         {
@@ -169,7 +171,8 @@ namespace FUParkingRepository
                             where gate.Id == gateId
                             select parkingArea;
                 return new Return<ParkingArea> { Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY, IsSuccess = true, Data = await query.FirstOrDefaultAsync() };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<ParkingArea> { Message = ErrorEnumApplication.GET_OBJECT_ERROR, IsSuccess = false, InternalErrorMessage = e.Message };
             }

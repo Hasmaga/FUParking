@@ -19,31 +19,31 @@ namespace FUParkingApi.Controllers
         private readonly IHelpperService _helperService;
         private readonly IVehicleService _vehicleService;
 
-        public CustomerController(ICustomerService customerService, IHelpperService helpperService,IVehicleService vehicleService)
+        public CustomerController(ICustomerService customerService, IHelpperService helpperService, IVehicleService vehicleService)
         {
             _customerService = customerService;
             _helperService = helpperService;
             _vehicleService = vehicleService;
         }
-        
+
         [HttpPost("free")]
         public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
         {
             Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
             try
             {
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
                 Guid userGuid = _helperService.GetAccIdFromLogged();
-                if(userGuid == Guid.Empty)
+                if (userGuid == Guid.Empty)
                 {
                     return Unauthorized();
                 }
 
                 res = await _customerService.CreateCustomerAsync(req, userGuid);
-                if(res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
                 {
                     return Unauthorized(res);
                 }
@@ -53,12 +53,12 @@ namespace FUParkingApi.Controllers
                     return Conflict(res);
                 }
 
-                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                if (res.Message.Equals(ErrorEnumApplication.BANNED))
                 {
                     return Forbid();
                 }
 
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }
@@ -86,7 +86,8 @@ namespace FUParkingApi.Controllers
                     Message = ErrorEnumApplication.INVALID_INPUT
                 });
             }
-            Return<List<GetCustomersWithFillerResDto>> res = new() { 
+            Return<List<GetCustomersWithFillerResDto>> res = new()
+            {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
@@ -97,12 +98,12 @@ namespace FUParkingApi.Controllers
                     return Unauthorized(res);
                 }
 
-                if(res.Message.Equals(ErrorEnumApplication.BANNED))
+                if (res.Message.Equals(ErrorEnumApplication.BANNED))
                 {
                     return Forbid();
                 }
 
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }
@@ -124,7 +125,7 @@ namespace FUParkingApi.Controllers
             try
             {
                 Guid customerGuid = _helperService.GetAccIdFromLogged();
-                if(customerGuid == Guid.Empty)
+                if (customerGuid == Guid.Empty)
                 {
                     return Unauthorized();
                 }
@@ -139,7 +140,7 @@ namespace FUParkingApi.Controllers
                 {
                     return Unauthorized(res);
                 }
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }
@@ -161,7 +162,7 @@ namespace FUParkingApi.Controllers
             try
             {
                 Guid customerGuid = _helperService.GetAccIdFromLogged();
-                if(customerGuid == Guid.Empty)
+                if (customerGuid == Guid.Empty)
                 {
                     return Unauthorized();
                 }
@@ -171,13 +172,14 @@ namespace FUParkingApi.Controllers
                 {
                     return Forbid();
                 }
-                if(!res.IsSuccess)
+                if (!res.IsSuccess)
                 {
                     return BadRequest(res);
                 }
                 return Ok(res);
 
-            }catch
+            }
+            catch
             {
                 return StatusCode(502, res);
             }
@@ -199,7 +201,7 @@ namespace FUParkingApi.Controllers
                     {
                         Data = errors,
                         IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT                        
+                        Message = ErrorEnumApplication.INVALID_INPUT
                     });
                 }
 
@@ -212,7 +214,8 @@ namespace FUParkingApi.Controllers
                 {
                     return BadRequest(result);
                 }
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new Return<object>
                 {

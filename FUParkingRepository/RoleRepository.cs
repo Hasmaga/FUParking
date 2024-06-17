@@ -72,7 +72,7 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } 
+            }
             catch (Exception ex)
             {
                 return new Return<Role>

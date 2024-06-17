@@ -36,12 +36,12 @@ namespace FUParkingApi.Controllers
                     return BadRequest(res);
                 return Ok(res);
             }
-            catch 
+            catch
             {
                 return StatusCode(502, res);
             }
         }
-        
+
         [HttpGet("")]
         public async Task<IActionResult> GetCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
         {
@@ -92,7 +92,7 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
         {
@@ -117,7 +117,7 @@ namespace FUParkingApi.Controllers
                 return StatusCode(500, res);
             }
         }
-        
+
         [HttpPut("{packageId}")]
         public async Task<IActionResult> UpdateCoinPackage([FromRoute] Guid packageId, [FromBody] UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
@@ -144,7 +144,7 @@ namespace FUParkingApi.Controllers
                 return StatusCode(500, res);
             }
         }
-        
+
         [HttpDelete("{packageId}")]
         public async Task<IActionResult> DeleteCoinPackage(Guid packageId)
         {

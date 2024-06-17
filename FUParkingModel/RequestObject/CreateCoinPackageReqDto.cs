@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace FUParkingModel.RequestObject
 {
@@ -23,7 +18,7 @@ namespace FUParkingModel.RequestObject
         public int? EXPPackage { get; set; }
 
         [Required(ErrorMessage = "Price is required")]
-        [Range(0, double.MaxValue, ErrorMessage = "Price must be a positive number")]
-        public required decimal Price { get; set; }
+        [Range(0, int.MaxValue, ErrorMessage = "Price must be a positive number")]
+        public required int Price { get; set; }
     }
 }

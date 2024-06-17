@@ -105,5 +105,7 @@ namespace FUParkingService
                 return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, IsSuccess = false, InternalErrorMessage = ex.Message };
             }
         }
+
+        //public async Task<Return<bool>> CheckOutAsync()
     }
 }

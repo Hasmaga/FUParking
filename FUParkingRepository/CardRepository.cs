@@ -69,7 +69,7 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-                
+
             }
             catch (Exception e)
             {
@@ -114,7 +114,7 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } 
+            }
             catch (Exception e)
             {
                 return new Return<Card>

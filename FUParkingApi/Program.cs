@@ -2,17 +2,17 @@ using FUParkingModel.DatabaseContext;
 using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService;
+using FUParkingService.Cloudflare;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
-using FUParkingService.Cloudflare;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +22,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 
 #region Database
 builder.Services.AddScoped<FUParkingDatabaseContext>();
@@ -29,7 +30,6 @@ builder.Services.AddScoped<FUParkingDatabaseContext>();
 
 #region Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICameraService, CameraService>();
 builder.Services.AddScoped<ICardService, CardService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IDepositService, DepositService>();
@@ -47,10 +47,10 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IZaloService, ZaloService>();
 #endregion
 
 #region Repositories
-builder.Services.AddScoped<ICameraRepository, CameraRepository>();
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IDepositRepository, DepositRepository>();
@@ -112,7 +112,6 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin();
     });
 });
-builder.Services.AddHttpContextAccessor();
 #endregion
 
 #region Validation Middlewares

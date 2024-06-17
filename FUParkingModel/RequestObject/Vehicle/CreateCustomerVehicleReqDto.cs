@@ -61,18 +61,18 @@ namespace FUParkingModel.RequestObject.Vehicle
         public class ValidateImageContentTypeAttribute : ValidationAttribute
         {
             private readonly string[] _supportedImageMimeTypes =
-            {
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "image/bmp",
-            "image/tiff",
-            "image/vnd.adobe.photoshop", // PSD
-            "image/svg+xml", // SVG
-            "image/webp",
-            "image/heic",
-            "image/heif" // HEIC variations
-        };
+            [
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/bmp",
+                "image/tiff",
+                "image/vnd.adobe.photoshop", // PSD
+                "image/svg+xml", // SVG
+                "image/webp",
+                "image/heic",
+                "image/heif" // HEIC variations
+            ];
 
             protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
             {

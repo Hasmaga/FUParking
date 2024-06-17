@@ -28,7 +28,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<Session>
                 {
@@ -49,7 +50,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<Session>
                 {
@@ -70,7 +72,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<Session>
                 {

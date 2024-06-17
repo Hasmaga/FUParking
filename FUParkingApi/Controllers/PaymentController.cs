@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FUParkingApi.Controllers
 {
-    [ApiController]    
+    [ApiController]
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class PaymentController : Controller
     {

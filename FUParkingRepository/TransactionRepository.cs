@@ -43,8 +43,9 @@ namespace FUParkingRepository
         public async Task<Return<List<Transaction>>> GetTransactionListAsync(DateTime FromDate, DateTime ToDate, int pageSize, int pageIndex)
         {
             Return<List<Transaction>> res = new() { Message = ErrorEnumApplication.GET_OBJECT_ERROR };
-            try { 
-                res.Data = await _db.Transactions.Include(t => t.Deposit).Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)
+            try
+            {
+                res.Data = await _db.Transactions.Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)
                                                                 .OrderByDescending(t => t.CreatedDate)
                                                                 .Skip((pageIndex - 1) * pageSize)
                                                                 .Take(pageSize)
