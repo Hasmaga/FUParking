@@ -9,5 +9,6 @@
         public const string UPDATE_OBJECT_SUCCESSFULLY = "Update object successfully";
         public const string SUCCESSFULLY = "Successfully";
         public const string DELETE_OBJECT_SUCCESSFULLY = "Delete object successfully";
+        public const string CREATE_DEPOSIT_SUCCESSFULLY = "Create depost successfully";
     }
 }

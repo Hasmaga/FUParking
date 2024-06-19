@@ -32,6 +32,7 @@
         public const string CARD_NOT_EXIST = "Card is not exist in system";
         public const string CARD_IN_USE = "This card is already use";
         public const string PLATE_NUMBER_IN_USE = "This plate number is already in system";
+        public const string NOT_FOUND_OBJECT = "Not found object";
     }
 
     public class MinioErrorServerDefineEnum

@@ -57,30 +57,25 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<Package?>> GetPackageByPackageIdAsync(Guid id)
+        public async Task<Return<Package>> GetPackageByPackageIdAsync(Guid id)
         {
-            Return<Package?> res = new()
-            {
-                IsSuccess = false,
-                Message = ErrorEnumApplication.PACKAGE_NOT_EXIST,
-            };
             try
             {
-                Package? package = await _db.Packages.FirstOrDefaultAsync(p => p.Id.Equals(id)) ?? throw new KeyNotFoundException();
-                res.IsSuccess = package != null;
-                res.Data = package;
-                res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
-                return res;
+                var result = await _db.Packages.Where(p => p.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(id));
+                return new Return<Package>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
             }
             catch (Exception ex)
             {
-                if (ex is KeyNotFoundException)
+                return new Return<Package>
                 {
-                    return res;
-                }
-                res.InternalErrorMessage = ex.Message;
-                res.Message = ErrorEnumApplication.SERVER_ERROR;
-                return res;
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = ex.Message
+                };
             }
         }
 

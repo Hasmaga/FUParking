@@ -14,42 +14,39 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class DepositController : Controller
     {
-        private readonly ICustomerService _customerService;
-        public DepositController(ICustomerService customerService)
+        public readonly IZaloService _zaloService;
+        
+        public DepositController(IZaloService zaloService)
         {
-            _customerService = customerService;
+            _zaloService = zaloService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CustomerBuyPackageAsync([FromBody] BuyPackageReqDto request)
+        public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute]Guid packetId)
         {
-            Return<bool> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
-                }
-                string? userIdToken = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
-                if (userIdToken == null)
-                {
-                    return Unauthorized();
-                }
-                Guid userId = new(userIdToken);
-                res = await _customerService.BuyPackageAsync(request, userId);
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
-            }
-            catch (Exception ex)
+                //var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
+                //if (result.IsSuccess)
+                //{
+                //    return StatusCode(200, new Return<bool> { Message = SuccessfullyEnumServer.CREATE_DEPOSIT_SUCCESSFULLY });
+                //}
+                //else
+                //{
+                //    switch(result.Message)
+                //    {
+                //        case ErrorEnumApplication.NOT_AUTHORITY:
+                //            return StatusCode(403, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                //        case ErrorEnumApplication.PACKAGE_NOT_EXIST:
+                //            return StatusCode(404, new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST });
+                //        case 
+                //    }
+                        
+                //}
+                return Ok();
+            } catch (Exception ex)
             {
-                res.InternalErrorMessage = ex.Message;
-                return StatusCode(502, res);
+                return BadRequest(ex.Message);
             }
         }
     }

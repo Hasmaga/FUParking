@@ -110,5 +110,12 @@ namespace FUParkingApi.Controllers
                 return BadRequest(result);
             }
         }
+
+        [HttpPost("google")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] string onetimecode)
+        {
+            return StatusCode(200, await _authService.LoginWithGoogleMobileAsync(onetimecode));            
+        }
     }
 }

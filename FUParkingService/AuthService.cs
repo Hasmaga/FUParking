@@ -1,17 +1,23 @@
-﻿using FUParkingModel.Enum;
+﻿using Azure;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Google.Apis.Auth;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Transactions;
+using static Google.Apis.Auth.GoogleJsonWebSignature;
 
 namespace FUParkingService
 {
@@ -212,6 +218,31 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<LoginResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    IsSuccess = false,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<Return<Payload>> LoginWithGoogleMobileAsync(string one_time_code)
+        {
+            try
+            {
+                var clientSecrets = _configuration.GetSection("Authentication:Google:ClientSecret").Value ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR);
+                var clientId = _configuration.GetSection("Authentication:Google:ClientId").Value ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR);               
+
+                var settings = new ValidationSettings() { Audience = new List<string>() { clientId } };
+                
+                Payload payload = await ValidateAsync(one_time_code, null, false);
+                return payload == null ? new Return<Payload> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED, IsSuccess = false } : new Return<Payload> { Data = payload, IsSuccess = true, Message = SuccessfullyEnumServer.SUCCESSFULLY };
+                
+
+            }
+            catch (Exception ex)
+            {
+                return new Return<Payload>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
