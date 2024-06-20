@@ -180,7 +180,9 @@ namespace FUParkingService
         {
             var response = await _httpClient.CreateClient().PostAsync(uri, content);
             var responseString = await response.Content.ReadAsStringAsync();
+#pragma warning disable CS8603 // Possible null reference return.
             return JsonConvert.DeserializeObject<T>(responseString);
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public Task<Dictionary<string, object>> PostAsync(string uri, HttpContent content)
@@ -202,7 +204,9 @@ namespace FUParkingService
         {
             var response = await _httpClient.CreateClient().GetAsync(uri);
             var responseString = await response.Content.ReadAsStringAsync();
+#pragma warning disable CS8603 // Possible null reference return.
             return JsonConvert.DeserializeObject<T>(responseString);
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public Task<Dictionary<string, object>> GetJson(string uri)

@@ -1,17 +1,12 @@
-﻿using Azure;
-using FUParkingModel.Enum;
+﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -226,26 +221,100 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<Payload>> LoginWithGoogleMobileAsync(string one_time_code)
+        public async Task<Return<string>> LoginWithGoogleMobileAsync(string one_time_code)
         {
+            using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                var clientSecrets = _configuration.GetSection("Authentication:Google:ClientSecret").Value ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR);
-                var clientId = _configuration.GetSection("Authentication:Google:ClientId").Value ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR);               
-
-                var settings = new ValidationSettings() { Audience = new List<string>() { clientId } };
-                
-                Payload payload = await ValidateAsync(one_time_code, null, false);
-                return payload == null ? new Return<Payload> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED, IsSuccess = false } : new Return<Payload> { Data = payload, IsSuccess = true, Message = SuccessfullyEnumServer.SUCCESSFULLY };
-                
-
+                var clientSecrets = _configuration.GetSection("Authentication:Google:ClientSecret").Value;
+                var clientId = _configuration.GetSection("Authentication:Google:ClientId").Value;
+                if (string.IsNullOrEmpty(clientSecrets) || string.IsNullOrEmpty(clientId))
+                {
+                    return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                var settings = new ValidationSettings() { Audience = [clientId] };
+                Payload payload = await ValidateAsync(one_time_code, settings);
+                if (payload == null)
+                {
+                    return new Return<string> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
+                }
+                if (!payload.HostedDomain.Equals("fpt.edu.vn"))
+                {
+                    return new Return<string> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY };
+                }
+                var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(payload.Email);
+                if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                {
+                    // Create new customer
+                    var customerType = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
+                    if (customerType.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || customerType.IsSuccess == false || customerType.Data == null)
+                    {
+                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
+                    }
+                    Customer newCustomer = new() {
+                        FullName = payload.Name,
+                        Email = payload.Email,
+                        CustomerTypeId = customerType.Data.Id,
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
+                        Avarta = payload.Picture
+                    };
+                    var resultCreateCus = await _customerRepository.CreateNewCustomerAsync(newCustomer);
+                    if (resultCreateCus.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultCreateCus.Data == null)
+                    {
+                        transaction.Dispose();
+                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultCreateCus.InternalErrorMessage };
+                    }
+                    // Create waller for the new customer
+                    Wallet cusWalletMain = new() { 
+                        WalletType = WalletType.MAIN, 
+                        CustomerId = resultCreateCus.Data.Id, 
+                        WalletStatus = StatusWalletEnum.ACTIVE 
+                    };
+                    var resultWallet = await _walletRepository.CreateWalletAsync(cusWalletMain);
+                    if (resultWallet.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWallet.Data == null)
+                    {
+                        transaction.Dispose();
+                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWallet.InternalErrorMessage };
+                    }
+                    Wallet cusWalletExtra = new()
+                    {
+                        CustomerId = resultCreateCus.Data.Id, 
+                        WalletType = WalletType.EXTRA, 
+                        WalletStatus = StatusWalletEnum.ACTIVE 
+                    };
+                    var resultWalletExtra = await _walletRepository.CreateWalletAsync(cusWalletExtra);
+                    if (resultWalletExtra.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWalletExtra.Data == null)
+                    {
+                        transaction.Dispose();
+                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
+                    }
+                    transaction.Complete();
+                    return new Return<string>
+                    {
+                        Data = CreateBearerTokenAccount(resultCreateCus.Data.Id),
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    };
+                } else if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
+                {
+                    transaction.Complete();
+                    return new Return<string>
+                    {
+                        Data = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    };
+                } else
+                {
+                    transaction.Dispose();
+                    return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isUserRegistered.InternalErrorMessage };
+                }
             }
             catch (Exception ex)
             {
-                return new Return<Payload>
+                return new Return<string>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
                     InternalErrorMessage = ex.Message
                 };
             }

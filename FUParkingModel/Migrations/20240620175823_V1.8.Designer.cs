@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    [Migration("20240609105108_v1.6")]
-    partial class V16
+    [Migration("20240620175823_V1.8")]
+    partial class V18
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,40 +24,6 @@ namespace FUParkingModel.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("FUParkingModel.Object.Camera", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Id");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreatedDate");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedDate");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Description");
-
-                    b.Property<Guid>("GateId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("GateId");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Name");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GateId");
-
-                    b.ToTable("Camera", "dbo");
-                });
 
             modelBuilder.Entity("FUParkingModel.Object.Card", b =>
                 {
@@ -95,6 +61,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<string>("Avarta")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Avarta");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -114,14 +84,6 @@ namespace FUParkingModel.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("FullName");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("PasswordHash");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Phone");
 
                     b.Property<string>("StatusCustomer")
                         .IsRequired()
@@ -170,30 +132,42 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<int>("Amount")
+                        .HasColumnType("int")
+                        .HasColumnName("Amount");
+
+                    b.Property<string>("AppTranId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("AppTranId");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CustomerId");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Name");
-
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("PackageId");
 
+                    b.Property<Guid>("PaymentMethodId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("PaymentMethodId");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("PackageId");
+
+                    b.HasIndex("PaymentMethodId");
 
                     b.ToTable("Deposit", "dbo");
                 });
@@ -352,8 +326,8 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PackageStatus");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18, 0)")
+                    b.Property<int>("Price")
+                        .HasColumnType("int")
                         .HasColumnName("Price");
 
                     b.HasKey("Id");
@@ -864,22 +838,16 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("WalletStatus");
 
+                    b.Property<string>("WalletType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("WalletType");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Wallet", "dbo");
-                });
-
-            modelBuilder.Entity("FUParkingModel.Object.Camera", b =>
-                {
-                    b.HasOne("FUParkingModel.Object.Gate", "Gate")
-                        .WithMany("Cameras")
-                        .HasForeignKey("GateId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Gate");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Customer", b =>
@@ -895,13 +863,29 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Deposit", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.Customer", "Customer")
+                        .WithMany("Deposits")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("FUParkingModel.Object.Package", "Package")
                         .WithMany("Deposits")
                         .HasForeignKey("PackageId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.PaymentMethod", "PaymentMethod")
+                        .WithMany("Deposits")
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
                     b.Navigation("Package");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Feedback", b =>
@@ -1082,6 +1066,8 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Customer", b =>
                 {
+                    b.Navigation("Deposits");
+
                     b.Navigation("Feedbacks");
 
                     b.Navigation("Vehicles");
@@ -1101,8 +1087,6 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Gate", b =>
                 {
-                    b.Navigation("Cameras");
-
                     b.Navigation("SessionGateIns");
 
                     b.Navigation("SessionGateOuts");
@@ -1132,6 +1116,8 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.PaymentMethod", b =>
                 {
+                    b.Navigation("Deposits");
+
                     b.Navigation("Payments");
                 });
 

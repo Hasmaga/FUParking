@@ -58,6 +58,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<string>("Avarta")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Avarta");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -77,10 +81,6 @@ namespace FUParkingModel.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("FullName");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("PasswordHash");
 
                     b.Property<string>("StatusCustomer")
                         .IsRequired()

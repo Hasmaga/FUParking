@@ -26,24 +26,20 @@ namespace FUParkingApi.Controllers
         {
             try
             {
-                //var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
-                //if (result.IsSuccess)
-                //{
-                //    return StatusCode(200, new Return<bool> { Message = SuccessfullyEnumServer.CREATE_DEPOSIT_SUCCESSFULLY });
-                //}
-                //else
-                //{
-                //    switch(result.Message)
-                //    {
-                //        case ErrorEnumApplication.NOT_AUTHORITY:
-                //            return StatusCode(403, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                //        case ErrorEnumApplication.PACKAGE_NOT_EXIST:
-                //            return StatusCode(404, new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST });
-                //        case 
-                //    }
-                        
-                //}
-                return Ok();
+                var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
+                if (result.IsSuccess)
+                {
+                    return StatusCode(200, new Return<bool> { Message = SuccessfullyEnumServer.CREATE_DEPOSIT_SUCCESSFULLY });
+                }
+                else
+                {
+                    return result.Message switch
+                    {
+                        ErrorEnumApplication.NOT_AUTHORITY => StatusCode(403, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
+                        ErrorEnumApplication.PACKAGE_NOT_EXIST => StatusCode(404, new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST }),
+                        _ => StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR }),
+                    };
+                }                
             } catch (Exception ex)
             {
                 return BadRequest(ex.Message);

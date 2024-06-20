@@ -173,5 +173,26 @@ namespace FUParkingRepository
                 return res;
             }
         }
+
+        public async Task<Return<Package>> GetPackageByNameAsync(string PacketName)
+        {
+            try
+            {
+                var result = await _db.Packages.Where(p => p.DeletedDate == null).FirstOrDefaultAsync(p => p.Name.ToUpper().Equals(PacketName.ToUpper()));
+                return new Return<Package>
+                {
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true,
+                    Data = result
+                };
+            } catch (Exception ex)
+            {
+                return new Return<Package>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = ex.Message
+                };
+            }
+        }
     }
 }

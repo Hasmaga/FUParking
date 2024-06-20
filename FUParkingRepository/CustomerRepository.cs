@@ -25,8 +25,7 @@ namespace FUParkingRepository
                 await _db.SaveChangesAsync();
                 return new Return<Customer>
                 {
-                    Data = customer,
-                    IsSuccess = true,
+                    Data = customer,                    
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
@@ -34,7 +33,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
                     InternalErrorMessage = ex.Message
                 };
@@ -70,19 +69,19 @@ namespace FUParkingRepository
         {
             try
             {
+                var customer = await _db.Customers.Where(p => p.DeletedDate == null).FirstOrDefaultAsync(c => c.Email == email);
                 return new Return<Customer>
                 {
-                    Data = await _db.Customers.FirstOrDefaultAsync(c => c.Email == email),
+                    Data = customer,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = customer != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,                    
                     InternalErrorMessage = ex.Message
                 };
             }
@@ -189,15 +188,14 @@ namespace FUParkingRepository
                 {
                     Data = customerType,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = customerType != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<CustomerType>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,                    
                     InternalErrorMessage = ex.Message
                 };
             }

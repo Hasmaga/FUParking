@@ -15,14 +15,13 @@ namespace FUParkingModel.Object
         public string? FullName { get; set; }
 
         [Column("Email")]
-        public string? Email { get; set; }
-
-        [Column("PasswordHash")]
-        [JsonIgnore]
-        public string? PasswordHash { get; set; }
+        public string? Email { get; set; }        
 
         [Column("StatusCustomer")]
         public required string StatusCustomer { get; set; }
+
+        [Column("Avarta")]
+        public string? Avarta { get; set; }
 
         [JsonIgnore]
         public ICollection<Feedback>? Feedbacks { get; set; }

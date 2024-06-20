@@ -139,8 +139,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -150,30 +149,20 @@ namespace FUParkingService
                 if (userlogged.Data == null || userlogged.IsSuccess == false)
                 {
                     return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
 
                 if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
+                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                }               
 
-                // Check package's name exist
-                var existPackages = await _packageRepository.GetAllPackagesAsync();
-                if (existPackages.Data != null && existPackages.IsSuccess == true)
+                var isExistPackage = await _packageRepository.GetPackageByNameAsync(reqDto.Name);
+                if (isExistPackage.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))    
                 {
-                    bool isExistPackageName = existPackages.Data.Exists(p => p.Name.ToLower().Equals(reqDto.Name.ToLower()));
-                    if (isExistPackageName)
-                    {
-                        return new Return<bool>
-                        {
-                            IsSuccess = false,
-                            Message = ErrorEnumApplication.OBJECT_EXISTED
-                        };
-                    }
+                    return new Return<bool> { Message = ErrorEnumApplication.OBJECT_EXISTED };
                 }
 
                 // Create package
@@ -184,8 +173,7 @@ namespace FUParkingService
                     CoinAmount = reqDto.CoinAmount,
                     ExtraCoin = reqDto.ExtraCoin,
                     EXPPackage = reqDto.EXPPackage,
-                    PackageStatus = StatusPackageEnum.ACTIVE,
-                    CreatedDate = DateTime.Now,
+                    PackageStatus = StatusPackageEnum.ACTIVE,                    
                 };
 
                 var res = await _packageRepository.CreatePackageAsync(package);
@@ -199,8 +187,7 @@ namespace FUParkingService
             catch (Exception)
             {
                 return new Return<bool>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

@@ -83,10 +83,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Wallet>
-                {
-                    IsSuccess = false,
+                {                    
                     InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
