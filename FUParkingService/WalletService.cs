@@ -41,7 +41,7 @@ namespace FUParkingService
                     return res;
                 }
 
-                Return<Wallet?> foundWalletRes = await _walletRepository.GetWalletByCustomerId(customerGuid);
+                Return<Wallet> foundWalletRes = await _walletRepository.GetWalletByCustomerId(customerGuid);
                 if (foundWalletRes.Data == null)
                 {
                     res.Message = foundWalletRes.Message;

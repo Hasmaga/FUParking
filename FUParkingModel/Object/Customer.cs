@@ -19,10 +19,7 @@ namespace FUParkingModel.Object
 
         [Column("StatusCustomer")]
         public required string StatusCustomer { get; set; }
-
-        [Column("Avarta")]
-        public string? Avarta { get; set; }
-
+        
         [JsonIgnore]
         public ICollection<Feedback>? Feedbacks { get; set; }
         [JsonIgnore]

@@ -32,9 +32,30 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Transaction>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<Transaction>> GetTransactionByDepositIdAsync(Guid transactionId)
+        {
+            try
+            {
+                var result = await _db.Transactions.Include(t => t.Payment).FirstOrDefaultAsync(t => t.Id.Equals(transactionId));
+                return new Return<Transaction>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Transaction>
+                {                    
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }
@@ -57,6 +78,28 @@ namespace FUParkingRepository
             catch
             {
                 return res;
+            }
+        }
+
+        public async Task<Return<bool>> UpdateTransactionAsync(Transaction transaction)
+        {
+            try
+            {
+                _db.Update(transaction);
+                await _db.SaveChangesAsync();
+                return new Return<bool>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<bool>
+                {                    
+                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
             }
         }
     }

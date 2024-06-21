@@ -29,7 +29,7 @@ namespace FUParkingApi.Controllers
                 var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
                 if (result.IsSuccess)
                 {
-                    return StatusCode(200, new Return<bool> { Message = SuccessfullyEnumServer.CREATE_DEPOSIT_SUCCESSFULLY });
+                    return StatusCode(200, result);
                 }
                 else
                 {

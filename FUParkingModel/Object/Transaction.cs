@@ -8,7 +8,7 @@ namespace FUParkingModel.Object
     {
         [Column("WalletId")]
         [JsonIgnore]
-        public Guid WalletId { get; set; }
+        public Guid? WalletId { get; set; }
 
         [JsonIgnore]
         public Wallet? Wallet { get; set; }

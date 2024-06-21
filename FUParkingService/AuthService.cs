@@ -256,8 +256,7 @@ namespace FUParkingService
                         FullName = payload.Name,
                         Email = payload.Email,
                         CustomerTypeId = customerType.Data.Id,
-                        StatusCustomer = StatusCustomerEnum.ACTIVE,
-                        Avarta = payload.Picture
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,                        
                     };
                     var resultCreateCus = await _customerRepository.CreateNewCustomerAsync(newCustomer);
                     if (resultCreateCus.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultCreateCus.Data == null)

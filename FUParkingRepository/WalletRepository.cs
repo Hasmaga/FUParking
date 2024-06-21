@@ -42,15 +42,15 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<Wallet?>> GetWalletByCustomerId(Guid customerId)
+        public async Task<Return<Wallet>> GetWalletByCustomerId(Guid customerId)
         {
-            Return<Wallet?> res = new()
+            Return<Wallet> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
             try
             {
-                Wallet? wallet = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId));
+                var wallet = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId));
                 if (wallet == null)
                 {
                     res.Message = ErrorEnumApplication.WALLET_NOT_EXIST;
@@ -83,7 +83,73 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Wallet>
-                {                    
+                {
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<Wallet>> GetMainWalletByCustomerId(Guid customerId)
+        {
+            try
+            {
+                var result = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId) && w.WalletType == WalletType.MAIN);
+                return new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = result,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Wallet>
+                {
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<Wallet>> GetExtraWalletByCustomerId(Guid customerId)
+        {
+            try
+            {
+                var result = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId) && w.WalletType == WalletType.EXTRA);
+                return new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = result,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Wallet>
+                {
+                    InternalErrorMessage = e.Message,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<bool>> UpdateWalletAsync(Wallet wallet)
+        {
+            try
+            {
+                _db.Wallets.Update(wallet);
+                await _db.SaveChangesAsync();
+                return new Return<bool>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<bool>
+                {
                     InternalErrorMessage = e.Message,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };

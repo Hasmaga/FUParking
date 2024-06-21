@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -14,61 +15,61 @@ namespace FUParkingService
     {
         private readonly ICustomerService _customerService;
         private readonly IHelpperService _helperService;
-        private readonly IPackageRepository _packageRepository;        
+        private readonly IPackageRepository _packageRepository;
         private readonly IConfiguration _configuration;
-        private readonly IWalletRepository _walletRepository;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IDepositRepository _depositRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly IHttpClientFactory _httpClient;
+        private readonly IWalletRepository _walletRepository;
 
-        public ZaloService(ICustomerService customerService, IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IWalletRepository walletRepository, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient)
+        public ZaloService(ICustomerService customerService, IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
         {
             _customerService = customerService;
             _helperService = helperService;
             _packageRepository = packageRepository;
             _configuration = configuration;
-            _walletRepository = walletRepository;
             _paymentRepository = paymentRepository;
             _depositRepository = depositRepository;
             _transactionRepository = transactionRepository;
             _httpClient = httpClient;
+            _walletRepository = walletRepository;
         }
 
-        public async Task<Return<bool>> CustomerCreateRequestBuyPackageByZaloPayAsync(Guid packageId)
+        public async Task<Return<ZaloResDto>> CustomerCreateRequestBuyPackageByZaloPayAsync(Guid packageId)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 if (!_helperService.IsTokenValid())
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 var userLogged = await _customerService.GetCustomerByIdAsync(_helperService.GetAccIdFromLogged());
                 if (userLogged.IsSuccess == false || userLogged.Data == null)
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 var package = await _packageRepository.GetPackageByPackageIdAsync(packageId);
                 if (package.IsSuccess == false || package.Data == null)
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST };
                 }
                 // Call Zalo API to create request buy package
                 string appid = _configuration.GetSection("ZaloPay:AppId").Value ?? "";
                 string key1 = _configuration.GetSection("ZaloPay:Key1").Value ?? "";
                 string createOrderUrl = _configuration.GetSection("ZaloPay:CreateOrderUrl").Value ?? "";
-                string callbackUrl = _configuration.GetSection("ZaloPay:CallbackUrl").Value ?? "";
+                string redirectUrl = _configuration.GetSection("ZaloPay:RedirectUrl").Value ?? "";
                 string bankCode = _configuration.GetSection("ZaloPay:BankCode").Value ?? "";
-                if (string.IsNullOrEmpty(appid) || string.IsNullOrEmpty(key1) || string.IsNullOrEmpty(createOrderUrl) /*|| string.IsNullOrEmpty(callbackUrl)*/ || string.IsNullOrEmpty(bankCode))
+                if (string.IsNullOrEmpty(appid) || string.IsNullOrEmpty(key1) || string.IsNullOrEmpty(createOrderUrl) || string.IsNullOrEmpty(redirectUrl) || string.IsNullOrEmpty(bankCode))
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 Random rnd = new();
                 var embed_data = new
                 {
-                    redirecturl = callbackUrl,
-                    accountId = userLogged.Data.Id,
+                    redirecturl = redirectUrl,
+                    accountId = userLogged.Data.Id.ToString(),
                 };
                 var items = new[]
                 {
@@ -80,49 +81,71 @@ namespace FUParkingService
                         itemquantity = 1,
                     }
                 };
+
+                string tran;
+                bool isTranExist;
+                do
+                {
+                    tran = DateTime.Now.ToString("yyMMdd") + "_" + rnd.Next(1000000);
+                    // Check if tran exists in the database
+                    var depositExist = await _depositRepository.GetDepositByAppTransIdAsync(tran);
+                    if (depositExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        isTranExist = false;
+                    }
+                    else
+                    {
+                        isTranExist = true;
+                    }
+                } while (isTranExist);
+
                 var param = new Dictionary<string, string>()
                 {
                     { "app_id", appid },
                     { "app_user", "Bai Parking FPT" },
                     { "app_time", GetTimeStamp().ToString() },
                     { "amount", package.Data.Price.ToString() },
-                    { "app_tran_id", DateTime.Now.ToString("yyMMdd") + "_" + rnd.Next(1000000) },
+                    { "app_trans_id", tran },
                     { "embed_data", JsonConvert.SerializeObject(embed_data) },
                     { "item", JsonConvert.SerializeObject(items) },
                     { "description", "Mua gói dịch vụ " + package.Data.Name + " Bai Parking FPT" },
                     { "bank_code", bankCode },
-                    { "email", "baiparking@gmail.com" }
+                    { "email", "khangbpak2001@gmail.com" }
                 };
                 var data = appid + "|" + param["app_trans_id"] + "|" + param["app_user"] + "|" + param["amount"] + "|" + param["app_time"] + "|" + param["embed_data"] + "|" + param["item"];
                 param.Add("mac", Compute(ZaloPayHMAC.HMACSHA256, key1, data));
                 var response = await PostFormAsync(createOrderUrl, param);
                 string result = JsonConvert.SerializeObject(response);
-                // Create transaction
-                var walletData = (await _walletRepository.GetWalletByCustomerId(userLogged.Data.Id)).Data;
-                var paymentMethod = (await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.ZALOPAY)).Data;
-                if (walletData == null || paymentMethod == null)
+                // Convert result to ZaloPayResDto object
+                var zaloPayResDto = JsonConvert.DeserializeObject<ZaloResDto>(result);
+                if (zaloPayResDto?.Return_code != 1)
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                // Create transaction                
+                var paymentMethod = (await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.ZALOPAY)).Data;
+                if (paymentMethod == null)
+                {
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 // Create Deposit
                 Deposit newDeposit = new()
                 {
                     PaymentMethodId = paymentMethod.Id,
                     PackageId = package.Data.Id,
-                    CustomerId = walletData.CustomerId,
+                    CustomerId = userLogged.Data.Id,
                     Amount = package.Data.Price,
-                    AppTranId = param["app_tran_id"]
+                    AppTranId = tran
                 };
                 var deposit = await _depositRepository.CreateDepositAsync(newDeposit);
                 if (deposit.IsSuccess == false || deposit.Data == null)
                 {
                     scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
                 FUParkingModel.Object.Transaction newTransaction = new()
                 {
-                    WalletId = walletData.CustomerId,
                     Amount = package.Data.Price,
                     TransactionDescription = "UserId: " + userLogged.Data.Id + " buy " + package.Data.Name,
                     TransactionStatus = StatusTransactionEnum.PENDING,
@@ -132,14 +155,77 @@ namespace FUParkingService
                 if (transaction.IsSuccess == false || transaction.Data == null)
                 {
                     scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 scope.Complete();
-                return new Return<bool> { Data = true, Message = SuccessfullyEnumServer.SUCCESSFULLY };
+                return new Return<ZaloResDto> { Data = zaloPayResDto, Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
             }
             catch (Exception ex)
             {
                 scope.Dispose();
+                return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex.Message };
+            }
+        }
+
+
+        public async Task<Return<bool>> CallbackZaloPayAsync(string app_trans_id)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var deposit = await _depositRepository.GetDepositByAppTransIdAsync(app_trans_id);
+                if (!deposit.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || deposit.Data == null)
+                {
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var transaction = await _transactionRepository.GetTransactionByDepositIdAsync(deposit.Data.Id);
+                if (!transaction.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || transaction.Data == null)
+                {
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                transaction.Data.TransactionStatus = StatusTransactionEnum.SUCCEED;
+                var updateTransaction = await _transactionRepository.UpdateTransactionAsync(transaction.Data);
+                if (!updateTransaction.Message.Equals(SuccessfullyEnumServer.SUCCESSFULLY))
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var walletMain = await _walletRepository.GetMainWalletByCustomerId(deposit.Data.CustomerId);
+                if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                walletMain.Data.Balance += deposit.Data.Amount;
+                var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
+                if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(deposit.Data.CustomerId);
+                if (!walletExtra.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletExtra.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                walletExtra.Data.Balance += deposit.Data.Amount;
+                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                scope.Complete();
+                return new Return<bool> { Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
+            }
+            catch (Exception ex)
+            {
                 return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex.Message };
             }
         }

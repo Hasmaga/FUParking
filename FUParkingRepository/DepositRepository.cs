@@ -3,6 +3,7 @@ using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
 {
@@ -33,6 +34,27 @@ namespace FUParkingRepository
                 return new Return<Deposit>
                 {
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                    InternalErrorMessage = e.Message
+                };
+            }
+        }
+
+        public async Task<Return<Deposit>> GetDepositByAppTransIdAsync(string appTransId)
+        {
+            try
+            {
+                var result = await _db.Deposits.Where(d => d.AppTranId.Equals(appTransId)).FirstOrDefaultAsync();
+                return new Return<Deposit>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            } catch (Exception e)
+            {
+                return new Return<Deposit>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e.Message
                 };
             }
