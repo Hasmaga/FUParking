@@ -113,9 +113,33 @@ namespace FUParkingApi.Controllers
 
         [HttpPost("google")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromQuery] string onetimecode)
+        public async Task<IActionResult> Login([FromQuery] string idToken)
         {
-            return StatusCode(200, await _authService.LoginWithGoogleMobileAsync(onetimecode));            
+            try
+            {
+                var result = await _authService.LoginWithGoogleMobileAsync(idToken);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.GOOGLE_LOGIN_FAILED:
+                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
+                        case ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
+                        default:
+                            _logger.LogInformation("Error at login with google: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+            } catch (Exception e)
+            {
+                _logger.LogInformation("Error at login with google: {e}", e);
+                return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+            }
         }
     }
 }
