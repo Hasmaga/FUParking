@@ -55,11 +55,11 @@ namespace FUParkingService
                     return new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST };
                 }
                 // Call Zalo API to create request buy package
-                string appid = _configuration.GetSection("AppSettings:ZaloPay:AppId").Value ?? "";
-                string key1 = _configuration.GetSection("AppSettings:ZaloPay:Key1").Value ?? "";
-                string createOrderUrl = _configuration.GetSection("AppSettings:ZaloPay:CreateOrderUrl").Value ?? "";
-                string callbackUrl = _configuration.GetSection("AppSettings:ZaloPay:CallbackUrl").Value ?? "";
-                string bankCode = _configuration.GetSection("AppSettings:ZaloPay:BankCode").Value ?? "";
+                string appid = _configuration.GetSection("ZaloPay:AppId").Value ?? "";
+                string key1 = _configuration.GetSection("ZaloPay:Key1").Value ?? "";
+                string createOrderUrl = _configuration.GetSection("ZaloPay:CreateOrderUrl").Value ?? "";
+                string callbackUrl = _configuration.GetSection("ZaloPay:CallbackUrl").Value ?? "";
+                string bankCode = _configuration.GetSection("ZaloPay:BankCode").Value ?? "";
                 if (string.IsNullOrEmpty(appid) || string.IsNullOrEmpty(key1) || string.IsNullOrEmpty(createOrderUrl) || string.IsNullOrEmpty(callbackUrl) || string.IsNullOrEmpty(bankCode))
                 {
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };

@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -9,6 +10,6 @@ namespace FUParkingService.Interface
         Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login);
         Task<Return<LoginResDto>> LoginWithCredentialAsync(LoginWithCredentialReqDto req);
         Task<Return<LoginResDto>> CheckRoleByTokenAsync();
-        Task<Return<string>> LoginWithGoogleMobileAsync(string one_time_code);
+        Task<Return<LoginWithGoogleMoblieResDto>> LoginWithGoogleMobileAsync(string one_time_code);
     }
 }

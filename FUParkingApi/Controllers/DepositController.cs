@@ -15,13 +15,13 @@ namespace FUParkingApi.Controllers
     public class DepositController : Controller
     {
         public readonly IZaloService _zaloService;
-        
+
         public DepositController(IZaloService zaloService)
         {
             _zaloService = zaloService;
         }
 
-        [HttpPost]
+        [HttpPost("{packetId}")]
         public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute]Guid packetId)
         {
             try

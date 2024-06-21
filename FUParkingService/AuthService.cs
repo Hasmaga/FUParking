@@ -1,7 +1,8 @@
-﻿using FUParkingModel.Enum;
+﻿    using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -221,7 +222,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<string>> LoginWithGoogleMobileAsync(string one_time_code)
+        public async Task<Return<LoginWithGoogleMoblieResDto>> LoginWithGoogleMobileAsync(string one_time_code)
         {
             using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
@@ -230,17 +231,17 @@ namespace FUParkingService
                 var clientId = _configuration.GetSection("Authentication:Google:ClientId").Value;
                 if (string.IsNullOrEmpty(clientSecrets) || string.IsNullOrEmpty(clientId))
                 {
-                    return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 var settings = new ValidationSettings() { Audience = [clientId] };
                 Payload payload = await ValidateAsync(one_time_code, settings);
                 if (payload == null)
                 {
-                    return new Return<string> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
+                    return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
                 }
                 if (!payload.HostedDomain.Equals("fpt.edu.vn"))
                 {
-                    return new Return<string> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY };
+                    return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY };
                 }
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(payload.Email);
                 if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
@@ -249,7 +250,7 @@ namespace FUParkingService
                     var customerType = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
                     if (customerType.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || customerType.IsSuccess == false || customerType.Data == null)
                     {
-                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
+                        return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
                     }
                     Customer newCustomer = new() {
                         FullName = payload.Name,
@@ -262,7 +263,7 @@ namespace FUParkingService
                     if (resultCreateCus.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultCreateCus.Data == null)
                     {
                         transaction.Dispose();
-                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultCreateCus.InternalErrorMessage };
+                        return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultCreateCus.InternalErrorMessage };
                     }
                     // Create waller for the new customer
                     Wallet cusWalletMain = new() { 
@@ -274,7 +275,7 @@ namespace FUParkingService
                     if (resultWallet.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWallet.Data == null)
                     {
                         transaction.Dispose();
-                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWallet.InternalErrorMessage };
+                        return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWallet.InternalErrorMessage };
                     }
                     Wallet cusWalletExtra = new()
                     {
@@ -286,33 +287,45 @@ namespace FUParkingService
                     if (resultWalletExtra.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWalletExtra.Data == null)
                     {
                         transaction.Dispose();
-                        return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
+                        return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
                     }
                     transaction.Complete();
-                    return new Return<string>
+                    return new Return<LoginWithGoogleMoblieResDto>
                     {
-                        Data = CreateBearerTokenAccount(resultCreateCus.Data.Id),
+                        Data = new LoginWithGoogleMoblieResDto
+                        {
+                            BearerToken = CreateBearerTokenAccount(resultCreateCus.Data.Id),
+                            Name = resultCreateCus.Data.FullName ?? "",
+                            Email = resultCreateCus.Data.Email ?? "",
+                            Avarta = payload.Picture
+                        },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.SUCCESSFULLY
                     };
                 } else if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
                 {
                     transaction.Complete();
-                    return new Return<string>
+                    return new Return<LoginWithGoogleMoblieResDto>
                     {
-                        Data = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                        Data = new LoginWithGoogleMoblieResDto
+                        {
+                            BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                            Name = isUserRegistered.Data.FullName ?? "",
+                            Email = isUserRegistered.Data.Email ?? "",
+                            Avarta = payload.Picture
+                        },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.SUCCESSFULLY
                     };
                 } else
                 {
                     transaction.Dispose();
-                    return new Return<string> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isUserRegistered.InternalErrorMessage };
+                    return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isUserRegistered.InternalErrorMessage };
                 }
             }
             catch (Exception ex)
             {
-                return new Return<string>
+                return new Return<LoginWithGoogleMoblieResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,                    
                     InternalErrorMessage = ex.Message
