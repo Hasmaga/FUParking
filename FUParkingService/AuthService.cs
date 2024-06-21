@@ -297,7 +297,7 @@ namespace FUParkingService
                             BearerToken = CreateBearerTokenAccount(resultCreateCus.Data.Id),
                             Name = resultCreateCus.Data.FullName ?? "",
                             Email = resultCreateCus.Data.Email ?? "",
-                            Avarta = payload.Picture
+                            Avatar = payload.Picture
                         },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.SUCCESSFULLY
@@ -312,7 +312,7 @@ namespace FUParkingService
                             BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
                             Name = isUserRegistered.Data.FullName ?? "",
                             Email = isUserRegistered.Data.Email ?? "",
-                            Avarta = payload.Picture
+                            Avatar = payload.Picture
                         },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.SUCCESSFULLY

@@ -60,7 +60,7 @@ namespace FUParkingService
                 string createOrderUrl = _configuration.GetSection("ZaloPay:CreateOrderUrl").Value ?? "";
                 string callbackUrl = _configuration.GetSection("ZaloPay:CallbackUrl").Value ?? "";
                 string bankCode = _configuration.GetSection("ZaloPay:BankCode").Value ?? "";
-                if (string.IsNullOrEmpty(appid) || string.IsNullOrEmpty(key1) || string.IsNullOrEmpty(createOrderUrl) || string.IsNullOrEmpty(callbackUrl) || string.IsNullOrEmpty(bankCode))
+                if (string.IsNullOrEmpty(appid) || string.IsNullOrEmpty(key1) || string.IsNullOrEmpty(createOrderUrl) /*|| string.IsNullOrEmpty(callbackUrl)*/ || string.IsNullOrEmpty(bankCode))
                 {
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
