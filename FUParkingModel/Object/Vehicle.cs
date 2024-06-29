@@ -7,29 +7,31 @@ namespace FUParkingModel.Object
     public class Vehicle : Common
     {
         [Column("PlateNumber")]
-        public string? PlateNumber { get; set; }
+        public required string PlateNumber { get; set; }
 
-        [Column("CustomerId")]
-        [JsonIgnore]
-        public Guid CustomerId { get; set; }
-        [JsonIgnore]
+        [Column("CustomerId")]        
+        public required Guid CustomerId { get; set; }        
         public Customer? Customer { get; set; }
 
-        [Column("VehicleTypeId")]
-        [JsonIgnore]
-        public Guid VehicleTypeId { get; set; }
+        [Column("VehicleTypeId")]        
+        public required Guid VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
         [Column("PlateImage")]
-        public string? PlateImage { get; set; }
-
-        [Column("HeadImage")]
-        public string? HeadImage { get; set; }
-
-        [Column("BodyImage")]
-        public string? BodyImage { get; set; }
+        public required string PlateImage { get; set; }        
 
         [Column("StatusVehicle")]
-        public string? StatusVehicle { get; set; }
+        public required string StatusVehicle { get; set; }
+
+        [Column("StaffId")]
+        public Guid? StaffId { get; set; }
+        public User? Staff { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
     }
 }

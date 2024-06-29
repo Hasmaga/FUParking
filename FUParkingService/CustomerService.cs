@@ -22,88 +22,7 @@ namespace FUParkingService
             _helpperService = helpperService;
         }
 
-        public Task<Return<bool>> BuyPackageAsync(BuyPackageReqDto req, Guid customerId)
-        {
-            //Return<bool> res = new()
-            //{
-            //    Message = ErrorEnumApplication.SERVER_ERROR,
-            //};
-            //using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            //try
-            //{
-            //    Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-            //    if (customerRes.IsSuccess == false || customerRes.Data == null)
-            //    {
-            //        res.Message = customerRes.Message;
-            //        return res;
-            //    }
-
-            //    if (!Guid.TryParse(req.packageId, out Guid packageGuid))
-            //    {
-            //        transaction.Dispose();
-            //        res.Message = ErrorEnumApplication.PACKAGE_NOT_EXIST;
-            //        return res;
-            //    }
-
-            //    Return<Package?> existPackageRes = await _packageRepository.GetPackageByPackageIdAsync(packageGuid);
-
-            //    if (existPackageRes.Data == null)
-            //    {
-            //        transaction.Dispose();
-            //        res.Message = existPackageRes.Message;
-            //        return res;
-            //    }
-
-            //    Deposit newDeposit = new()
-            //    {
-            //        Name = existPackageRes.Data.Name,
-            //        PackageId = existPackageRes.Data.Id,
-            //        Description = DepositEnum.PACKAGE_DEPOSIT
-            //    };
-            //    Return<Deposit?> createDepositRes = await _depositRepository.CreateDepositAsync(newDeposit);
-            //    if (createDepositRes.Data == null)
-            //    {
-            //        transaction.Dispose();
-            //        res.Message = createDepositRes.Message;
-            //        return res;
-            //    }
-            //    Return<Wallet?> cusWalletRes = await _walletRepository.GetWalletByCustomerId(customerRes.Data.Id);
-            //    if (cusWalletRes.Data == null)
-            //    {
-            //        transaction.Dispose();
-            //        res.Message = cusWalletRes.Message;
-            //        return res;
-            //    }
-            //    Wallet customerWallet = cusWalletRes.Data;
-            //    FUParkingModel.Object.Transaction newTransaction = new()
-            //    {
-            //        WalletId = customerWallet.Id,
-            //        DepositId = createDepositRes.Data.Id,
-            //        Amount = existPackageRes.Data.CoinAmount,
-            //        TransactionStatus = StatusTransactionEnum.PENDING,
-            //    };
-            //    var createTransactionRes = await _transactionRepository.CreateTransactionAsync(newTransaction);
-            //    if (createTransactionRes.Data == null)
-            //    {
-            //        transaction.Dispose();
-            //        res.Message = createDepositRes.Message;
-            //        return res;
-            //    }
-            //    transaction.Complete();
-            //    res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
-            //    res.IsSuccess = true;
-            //    return res;
-            //}
-            //catch (Exception ex)
-            //{
-            //    transaction.Dispose();
-            //    res.InternalErrorMessage = ex.Message;
-            //    return res;
-            //}
-            throw new NotImplementedException();
-        }
-
-        public async Task<Return<bool>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)
+        public async Task<Return<dynamic>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)
         {
             try
             {
@@ -111,33 +30,30 @@ namespace FUParkingService
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = false,
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 // Check role 
                 var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || userlogged.Data.Role == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = false,
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (!Auth.AuthManager.Contains((userlogged.Data.Role ?? new Role() { Name = RoleEnum.MANAGER }).Name))
+                if (!Auth.AuthManager.Contains((userlogged.Data.Role).Name))
                 {
-                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 // Check CustomerId is exist
                 var isCustomerExist = await _customerRepository.GetCustomerByIdAsync(req.CustomerId);
-                if (isCustomerExist.Data == null || isCustomerExist.IsSuccess == false)
+                if (isCustomerExist.Data == null || !isCustomerExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = false,
                         Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST
                     };
                 }
@@ -145,9 +61,8 @@ namespace FUParkingService
                 {
                     if ((isCustomerExist.Data.StatusCustomer ?? "").Equals(StatusCustomerEnum.ACTIVE))
                     {
-                        return new Return<bool>
+                        return new Return<dynamic>
                         {
-                            IsSuccess = false,
                             Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
                         };
                     }
@@ -156,27 +71,22 @@ namespace FUParkingService
                         isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.ACTIVE;
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
-                        if (isUpdate.Data == null || isUpdate.IsSuccess == false)
+                        if (isUpdate.Data == null || !isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                         {
-                            return new Return<bool>
+                            return new Return<dynamic>
                             {
-                                IsSuccess = false,
-                                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                                Message = ErrorEnumApplication.SERVER_ERROR
                             };
                         }
-                        else
-                        {
-                            return new Return<bool> { IsSuccess = true, Data = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
-                        }
+                        return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
                     }
                 }
                 else
                 {
                     if ((isCustomerExist.Data.StatusCustomer ?? "").Equals(StatusCustomerEnum.INACTIVE))
                     {
-                        return new Return<bool>
+                        return new Return<dynamic>
                         {
-                            IsSuccess = false,
                             Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
                         };
                     }
@@ -185,61 +95,63 @@ namespace FUParkingService
                         isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.INACTIVE;
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
-                        if (isUpdate.Data == null || isUpdate.IsSuccess == false)
+                        if (isUpdate.Data == null || !isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                         {
-                            return new Return<bool>
-                            {
-                                IsSuccess = false,
-                                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                            return new Return<dynamic>
+                            {                                
+                                Message = ErrorEnumApplication.SERVER_ERROR
                             };
                         }
-                        else
-                        {
-                            return new Return<bool> { IsSuccess = true, Data = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
-                        }
+                        return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
                     }
                 }
             }
             catch (Exception ex)
             {
-                return new Return<bool>
-                {
-                    IsSuccess = false,
+                return new Return<dynamic>
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
 
-        public async Task<Return<Customer>> CreateCustomerAsync(CustomerReqDto customerReq, Guid userGuid)
+        public async Task<Return<dynamic>> CreateCustomerAsync(CustomerReqDto customerReq)
         {
-            Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
+            Return<dynamic> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
             try
             {
-                Return<User> userRes = await _userRepository.GetUserByIdAsync(userGuid);
-                bool isStaff = userRes.Data?.Role?.Name.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
-                if (userRes.Data == null || isStaff)
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
-
-                if (userRes.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || userlogged.Data.Role == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                if (!Auth.AuthSupervisor.Contains((userlogged.Data.Role).Name))
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                if (userlogged.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
                 Return<Customer> foundCustomerRes = await _customerRepository.GetCustomerByEmailAsync(customerReq.Email);
-                if (foundCustomerRes.Data != null)
+                if (foundCustomerRes.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     res.Message = ErrorEnumApplication.EMAIL_IS_EXIST;
                     return res;
                 }
-
                 Return<CustomerType> typeFreeRes = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.FREE);
-                if (typeFreeRes.Data == null)
-                {
-                    res.Message = typeFreeRes.Message;
+                if (!typeFreeRes.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || typeFreeRes.Data == null)
+                {                    
                     return res;
                 }
                 Customer newCustomer = new()
@@ -249,48 +161,76 @@ namespace FUParkingService
                     CustomerTypeId = typeFreeRes.Data.Id,
                     Email = customerReq.Email,
                 };
-                res = await _customerRepository.CreateNewCustomerAsync(newCustomer);
+                var result = await _customerRepository.CreateNewCustomerAsync(newCustomer);
+                if (result.Data == null || !result.Data.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                {
+                    return res;
+                }
+                res.Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY;
+                res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
 
-        public async Task<Return<Customer>> GetCustomerByIdAsync(Guid customerId)
+        public async Task<Return<GetCustomersWithFillerResDto>> GetCustomerByIdAsync(Guid customerId)
         {
-            Return<Customer> res = new()
+            Return<GetCustomersWithFillerResDto> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-
-                if (customerRes.Data == null)
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
-
-                if ((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || userlogged.Data.Role == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                if (!Auth.AuthSupervisor.Contains((userlogged.Data.Role).Name))
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                if (userlogged.Data.StatusUser.ToLower().Equals(StatusUserEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
-
-                return customerRes;
+                var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
+                res.Data = new GetCustomersWithFillerResDto()
+                {
+                    StatusCustomer = customer.Data?.StatusCustomer ?? "",
+                    CustomerType = customer.Data?.CustomerType?.Name ?? "",
+                    Email = customer.Data?.Email ?? "",
+                    FullName = customer.Data?.FullName ?? "",
+                    CreateDate = DateOnly.FromDateTime(customer.Data?.CreatedDate ?? DateTime.Now),
+                    CustomerId = customer.Data?.Id ?? Guid.Empty,
+                };
+                res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
+                res.IsSuccess = true;
+                return res;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
             }
         }
 
-        public async Task<Return<List<GetCustomersWithFillerResDto>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req)
+        public async Task<Return<IEnumerable<GetCustomersWithFillerResDto>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req)
         {
-            Return<List<GetCustomersWithFillerResDto>> res = new()
+            Return<IEnumerable<GetCustomersWithFillerResDto>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
                 IsSuccess = false
@@ -321,11 +261,11 @@ namespace FUParkingService
                     return res;
                 }
 
-                Return<List<Customer>> listCustomerRes = await _customerRepository.GetListCustomerAsync(req);
-                List<GetCustomersWithFillerResDto> listCustomer = [];
+                var listCustomerRes = await _customerRepository.GetListCustomerAsync(req);
+                IEnumerable<GetCustomersWithFillerResDto> listCustomer = [];
                 foreach (var item in listCustomerRes.Data ?? [])
                 {
-                    listCustomer.Add(new GetCustomersWithFillerResDto
+                    listCustomer.Append(new GetCustomersWithFillerResDto
                     {
                         CustomerId = item.Id,
                         FullName = item.FullName ?? "",
@@ -336,15 +276,16 @@ namespace FUParkingService
                     });
                 }
                 res.Data = listCustomer;
-                res.TotalRecord = listCustomer.Count;
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.TotalRecord = listCustomer.Count();
+                res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
                 res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
-            }
+                res.InternalErrorMessage = ex;
+                return res;
+            }            
         }
     }
 }

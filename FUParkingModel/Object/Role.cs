@@ -11,7 +11,17 @@ namespace FUParkingModel.Object
 
         [Column("Description")]
         public string? Description { get; set; }
-        [JsonIgnore]
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
 
         public ICollection<User>? Users { get; set; }
     }

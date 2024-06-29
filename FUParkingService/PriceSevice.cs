@@ -95,7 +95,7 @@ namespace FUParkingService
             {
                 return new Return<bool>()
                 {
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -167,7 +167,7 @@ namespace FUParkingService
                 return new Return<bool>
                 {
                     IsSuccess = false,
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -220,7 +220,7 @@ namespace FUParkingService
                     {
                         Data = result.Data,
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                        Message = SuccessfullyEnumServer.FOUND_OBJECT
                     };
                 }
                 else
@@ -237,7 +237,7 @@ namespace FUParkingService
                 return new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = false,
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -316,7 +316,7 @@ namespace FUParkingService
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -371,7 +371,7 @@ namespace FUParkingService
                     {
                         Data = listPriceTable,
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                        Message = SuccessfullyEnumServer.FOUND_OBJECT
                     };
                 }
                 else
@@ -389,7 +389,7 @@ namespace FUParkingService
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -499,7 +499,7 @@ namespace FUParkingService
                 {
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }

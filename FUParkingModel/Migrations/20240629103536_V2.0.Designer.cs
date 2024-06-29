@@ -4,6 +4,7 @@ using FUParkingModel.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    partial class FUParkingDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20240629103536_V2.0")]
+    partial class V20
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -245,10 +248,6 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("ParkingAreaId");
 
-                    b.Property<Guid?>("SessionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("SessionId");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Title");
@@ -258,8 +257,6 @@ namespace FUParkingModel.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("ParkingAreaId");
-
-                    b.HasIndex("SessionId");
 
                     b.ToTable("Feedback", "dbo");
                 });
@@ -1182,16 +1179,9 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("FUParkingModel.Object.Session", "Session")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.Navigation("Customer");
 
                     b.Navigation("ParkingArea");
-
-                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Gate", b =>
@@ -1592,8 +1582,6 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Session", b =>
                 {
-                    b.Navigation("Feedbacks");
-
                     b.Navigation("Payments");
                 });
 

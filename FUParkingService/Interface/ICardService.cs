@@ -6,9 +6,9 @@ namespace FUParkingService.Interface
 {
     public interface ICardService
     {
-        Task<Return<bool>> CreateNewCardAsync(CreateNewCardReqDto req);
+        Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req);
         Task<Return<List<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req);
-        Task<Return<bool>> DeleteCardByIdAsync(Guid id);
-        Task<Return<bool>> UpdatePlateNumberCard(string PlateNumber, Guid CardId);
+        Task<Return<dynamic>> DeleteCardByIdAsync(Guid id);
+        Task<Return<dynamic>> UpdatePlateNumberCard(string PlateNumber, Guid CardId);
     }
 }

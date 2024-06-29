@@ -6,22 +6,15 @@ namespace FUParkingModel.Object
     [Table("Transaction", Schema = "dbo")]
     public class Transaction : Common
     {
-        [Column("WalletId")]
-        [JsonIgnore]
-        public Guid? WalletId { get; set; }
-
-        [JsonIgnore]
+        [Column("WalletId")]       
+        public Guid? WalletId { get; set; }        
         public Wallet? Wallet { get; set; }
 
-        [Column("PaymentId")]
-        [JsonIgnore]
-        public Guid? PaymentId { get; set; }
-
-        [JsonIgnore]
+        [Column("PaymentId")]        
+        public Guid? PaymentId { get; set; }        
         public Payment? Payment { get; set; }
 
-        [Column("DepositId")]
-        [JsonIgnore]
+        [Column("DepositId")]        
         public Guid? DepositId { get; set; }
         public Deposit? Deposit { get; set; }
 
@@ -29,9 +22,9 @@ namespace FUParkingModel.Object
         public int Amount { get; set; }
 
         [Column("TransactionDescription")]
-        public string? TransactionDescription { get; set; }
+        public required string TransactionDescription { get; set; }
 
         [Column("TransactionStatus")]
-        public string? TransactionStatus { get; set; }
+        public required string TransactionStatus { get; set; }
     }
 }

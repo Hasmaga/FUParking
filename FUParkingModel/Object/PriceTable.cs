@@ -10,10 +10,10 @@ namespace FUParkingModel.Object
         public VehicleType? VehicleType { get; set; }
 
         [Column("Priority")]
-        public int Priority { get; set; }
+        public required int Priority { get; set; }
 
         [Column("Name")]
-        public string Name { get; set; } = null!;
+        public required string Name { get; set; } = null!;
 
         [Column("ApplyFromDate")]
         public DateTime ApplyFromDate { get; set; }
@@ -22,7 +22,18 @@ namespace FUParkingModel.Object
         public DateTime ApplyToDate { get; set; }
 
         [Column("StatusPriceTable")]
-        public string? StatusPriceTable { get; set; }
+        public required string StatusPriceTable { get; set; }
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
 
         public ICollection<PriceItem>? PriceItems { get; set; }
     }

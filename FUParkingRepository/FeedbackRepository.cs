@@ -32,65 +32,66 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Feedback>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
 
-        public async Task<Return<List<Feedback>>> GetCustomerFeedbacksByCustomerIdAsync(Guid customerGuiId, int pageIndex, int pageSize)
+        public async Task<Return<IEnumerable<Feedback>>> GetCustomerFeedbacksByCustomerIdAsync(Guid customerGuiId, int pageIndex, int pageSize)
         {
-            Return<List<Feedback>> res = new()
+            Return<IEnumerable<Feedback>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
             try
             {
-                List<Feedback> feedbacks = await _db.Feedbacks.Where(f => f.CustomerId.Equals(customerGuiId))
+                var feedbacks = await _db.Feedbacks.Where(f => f.CustomerId.Equals(customerGuiId))
+                                                                .Where(t => t.DeletedDate == null)
                                                                 .OrderByDescending(t => t.CreatedDate)
                                                                 .Skip((pageIndex - 1) * pageSize)
                                                                 .Take(pageSize)
                                                                 .ToListAsync();
                 res.Data = feedbacks;
                 res.IsSuccess = true;
-                res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
+                res.TotalRecord = feedbacks.Count;
+                res.Message = feedbacks.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 return res;
-
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
             }
         }
 
-        public async Task<Return<List<Feedback>>> GetFeedbacksAsync(int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<Feedback>>> GetFeedbacksAsync(int pageSize, int pageIndex)
         {
             try
             {
                 var feedbacks = await _db.Feedbacks
-                    .OrderByDescending(t => t.CreatedDate)
-                    .Include(f => f.Customer)
-                    .Include(f => f.ParkingArea)
-                    .Skip((pageIndex - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
+                        .OrderByDescending(t => t.CreatedDate)
+                        .Include(f => f.Customer)
+                        .Include(f => f.ParkingArea)
+                        .Skip((pageIndex - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToListAsync();
 
-                return new Return<List<Feedback>>()
+                return new Return<IEnumerable<Feedback>>()
                 {
                     Data = feedbacks,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = feedbacks.Count,
+                    Message = feedbacks.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
-                return new Return<List<Feedback>>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                return new Return<IEnumerable<Feedback>>()
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }

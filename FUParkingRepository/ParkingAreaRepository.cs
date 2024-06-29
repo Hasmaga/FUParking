@@ -19,9 +19,7 @@ namespace FUParkingRepository
         public async Task<Return<ParkingArea>> CreateParkingAreaAsync(ParkingArea parkingArea)
         {
             try
-            {
-                parkingArea.Mode = ModeEnum.MODE1;
-                parkingArea.StatusParkingArea = StatusParkingEnum.ACTIVE;
+            {                
                 await _db.ParkingAreas.AddAsync(parkingArea);
                 await _db.SaveChangesAsync();
                 return new Return<ParkingArea>
@@ -34,10 +32,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -50,19 +47,15 @@ namespace FUParkingRepository
             };
             try
             {
-                ParkingArea? parkingArea = await _db.ParkingAreas.FirstOrDefaultAsync(p => p.Id.Equals(parkingId));
-                if (parkingArea == null)
-                {
-                    res.Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST;
-                    return res;
-                }
-                res.Data = parkingArea;
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                var result = await _db.ParkingAreas.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(parkingId));                
+                res.Data = result;
+                res.Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
             }
         }
@@ -71,20 +64,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.ParkingAreas.Where(r => r.DeletedDate == null && r.Name.ToLower().Equals(name.ToLower())).FirstOrDefaultAsync();
                 return new Return<ParkingArea>
                 {
-                    Data = await _db.ParkingAreas.FindAsync(name),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -93,20 +86,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.ParkingAreas.Where(t => t.DeletedDate == null).ToListAsync();
                 return new Return<IEnumerable<ParkingArea>>
                 {
-                    Data = await _db.ParkingAreas.ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<ParkingArea>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                   
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -127,10 +121,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -139,25 +132,26 @@ namespace FUParkingRepository
         {
             try
             {
-                return new Return<IEnumerable<ParkingArea>>
-                {
-                    Data = await _db.ParkingAreas
+                var result = await _db.ParkingAreas
                                     .OrderByDescending(t => t.CreatedDate)
                                     .Skip((pageIndex - 1) * pageSize)
                                     .Take(pageSize)
-                                    .ToListAsync(),
+                                    .ToListAsync();
+
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Data = result,
                     IsSuccess = true,
-                    TotalRecord = await _db.ParkingAreas.CountAsync(),
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<ParkingArea>>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -170,11 +164,12 @@ namespace FUParkingRepository
                             join gate in _db.Gates on parkingArea.Id equals gate.ParkingAreaId
                             where gate.Id == gateId
                             select parkingArea;
-                return new Return<ParkingArea> { Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY, IsSuccess = true, Data = await query.FirstOrDefaultAsync() };
+                var result = await query.FirstOrDefaultAsync();
+                return new Return<ParkingArea> { Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT, IsSuccess = true, Data = result };
             }
             catch (Exception e)
             {
-                return new Return<ParkingArea> { Message = ErrorEnumApplication.GET_OBJECT_ERROR, IsSuccess = false, InternalErrorMessage = e.Message };
+                return new Return<ParkingArea> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = e };
             }
         }
     }

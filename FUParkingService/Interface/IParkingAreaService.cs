@@ -6,9 +6,9 @@ namespace FUParkingService.Interface
 {
     public interface IParkingAreaService
     {
-        Task<Return<bool>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
-        Task<Return<bool>> DeleteParkingArea(Guid id);
+        Task<Return<dynamic>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
+        Task<Return<dynamic>> DeleteParkingArea(Guid id);
         Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync(int pageIndex, int pageSize);
-        Task<Return<bool>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
+        Task<Return<dynamic>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
     }
 }

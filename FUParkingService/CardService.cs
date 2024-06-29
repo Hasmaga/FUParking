@@ -21,49 +21,51 @@ namespace FUParkingService
             _userRepository = userRepository;
         }
 
-        public async Task<Return<bool>> CreateNewCardAsync(CreateNewCardReqDto req)
+        public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
         {
             try
             {
                 // Check token valid
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 // Check logged in account is manager or supervisor
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
+                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
 
                 // Check card number is exist
                 var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
-                if (card.Data?.CardNumber != null)
+                if (card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_IS_EXIST,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.CARD_IS_EXIST                        
                     };
                 }
-
+                else if (card.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR                        
+                    };
+                }
                 // Create new card
                 Card newCard = new()
                 {
@@ -72,28 +74,24 @@ namespace FUParkingService
                 };
 
                 var res = await _cardRepository.CreateCardAsync(newCard);
-                if (res.IsSuccess)
+                if (!res.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                else
+                return new Return<dynamic>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR
-                    };
-                }
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
             }
-            catch
+            catch (Exception ex)
             {
-                return new Return<bool>
+                return new Return<dynamic>
                 {
-                    IsSuccess = false,
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -108,8 +106,7 @@ namespace FUParkingService
                 {
                     return new Return<List<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 // Check logged in account is manager or supervisor
@@ -118,197 +115,174 @@ namespace FUParkingService
                 {
                     return new Return<List<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<List<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
 
                 var res = await _cardRepository.GetAllCardsAsync(req);
-                if (res.IsSuccess)
-                {
-                    List<GetCardResDto> listCard = [];
-                    foreach (var item in res.Data ?? [])
-                    {
-                        listCard.Add(new GetCardResDto
-                        {
-                            Id = item.Id,
-                            CardNumber = item.CardNumber,
-                            CreatedDate = item.CreatedDate,
-                            PlateNumber = item.PlateNumber
-                        });
-                    }
-                    return new Return<List<GetCardResDto>>
-                    {
-                        TotalRecord = listCard.Count,
-                        IsSuccess = true,
-                        Data = listCard,
-                        Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
-                    };
-                }
-                else
+                if (!res.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || !res.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<List<GetCardResDto>>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                        Message = ErrorEnumApplication.SERVER_ERROR                        
                     };
                 }
+                var listCard = new List<GetCardResDto>();
+                foreach (var item in res.Data ?? [])
+                {
+                    listCard.Add(new GetCardResDto
+                    {
+                        Id = item.Id,
+                        CardNumber = item.CardNumber,
+                        PlateNumber = item.PlateNumber
+                    });
+                }
+                return new Return<List<GetCardResDto>>
+                {
+                    IsSuccess = true,
+                    Data = listCard,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
             }
             catch (Exception ex)
             {
                 return new Return<List<GetCardResDto>>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message,
+                {                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<bool>> DeleteCardByIdAsync(Guid id)
+        public async Task<Return<dynamic>> DeleteCardByIdAsync(Guid id)
         {
             try
             {
                 // Check token valid
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 // Check logged in account is manager or supervisor
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (accountLogin.IsSuccess == false || accountLogin.Data == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
 
                 // Check card is exist
                 var card = await _cardRepository.GetCardByIdAsync(id);
-                if (!card.IsSuccess || card.Data == null)
+                if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_NOT_EXIST,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.CARD_NOT_EXIST                        
                     };
                 }
                 card.Data.DeletedDate = DateTime.Now;
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
-                if (res.IsSuccess)
+                if (!res.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = res.InternalErrorMessage
                     };
                 }
-                else
+                return new Return<dynamic>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
-                    };
-                }
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                };
             }
-            catch
+            catch (Exception ex)
             {
-                return new Return<bool>
-                {
-                    IsSuccess = false,
+                return new Return<dynamic>
+                {         
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<bool>> UpdatePlateNumberCard(string PlateNumber, Guid CardId)
+        public async Task<Return<dynamic>> UpdatePlateNumberCard(string PlateNumber, Guid CardId)
         {
             try
             {
                 // Check token valid
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                       
                     };
                 }
                 // Check logged in account is manager or supervisor
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (accountLogin.IsSuccess == false || accountLogin.Data == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,                        
                     };
                 }
                 // Check card is exist
                 var card = await _cardRepository.GetCardByIdAsync(CardId);
                 if (!card.IsSuccess || card.Data == null)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_NOT_EXIST,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.CARD_NOT_EXIST,                        
                     };
                 }
                 card.Data.PlateNumber = PlateNumber;
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
-                if (res.IsSuccess)
+                if (!res.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = res.InternalErrorMessage
                     };
                 }
-                else
+                return new Return<dynamic>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
-                    };
-                }
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
             }
-            catch
+            catch(Exception ex)
             {
-                return new Return<bool>
+                return new Return<dynamic>
                 {
-                    IsSuccess = false,
+                    InternalErrorMessage = ex,                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

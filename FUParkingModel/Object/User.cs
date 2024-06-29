@@ -6,22 +6,60 @@ namespace FUParkingModel.Object
     public class User : Common
     {
         [Column("RoleId")]
-        public Guid RoleId { get; set; }
+        public required Guid RoleId { get; set; }
         public Role? Role { get; set; }
 
         [Column("FullName")]
-        public string? FullName { get; set; }
+        public required string FullName { get; set; }
 
         [Column("Email")]
-        public string? Email { get; set; }
+        public required string Email { get; set; }
 
         [Column("PasswordHash")]
-        public string? PasswordHash { get; set; }
+        public required string PasswordHash { get; set; }
 
         [Column("PasswordSalt")]
-        public string? PasswordSalt { get; set; }
+        public required string PasswordSalt { get; set; }
 
         [Column("StatusUser")]
         public required string StatusUser { get; set; }
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
+
+        public ICollection<Card>? CardsCreateBy { get; set; }
+        public ICollection<Card>? CardsLastModifyBy { get; set; }
+        public ICollection<Customer>? CustomersCreateBy { get; set; }
+        public ICollection<Customer>? CustomersLastModifyBy { get; set; }
+        public ICollection<CustomerType>? CustomerTypeCreateBy { get; set; }
+        public ICollection<CustomerType>? CustomerTypeLastModifyBy { get; set; }
+        public ICollection<Gate>? GateCreateBy { get; set; }
+        public ICollection<Gate>? GateLastModifyBy { get; set; }
+        public ICollection<GateType>? GateTypeCreateBy { get; set; }
+        public ICollection<GateType>? GateTypeLastModifyBy { get; set; }
+        public ICollection<Package>? PackageCreateBy { get; set; }
+        public ICollection<Package>? PackageLastModifyBy { get; set; }
+        public ICollection<ParkingArea>? ParkingAreaCreateBy { get; set; }
+        public ICollection<ParkingArea>? ParkingAreaLastModifyBy { get; set; }
+        public ICollection<PaymentMethod>? PaymentMethodCreateBy { get; set; }
+        public ICollection<PaymentMethod>? PaymentMethodLastModifyBy { get; set; }
+        public ICollection<PriceItem>? PriceItemCreateBy { get; set; }
+        public ICollection<PriceItem>? PriceItemLastModifyBy { get; set; }
+        public ICollection<PriceTable>? PriceTableCreateBy { get; set; }
+        public ICollection<PriceTable>? PriceTableLastModifyBy { get; set; }
+        public ICollection<Role>? RoleCreateBy { get; set; }
+        public ICollection<Role>? RoleLastModifyBy { get; set; }
+        public ICollection<Vehicle>? VehicleStaffs { get; set; }
+        public ICollection<Vehicle>? VehicleLastModifyBy { get; set; }
+        public ICollection<VehicleType>? VehicleTypeCreateBy { get; set; }
+        public ICollection<VehicleType>? VehicleTypeLastModifyBy { get; set; }
     }
 }

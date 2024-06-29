@@ -32,21 +32,20 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PriceItem>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
 
-        public async Task<Return<bool>> DeletePriceItemAsync(PriceItem priceItem)
+        public async Task<Return<dynamic>> DeletePriceItemAsync(PriceItem priceItem)
         {
             try
             {
                 _db.PriceItems.Remove(priceItem);
                 await _db.SaveChangesAsync();
-                return new Return<bool>
+                return new Return<dynamic>
                 {
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
@@ -54,11 +53,10 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<bool>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.DELETE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                return new Return<dynamic>
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -67,20 +65,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PriceItems.Where(r => r.PriceTableId.Equals(PriceTableId) && r.DeletedDate == null).ToListAsync();
                 return new Return<IEnumerable<PriceItem>>
                 {
-                    Data = await _db.PriceItems.Where(r => r.PriceTableId == PriceTableId).ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<PriceItem>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -89,20 +88,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PriceItems.Where(r => r.DeletedDate == null && r.Id.Equals(id)).FirstOrDefaultAsync();
                 return new Return<PriceItem>
                 {
-                    Data = await _db.PriceItems.FindAsync(id),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,                    
                 };
             }
             catch (Exception e)
             {
                 return new Return<PriceItem>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -124,9 +123,8 @@ namespace FUParkingRepository
             {
                 return new Return<PriceTable>
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -135,20 +133,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PriceTables.Include(r => r.VehicleType).Where(t => t.DeletedDate == null).ToListAsync();
                 return new Return<IEnumerable<PriceTable>>
                 {
-                    Data = await _db.PriceTables.Include(r => r.VehicleType).ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<PriceTable>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -157,20 +156,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PriceTables.Where(r => r.DeletedDate == null && r.Id.Equals(id)).FirstOrDefaultAsync();
                 return new Return<PriceTable>
                 {
-                    Data = await _db.PriceTables.FindAsync(id),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<PriceTable>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -191,10 +190,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PriceTable>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                   
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }

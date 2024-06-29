@@ -32,10 +32,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Session>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -44,20 +43,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Sessions.FirstOrDefaultAsync(x => x.CardId == cardId);
                 return new Return<Session>
                 {
-                    Data = await _db.Sessions.FirstOrDefaultAsync(x => x.CardId == cardId),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<Session>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -66,20 +65,42 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Sessions.Where(x => x.PlateNumber == plateNumber).FirstOrDefaultAsync();
                 return new Return<Session>
                 {
-                    Data = await _db.Sessions.FirstOrDefaultAsync(x => x.PlateNumber == plateNumber),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Session>
+                {                    
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<Session>> GetSessionByIdAsync(Guid sessionId)
+        {
+            try
+            {
+                var result = await _db.Sessions.Include(e => e.GateIn).FirstOrDefaultAsync(e => e.Id.Equals(sessionId));
+                return new Return<Session>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<Session>
                 {
-                    IsSuccess = false,
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }

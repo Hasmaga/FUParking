@@ -32,10 +32,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Payment>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -56,10 +55,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -68,20 +66,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PaymentMethods.ToListAsync();
                 return new Return<IEnumerable<PaymentMethod>>
                 {
-                    Data = await _db.PaymentMethods.ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<PaymentMethod>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -90,20 +89,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PaymentMethods.FindAsync(paymentMethodId);
                 return new Return<PaymentMethod>
                 {
-                    Data = await _db.PaymentMethods.FindAsync(paymentMethodId),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -112,19 +111,22 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.PaymentMethods
+                    .Where(t => t.Name != null && t.Name.ToLower().Equals(name.ToLower()))
+                    .FirstOrDefaultAsync();
                 return new Return<PaymentMethod>
                 {
-                    Data = await _db.PaymentMethods.FirstOrDefaultAsync(pm => pm.Name == name),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -145,10 +147,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }

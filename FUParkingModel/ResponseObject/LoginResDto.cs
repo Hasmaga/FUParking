@@ -2,9 +2,9 @@
 {
     public class LoginResDto
     {
-        public string? BearerToken { get; set; }
-        public string? Name { get; set; }
-        public string? Email { get; set; }
-        public string? Role { get; set; }
+        public string BearerToken { get; set; } = null!;
+        public string Name { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string Role { get; set; } = null!;
     }
 }

@@ -26,7 +26,7 @@ namespace FUParkingApi.Controllers
         {
             try
             {
-                var result = await _gateService.GetAllGate();
+                var result = await _gateService.GetAllGateAsync();
                 if (result.IsSuccess == false)
                 {
                     return BadRequest(result);
@@ -75,7 +75,7 @@ namespace FUParkingApi.Controllers
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
 
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                 });
             }
         }
@@ -104,7 +104,7 @@ namespace FUParkingApi.Controllers
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
 
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                 });
             }
         }

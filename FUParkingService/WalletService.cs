@@ -47,7 +47,7 @@ namespace FUParkingService
                     res.Message = foundWalletRes.Message;
                     return res;
                 }
-                Return<List<Transaction>> transactionRes = await _walletRepository.GetWalletTransactionByWalletIdAsync(foundWalletRes.Data.Id, pageIndex, pageSize, now, lastDate);
+                Return<IEnumerable<Transaction>> transactionRes = await _walletRepository.GetWalletTransactionByWalletIdAsync(foundWalletRes.Data.Id, pageIndex, pageSize, now, lastDate);
                 if (transactionRes.Data == null && !transactionRes.IsSuccess)
                 {
                     res.Message = transactionRes.Message;
@@ -55,7 +55,7 @@ namespace FUParkingService
                 }
                 res.Message = transactionRes.Message;
                 res.IsSuccess = true;
-                res.Data = transactionRes.Data;
+                res.Data = transactionRes.Data.ToList();
                 return res;
             }
             catch (Exception)

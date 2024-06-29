@@ -21,19 +21,7 @@ namespace FUParkingModel.RequestObject.Vehicle
         [FileSize(MaxFileSize)]
         [ValidateImageContentType]
         [Required(ErrorMessage = "Must have Plate Image")]
-        public IFormFile PlateImage { get; set; } = null!;
-
-        [FromForm(Name = "HeadImage")]
-        [FileSize(MaxFileSize)]
-        [ValidateImageContentType]
-        [Required(ErrorMessage = "Must have Head Image")]
-        public IFormFile HeadImage { get; set; } = null!;
-
-        [FromForm(Name = "BodyImage")]
-        [FileSize(MaxFileSize)]
-        [ValidateImageContentType]
-        [Required(ErrorMessage = "Must have Body Image")]
-        public IFormFile BodyImage { get; set; } = null!;
+        public IFormFile PlateImage { get; set; } = null!;        
     }
 
     public class FileSizeAttribute : ValidationAttribute

@@ -35,6 +35,18 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.CardId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Card>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.CardsCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Card>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.CardsLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<Customer>()
                 .HasMany(e => e.Feedbacks)
                 .WithOne(e => e.Customer)
@@ -53,10 +65,34 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.CustomerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Customer>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.CustomersCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Customer>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.CustomersLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<CustomerType>()
                 .HasMany(e => e.Customers)
                 .WithOne(e => e.CustomerType)
                 .HasForeignKey(e => e.CustomerTypeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CustomerType>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.CustomerTypeCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CustomerType>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.CustomerTypeLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Gate>()
@@ -71,10 +107,34 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.GateOutId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Gate>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.GateCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Gate>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.GateLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<GateType>()
                 .HasMany(e => e.Gates)
                 .WithOne(e => e.GateType)
                 .HasForeignKey(e => e.GateTypeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<GateType>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.GateTypeCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<GateType>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.GateTypeLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ParkingArea>()
@@ -153,6 +213,120 @@ namespace FUParkingModel.DatabaseContext
                 .HasMany(e => e.Deposits)
                 .WithOne(e => e.Package)
                 .HasForeignKey(e => e.PackageId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Customer>()
+                .HasMany(e => e.Sessions)
+                .WithOne(e => e.Customer)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Package>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.PackageCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Package>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.PackageLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ParkingArea>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.ParkingAreaCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ParkingArea>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.ParkingAreaLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PaymentMethod>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.PaymentMethodCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PaymentMethod>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.PaymentMethodLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PriceItem>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.PriceItemCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PriceItem>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.PriceItemLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PriceTable>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.PriceTableCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PriceTable>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.PriceTableLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Role>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.RoleCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Role>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.RoleLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Vehicle>()
+                .HasOne(e => e.Staff)
+                .WithMany(e => e.VehicleStaffs)
+                .HasForeignKey(e => e.StaffId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Vehicle>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.VehicleLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<VehicleType>()
+                .HasOne(e => e.CreateBy)
+                .WithMany(e => e.VehicleTypeCreateBy)
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<VehicleType>()
+                .HasOne(e => e.LastModifyBy)
+                .WithMany(e => e.VehicleTypeLastModifyBy)
+                .HasForeignKey(e => e.LastModifyById)
+                .OnDelete(DeleteBehavior.NoAction);
+            
+            modelBuilder.Entity<Session>()
+                .HasMany(e => e.Feedbacks)
+                .WithOne(e => e.Session)
+                .HasForeignKey(e => e.SessionId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Feedback>()
+                .HasOne(e => e.Session)
+                .WithMany(e => e.Feedbacks)
+                .HasForeignKey(e => e.SessionId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             OnModelCreatingPartial(modelBuilder);

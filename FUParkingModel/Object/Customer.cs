@@ -6,27 +6,34 @@ namespace FUParkingModel.Object
     [Table("Customer", Schema = "dbo")]
     public class Customer : Common
     {
-        [Column("CustomerTypeId")]
-        [JsonIgnore]
-        public Guid CustomerTypeId { get; set; }
+        [Column("CustomerTypeId")]        
+        public required Guid CustomerTypeId { get; set; }
         public CustomerType? CustomerType { get; set; }
 
         [Column("FullName")]
-        public string? FullName { get; set; }
+        public required string FullName { get; set; }
 
         [Column("Email")]
-        public string? Email { get; set; }        
+        public required string Email { get; set; }
 
         [Column("StatusCustomer")]
         public required string StatusCustomer { get; set; }
-        
-        [JsonIgnore]
-        public ICollection<Feedback>? Feedbacks { get; set; }
-        [JsonIgnore]
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
+
         public ICollection<Vehicle>? Vehicles { get; set; }
-        [JsonIgnore]
+        public ICollection<Feedback>? Feedbacks { get; set; }
         public ICollection<Wallet>? Wallets { get; set; }
-        [JsonIgnore]
         public ICollection<Deposit>? Deposits { get; set; }
+        public ICollection<Session>? Sessions { get; set; }
     }
 }

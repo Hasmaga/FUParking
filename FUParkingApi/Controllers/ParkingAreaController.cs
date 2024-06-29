@@ -52,7 +52,7 @@ namespace FUParkingApi.Controllers
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
 
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                 });
             }
         }
@@ -113,7 +113,7 @@ namespace FUParkingApi.Controllers
                     IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR,
 
-                    InternalErrorMessage = e.Message,
+                    InternalErrorMessage = e,
                 });
             }
         }

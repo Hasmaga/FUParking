@@ -39,7 +39,7 @@ namespace FUParkingApi.Controllers
             }
             catch (Exception ex)
             {
-                res.InternalErrorMessage = ex.Message;
+                res.InternalErrorMessage = ex;
                 return StatusCode(502, res);
             }
         }

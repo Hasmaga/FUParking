@@ -33,9 +33,8 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -51,16 +50,16 @@ namespace FUParkingRepository
                 {
                     Data = customers,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = customers.Count,
+                    Message = customers.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<Customer>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -81,8 +80,8 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,                    
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -95,16 +94,15 @@ namespace FUParkingRepository
                 {
                     Data = await _db.Customers.Include(c => c.CustomerType).FirstOrDefaultAsync(c => c.Id.Equals(customerId)),
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -126,9 +124,8 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -150,9 +147,8 @@ namespace FUParkingRepository
             {
                 return new Return<CustomerType>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -161,20 +157,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.CustomerTypes.ToListAsync();
                 return new Return<IEnumerable<CustomerType>>
                 {
-                    Data = await _db.CustomerTypes.ToListAsync(),
+                    Data = result,
+                    TotalRecord = result.Count,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<CustomerType>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -183,29 +180,29 @@ namespace FUParkingRepository
         {
             try
             {
-                var customerType = await _db.CustomerTypes.FirstOrDefaultAsync(ct => ct.Name == name);
+                var result = await _db.CustomerTypes.FirstOrDefaultAsync(ct => ct.Name == name);
                 return new Return<CustomerType>
                 {
-                    Data = customerType,
+                    Data = result,
                     IsSuccess = true,
-                    Message = customerType != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<CustomerType>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,                    
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
 
-        public async Task<Return<List<Customer>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req)
+        public async Task<Return<IEnumerable<Customer>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req)
         {
-            Return<List<Customer>> res = new()
+            Return<IEnumerable<Customer>> res = new()
             {
-                Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
@@ -229,19 +226,21 @@ namespace FUParkingRepository
                         default:
                             break;
                     }
-                }
-                // Apply pagination
-                res.Data = await query
-                     .OrderByDescending(t => t.CreatedDate)
-                     .Skip((req.PageIndex - 1) * req.PageSize)
-                     .Take(req.PageSize)
-                     .ToListAsync();
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                }                
+                var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
+                res.Data = result;
+                res.TotalRecord = result.Count;
+                res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
             }
         }

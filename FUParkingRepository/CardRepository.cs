@@ -22,7 +22,7 @@ namespace FUParkingRepository
             try
             {
                 await _db.Cards.AddAsync(card);
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync();                
                 return new Return<Card>
                 {
                     Data = card,
@@ -33,15 +33,14 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<List<Card>>> GetAllCardsAsync(GetCardsWithFillerReqDto req)
+        public async Task<Return<IEnumerable<Card>>> GetAllCardsAsync(GetCardsWithFillerReqDto req)
         {
             try
             {
@@ -58,26 +57,25 @@ namespace FUParkingRepository
                             break;
                     }
                 }
-
-                return new Return<List<Card>>
-                {
-                    Data = await query
+                var result = await query
                         .OrderByDescending(t => t.CreatedDate)
                         .Skip((req.PageIndex - 1) * req.PageSize)
                         .Take(req.PageSize)
-                        .ToListAsync(),
+                        .ToListAsync();
+                return new Return<IEnumerable<Card>>
+                {
+                    Data = result,
+                    TotalRecord = result.Count,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
-
             }
             catch (Exception e)
             {
-                return new Return<List<Card>>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                return new Return<IEnumerable<Card>>
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -86,20 +84,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Cards.Where(x => x.DeletedDate == null).FirstOrDefaultAsync(x => x.CardNumber == cardNumber);
                 return new Return<Card>
                 {
-                    Data = await _db.Cards.Where(x => x.DeletedDate == null).FirstOrDefaultAsync(x => x.CardNumber == cardNumber),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<Card>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -108,20 +106,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Cards.Where(x => x.DeletedDate == null).FirstOrDefaultAsync(x => x.Id == cardId);
                 return new Return<Card>
                 {
-                    Data = await _db.Cards.Where(x => x.DeletedDate == null).FirstOrDefaultAsync(x => x.Id == cardId),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<Card>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -142,10 +140,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }

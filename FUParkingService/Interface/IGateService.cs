@@ -6,9 +6,9 @@ namespace FUParkingService.Interface
 {
     public interface IGateService
     {
-        Task<Return<IEnumerable<Gate>>> GetAllGate();
-        Task<Return<bool>> UpdateGateAsync(UpdateGateReqDto req, Guid id);
-        Task<Return<bool>> CreateGateAsync(CreateGateReqDto req);
-        Task<Return<bool>> DeleteGate(Guid id);
+        Task<Return<IEnumerable<Gate>>> GetAllGateAsync();
+        Task<Return<dynamic>> UpdateGateAsync(UpdateGateReqDto req, Guid id);
+        Task<Return<dynamic>> CreateGateAsync(CreateGateReqDto req);
+        Task<Return<dynamic>> DeleteGate(Guid id);
     }
 }

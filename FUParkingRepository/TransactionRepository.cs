@@ -33,8 +33,8 @@ namespace FUParkingRepository
             {
                 return new Return<Transaction>
                 {                    
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -55,39 +55,41 @@ namespace FUParkingRepository
             {
                 return new Return<Transaction>
                 {                    
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
 
-        public async Task<Return<List<Transaction>>> GetTransactionListAsync(DateTime FromDate, DateTime ToDate, int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<Transaction>>> GetTransactionListAsync(DateTime FromDate, DateTime ToDate, int pageSize, int pageIndex)
         {
-            Return<List<Transaction>> res = new() { Message = ErrorEnumApplication.GET_OBJECT_ERROR };
+            Return<IEnumerable<Transaction>> res = new() { Message = ErrorEnumApplication.GET_OBJECT_ERROR };
             try
             {
-                res.Data = await _db.Transactions.Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)
+                var result = await _db.Transactions.Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)
                                                                 .OrderByDescending(t => t.CreatedDate)
                                                                 .Skip((pageIndex - 1) * pageSize)
                                                                 .Take(pageSize)
                                                                 .ToListAsync();
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.Data = result;
+                res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch (Exception e)
             {
+                res.InternalErrorMessage = e;
                 return res;
             }
         }
 
-        public async Task<Return<bool>> UpdateTransactionAsync(Transaction transaction)
+        public async Task<Return<Transaction>> UpdateTransactionAsync(Transaction transaction)
         {
             try
             {
                 _db.Update(transaction);
                 await _db.SaveChangesAsync();
-                return new Return<bool>
+                return new Return<Transaction>
                 {
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
@@ -95,10 +97,10 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<bool>
+                return new Return<Transaction>
                 {                    
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }

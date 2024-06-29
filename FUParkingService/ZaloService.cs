@@ -13,7 +13,7 @@ namespace FUParkingService
 {
     public class ZaloService : IZaloService
     {
-        private readonly ICustomerService _customerService;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IHelpperService _helperService;
         private readonly IPackageRepository _packageRepository;
         private readonly IConfiguration _configuration;
@@ -23,9 +23,9 @@ namespace FUParkingService
         private readonly IHttpClientFactory _httpClient;
         private readonly IWalletRepository _walletRepository;
 
-        public ZaloService(ICustomerService customerService, IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
+        public ZaloService(ICustomerRepository customerRepository, IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
         {
-            _customerService = customerService;
+            _customerRepository = customerRepository;
             _helperService = helperService;
             _packageRepository = packageRepository;
             _configuration = configuration;
@@ -45,7 +45,7 @@ namespace FUParkingService
                 {
                     return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
-                var userLogged = await _customerService.GetCustomerByIdAsync(_helperService.GetAccIdFromLogged());
+                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helperService.GetAccIdFromLogged());
                 if (userLogged.IsSuccess == false || userLogged.Data == null)
                 {
                     return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
@@ -69,7 +69,7 @@ namespace FUParkingService
                 var embed_data = new
                 {
                     redirecturl = redirectUrl,
-                    accountId = userLogged.Data.Id.ToString(),
+                    accountId = userLogged.Data.Id.ToString()
                 };
                 var items = new[]
                 {
@@ -163,12 +163,12 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 scope.Dispose();
-                return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex.Message };
+                return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 
 
-        public async Task<Return<bool>> CallbackZaloPayAsync(string app_trans_id)
+        public async Task<Return<bool>> CallbackZaloPayAsync(string app_trans_id) // Not exp date yet
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
@@ -226,7 +226,7 @@ namespace FUParkingService
             }
             catch (Exception ex)
             {
-                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex.Message };
+                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 

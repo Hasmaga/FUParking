@@ -17,22 +17,24 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public async Task<Return<List<Vehicle>>> GetAllCustomerVehicleByCustomerIdAsync(Guid customerGuid)
+        public async Task<Return<IEnumerable<Vehicle>>> GetAllCustomerVehicleByCustomerIdAsync(Guid customerGuid)
         {
-            Return<List<Vehicle>> res = new()
+            Return<IEnumerable<Vehicle>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                List<Vehicle> vehicles = await _db.Vehicles.Where(v => v.CustomerId.Equals(customerGuid)).ToListAsync();
+                IEnumerable<Vehicle> vehicles = await _db.Vehicles.Where(v => v.CustomerId.Equals(customerGuid)).ToListAsync();
                 res.Data = vehicles;
                 res.IsSuccess = true;
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                res.TotalRecord = vehicles.Count();
+                res.Message = vehicles.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 return res;
             }
-            catch
+            catch (Exception e)
             {
+                res.InternalErrorMessage = e;
                 return res;
             }
         }
@@ -53,10 +55,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Vehicle>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -77,10 +78,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -102,24 +102,25 @@ namespace FUParkingRepository
                             break;
                     }
                 }
-                return new Return<IEnumerable<VehicleType>>()
-                {
-                    Data = await query
+                var result = await query
                                 .OrderByDescending(t => t.CreatedDate)
                                 .Skip((req.PageIndex - 1) * req.PageSize)
                                 .Take(req.PageSize)
-                                .ToListAsync(),
+                                .ToListAsync();
+                return new Return<IEnumerable<VehicleType>>()
+                {
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<VehicleType>>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -128,19 +129,19 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.VehicleTypes.Where(e => e.DeletedDate == null).FirstOrDefaultAsync(e => e.Id == vehicleTypeId);
                 return new Return<VehicleType>()
                 {
-                    Data = await _db.VehicleTypes.Where(e => e.DeletedDate == null).FirstOrDefaultAsync(e => e.Id == vehicleTypeId),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
+                {                    
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
             }
@@ -162,10 +163,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -179,16 +179,16 @@ namespace FUParkingRepository
                 {
                     Data = vehicles,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = vehicles.Count,
+                    Message = vehicles.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<Vehicle>>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -197,20 +197,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Vehicles.Where(v => v.VehicleTypeId == id).ToListAsync();
                 return new Return<IEnumerable<Vehicle>>()
                 {
-                    Data = await _db.Vehicles.Where(v => v.VehicleTypeId == id).ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<Vehicle>>()
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -219,20 +220,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.VehicleTypes.Where(a => a.DeletedDate == null).FirstOrDefaultAsync(vt => vt.Name.Equals(VehicleTypeName, StringComparison.OrdinalIgnoreCase));
                 return new Return<VehicleType>
                 {
-                    Data = await _db.VehicleTypes.Where(a => a.DeletedDate == null).FirstOrDefaultAsync(vt => vt.Name.Equals(VehicleTypeName, StringComparison.OrdinalIgnoreCase)),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<VehicleType>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }

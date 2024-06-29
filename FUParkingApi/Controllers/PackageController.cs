@@ -19,28 +19,7 @@ namespace FUParkingApi.Controllers
         public PackageController(IPackageService packageService)
         {
             _packageService = packageService;
-        }
-
-        [HttpGet("available")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAvailablePackageAsync()
-        {
-            Return<List<Package>> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                res = await _packageService.GetAvailablePackageAsync();
-                if (!res.IsSuccess)
-                    return BadRequest(res);
-                return Ok(res);
-            }
-            catch
-            {
-                return StatusCode(502, res);
-            }
-        }
+        }        
 
         [HttpGet("")]
         public async Task<IActionResult> GetCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
@@ -96,7 +75,7 @@ namespace FUParkingApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
         {
-            Return<bool> res = new()
+            Return<dynamic> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
@@ -121,7 +100,7 @@ namespace FUParkingApi.Controllers
         [HttpPut("{packageId}")]
         public async Task<IActionResult> UpdateCoinPackage([FromRoute] Guid packageId, [FromBody] UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
-            Return<bool> res = new()
+            Return<dynamic> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };
@@ -148,7 +127,7 @@ namespace FUParkingApi.Controllers
         [HttpDelete("{packageId}")]
         public async Task<IActionResult> DeleteCoinPackage(Guid packageId)
         {
-            Return<bool> res = new()
+            Return<dynamic> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
             };

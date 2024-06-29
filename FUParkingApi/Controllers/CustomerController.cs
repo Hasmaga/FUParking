@@ -16,33 +16,26 @@ namespace FUParkingApi.Controllers
     public class CustomerController : Controller
     {
         private readonly ICustomerService _customerService;
-        private readonly IHelpperService _helperService;
         private readonly IVehicleService _vehicleService;
 
-        public CustomerController(ICustomerService customerService, IHelpperService helpperService, IVehicleService vehicleService)
+        public CustomerController(ICustomerService customerService, IVehicleService vehicleService)
         {
-            _customerService = customerService;
-            _helperService = helpperService;
+            _customerService = customerService;            
             _vehicleService = vehicleService;
         }
 
         [HttpPost("free")]
         public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
         {
-            Return<Customer> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
+            Return<dynamic> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
             try
             {
                 if (!ModelState.IsValid)
                 {
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
-                }
-                Guid userGuid = _helperService.GetAccIdFromLogged();
-                if (userGuid == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
+                }               
 
-                res = await _customerService.CreateCustomerAsync(req, userGuid);
+                res = await _customerService.CreateCustomerAsync(req);
                 if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
                 {
                     return Unauthorized(res);
@@ -86,7 +79,7 @@ namespace FUParkingApi.Controllers
                     Message = ErrorEnumApplication.INVALID_INPUT
                 });
             }
-            Return<List<GetCustomersWithFillerResDto>> res = new()
+            Return<IEnumerable<GetCustomersWithFillerResDto>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
@@ -123,23 +116,9 @@ namespace FUParkingApi.Controllers
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
-            {
-                Guid customerGuid = _helperService.GetAccIdFromLogged();
-                if (customerGuid == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
+            {                
 
-                res = await _vehicleService.GetCustomerVehicleByCustomerIdAsync(customerGuid);
-                if (res.Message.ToLower().Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
-
-                if (res.Message.ToLower().Equals(ErrorEnumApplication.NOT_AUTHORITY))
-                {
-                    return Unauthorized(res);
-                }
+                
                 if (!res.IsSuccess)
                 {
                     return BadRequest(res);
@@ -161,17 +140,7 @@ namespace FUParkingApi.Controllers
             };
             try
             {
-                Guid customerGuid = _helperService.GetAccIdFromLogged();
-                if (customerGuid == Guid.Empty)
-                {
-                    return Unauthorized();
-                }
-                res = await _customerService.GetCustomerByIdAsync(customerGuid);
-
-                if ((res.Message ?? "").ToLower().Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
+               
                 if (!res.IsSuccess)
                 {
                     return BadRequest(res);

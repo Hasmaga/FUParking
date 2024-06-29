@@ -11,22 +11,14 @@ namespace FUParkingModel.Object
 
         [Column("WalletType")]
         public required string WalletType { get; set; }
-
-        [JsonIgnore]
+        
         [Column("CustomerId")]
-        public required Guid CustomerId { get; set; }
-
-        [JsonIgnore]
-        public Customer? Customer { get; set; }
-
-        [Column("WalletStatus")]
-        [JsonIgnore]
-        public string? WalletStatus { get; set; }
+        public required Guid CustomerId { get; set; }        
+        public Customer? Customer { get; set; }        
 
         [Column("EXPDate")]
         public DateTime? EXPDate { get; set; }
-
-        [JsonIgnore]
+        
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

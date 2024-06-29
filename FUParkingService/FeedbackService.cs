@@ -15,108 +15,121 @@ namespace FUParkingService
         private readonly ICustomerRepository _customerRepository;
         private readonly IParkingAreaRepository _parkingAreaRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ISessionRepository _sessionRepository;
 
-        public FeedbackService(IFeedbackRepository feedbackRepository, ICustomerRepository customerRepository, IParkingAreaRepository parkingAreaRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public FeedbackService(IFeedbackRepository feedbackRepository, ICustomerRepository customerRepository, IParkingAreaRepository parkingAreaRepository, IUserRepository userRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _feedbackRepository = feedbackRepository;
             _customerRepository = customerRepository;
             _parkingAreaRepository = parkingAreaRepository;
             _userRepository = userRepository;
             _helpperService = helpperService;
+            _sessionRepository = sessionRepository;
         }
 
-        public async Task<Return<Feedback>> CreateFeedbackAsync(FeedbackReqDto request, Guid customerId)
+        public async Task<Return<dynamic>> CreateFeedbackAsync(FeedbackReqDto request)
         {
-            Return<Feedback> res = new()
+            Return<dynamic> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-                if (customerRes.Data == null)
+                if (!_helpperService.IsTokenValid())
                 {
-                    res.Message = customerRes.Message;
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
 
-                if ((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE))
+                if (customerLogged.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
 
-                if (!Guid.TryParse(request.ParkingAreaId, out var parkingAreaGuId))
+                // Check session is exist
+                var isSessionExist = await _sessionRepository.GetSessionByIdAsync(request.SessionId);
+                if (!isSessionExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isSessionExist.Data == null)
                 {
-                    res.Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST;
+                    res.Message = ErrorEnumApplication.NOT_FOUND_OBJECT;
                     return res;
                 }
 
-                Return<ParkingArea> foundParkingAreaRes = await _parkingAreaRepository.GetParkingAreaByIdAsync(parkingAreaGuId);
-
-                if (foundParkingAreaRes.Data == null)
+                // Get parking area by session
+                var foundParkingAreaRes = await _parkingAreaRepository.GetParkingAreaByIdAsync(isSessionExist.Data.GateIn?.ParkingAreaId ?? Guid.Empty);
+                if (!foundParkingAreaRes.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || foundParkingAreaRes.Data == null)
                 {
-                    res.Message = foundParkingAreaRes.Message;
+                    res.Message = ErrorEnumApplication.NOT_FOUND_OBJECT;
                     return res;
                 }
 
                 Feedback newFeedback = new()
                 {
-                    CustomerId = customerId,
-                    Description = request.Description?.Trim(),
+                    CustomerId = customerLogged.Data.Id,
+                    Description = request.Description.Trim(),
                     ParkingAreaId = foundParkingAreaRes.Data.Id,
-                    Title = request.Title?.Trim() ?? "Untitled"
+                    SessionId = isSessionExist.Data.Id,
+                    Title = request.Title.Trim()
                 };
                 Return<Feedback> createFeedbackRes = await _feedbackRepository.CreateFeedbackAsync(newFeedback);
-                if (createFeedbackRes.Data == null)
+                if (createFeedbackRes.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    res.Message = createFeedbackRes.Message;
+                    res.Message = ErrorEnumApplication.SERVER_ERROR;
                     return res;
                 }
-
-                res.Message = createFeedbackRes.Message;
+                res.Message = SuccessfullyEnumServer.SUCCESSFULLY;
                 res.IsSuccess = true;
-                res.Data = createFeedbackRes.Data;
-
                 return res;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
 
-        public async Task<Return<List<Feedback>>> GetFeedbacksByCustomerIdAsync(Guid customerId, int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<Feedback>>> GetFeedbacksByCustomerIdAsync(int pageSize, int pageIndex)
         {
-            Return<List<Feedback>> res = new()
+            Return<IEnumerable<Feedback>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerId);
-                if (customerRes.Data == null)
+                if (!_helpperService.IsTokenValid())
                 {
-                    res.Message = customerRes.Message;
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data == null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
 
-                if ((customerRes.Data.StatusCustomer ?? "").ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                if (customerLogged.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
-
-                res = await _feedbackRepository.GetCustomerFeedbacksByCustomerIdAsync(customerId, pageIndex, pageSize);
+                res = await _feedbackRepository.GetCustomerFeedbacksByCustomerIdAsync(customerLogged.Data.Id, pageIndex, pageSize);
                 return res;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
 
-        public async Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex, Guid userGuid)
+        public async Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex)
         {
             try
             {
@@ -124,15 +137,14 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<IEnumerable<GetListFeedbacksResDto>>
-                    {
-                        IsSuccess = false,
+                    {                       
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
 
                 // check role
                 var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.IsSuccess)
+                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<IEnumerable<GetListFeedbacksResDto>>
                     {
@@ -168,8 +180,7 @@ namespace FUParkingService
             catch
             {
                 return new Return<IEnumerable<GetListFeedbacksResDto>>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

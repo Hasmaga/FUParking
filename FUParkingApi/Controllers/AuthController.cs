@@ -29,8 +29,16 @@ namespace FUParkingApi.Controllers
         [AllowAnonymous]
         public IActionResult Login()
         {
-            var props = new AuthenticationProperties { RedirectUri = "api/auth/signin-google" };
-            return Challenge(props, GoogleDefaults.AuthenticationScheme);
+            try
+            {
+                var props = new AuthenticationProperties { RedirectUri = "api/auth/signin-google" };
+                return Challenge(props, GoogleDefaults.AuthenticationScheme);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation("Error at login with google: {e}", e);
+                return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+            }
         }
 
         [HttpGet("signin-google")]
@@ -52,28 +60,35 @@ namespace FUParkingApi.Controllers
                     IsAuthentication = (reponse.Principal.Identity ?? new ClaimsIdentity()).IsAuthenticated
                 };
                 var result = await _authService.LoginWithGoogleAsync(login);
-                if (result.IsSuccess)
+                if (result.Message.Equals(SuccessfullyEnumServer.LOGIN_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    return StatusCode(200, result);
                 }
                 else
                 {
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.GOOGLE_LOGIN_FAILED:
-                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
+                            return StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
                         case ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY:
-                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
+                            return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
                         default:
-                            _logger.LogInformation("Error at login with google {email}: {ex}", login.Email, result.InternalErrorMessage);
-                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                            if (result.InternalErrorMessage != null)
+                            {
+                                _logger.LogError("Error at login with google {email}: {ex}", login.Email, result.InternalErrorMessage);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("Error at login with google {email}", login.Email);
+                            }
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogInformation("Error at login with google: {ex}", ex);
-                return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
             }
         }
 
@@ -86,13 +101,27 @@ namespace FUParkingApi.Controllers
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
             var result = await _authService.LoginWithCredentialAsync(login);
-            if (result.IsSuccess)
+            if (result.Message.Equals(SuccessfullyEnumServer.LOGIN_SUCCESSFULLY))
             {
-                return Ok(result);
+                return StatusCode(200, result);
             }
             else
             {
-                return BadRequest(result);
+                switch (result.Message)
+                {
+                    case ErrorEnumApplication.CRENEDTIAL_IS_WRONG:
+                        return StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG });
+                    default:
+                        if (result.InternalErrorMessage != null)
+                        {
+                            _logger.LogError("Error at login with credential {email}: {ex}", login.Email, result.InternalErrorMessage);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Error at login with credential {email}", login.Email);
+                        }
+                        return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                }
             }
         }
 
@@ -101,13 +130,27 @@ namespace FUParkingApi.Controllers
         public async Task<IActionResult> CheckRoleByTokenAsync()
         {
             var result = await _authService.CheckRoleByTokenAsync();
-            if (result.IsSuccess)
+            if (result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
                 return Ok(result);
             }
             else
             {
-                return BadRequest(result);
+                switch (result.Message)
+                {
+                    case ErrorEnumApplication.USER_NOT_EXIST:
+                        return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.USER_NOT_EXIST });
+                    default:
+                        if (result.InternalErrorMessage != null)
+                        {
+                            _logger.LogError("Error at check role by token: {ex}", result.InternalErrorMessage);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Error at check role by token");
+                        }
+                        return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                }
             }
         }
 
@@ -127,18 +170,26 @@ namespace FUParkingApi.Controllers
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.GOOGLE_LOGIN_FAILED:
-                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
+                            return StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED });
                         case ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY:
-                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
+                            return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY });
                         default:
-                            _logger.LogInformation("Error at login with google: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                            if (result.InternalErrorMessage != null)
+                            {
+                                _logger.LogError("Error at login with google: {ex}", result.InternalErrorMessage);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("Error at login with google with IdToken: {idToken}", idToken);
+                            }
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
-                _logger.LogInformation("Error at login with google: {e}", e);
-                return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                _logger.LogInformation("Error at login with google with IdToken {idToken}: {e}", e, idToken);
+                return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
             }
         }
     }

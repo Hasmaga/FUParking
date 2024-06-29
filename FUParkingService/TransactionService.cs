@@ -41,8 +41,9 @@ namespace FUParkingService
                     res.Message = ErrorEnumApplication.DATE_OVERLAPSED;
                     return res;
                 }
-
-                res = await _transactionRepository.GetTransactionListAsync(fromDate, toDate, pageSize, pageIndex);
+                res.IsSuccess = true;
+                res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
+                res.Data = (await _transactionRepository.GetTransactionListAsync(fromDate, toDate, pageSize, pageIndex)).Data.ToList();
                 return res;
             }
             catch

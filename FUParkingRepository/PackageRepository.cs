@@ -16,43 +16,47 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public async Task<Return<List<Package>>> GetAllPackagesAsync()
+        public async Task<Return<IEnumerable<Package>>> GetAllPackagesAsync()
         {
-            Return<List<Package>> res = new()
+            Return<IEnumerable<Package>> res = new()
             {
-                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                Message = ErrorEnumApplication.SERVER_ERROR,
             };
             try
             {
-                List<Package> packages = await _db.Packages.OrderByDescending(t => t.CreatedDate).ToListAsync();
-                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                var result = await _db.Packages.Where(t => t.DeletedDate == null).OrderByDescending(t => t.CreatedDate).ToListAsync();
+                res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
-                res.Data = packages;
+                res.TotalRecord = result.Count;
+                res.Data = result;
                 return res;
             }
-            catch
+            catch (Exception e)
             {
+                res.InternalErrorMessage = e;
                 return res;
             }
         }
 
-        public async Task<Return<List<Package>>> GetPackagesByStatusAsync(bool active)
+        public async Task<Return<IEnumerable<Package>>> GetPackagesByStatusAsync(bool active)
         {
-            Return<List<Package>> res = new()
+            Return<IEnumerable<Package>> res = new()
             {
-                Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                Message = ErrorEnumApplication.SERVER_ERROR,
             };
             try
             {
                 string status = active ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
-                List<Package> packages = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
-                res.Message = SuccessfullyEnumServer.FOUND_OBJECT;
+                var result = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
+                res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
-                res.Data = packages;
+                res.TotalRecord = result.Count;
+                res.Data = result;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
             }
         }
@@ -73,8 +77,8 @@ namespace FUParkingRepository
             {
                 return new Return<Package>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -96,9 +100,8 @@ namespace FUParkingRepository
             {
                 return new Return<Package>
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -107,69 +110,52 @@ namespace FUParkingRepository
         {
             try
             {
-                List<Package> packages;
-                int totalRecord = 0;
-
-                if (string.IsNullOrEmpty(status))
+                var query = _db.Packages.Where(p => p.DeletedDate == null).AsQueryable();
+                if (!string.IsNullOrEmpty(status))
                 {
-                    packages = await _db.Packages
-                        .OrderByDescending(t => t.CreatedDate)
-                        .Skip(pageSize * (pageIndex - 1))
-                        .Take(pageSize)
-                        .ToListAsync();
-
-                    totalRecord = await _db.Packages.CountAsync();
+                    query = query.Where(p => p.PackageStatus == status);
                 }
-                else
-                {
-                    packages = await _db.Packages
-                                        .Where(p => p.PackageStatus.Equals(status))
-                                        .OrderByDescending(t => t.CreatedDate)
-                                        .Skip(pageSize * (pageIndex - 1))
-                                        .Take(pageSize)
-                                        .ToListAsync();
-
-                    totalRecord = await _db.Packages
-                                        .Where(p => p.PackageStatus.Equals(status))
-                                        .CountAsync();
-                }
-
+                var result = await query
+                                .OrderByDescending(t => t.CreatedDate)
+                                .Skip((pageIndex - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToListAsync();
                 return new Return<IEnumerable<Package>>
                 {
-                    Data = packages,
+                    Data = result,
                     IsSuccess = true,
-                    TotalRecord = totalRecord,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<Package>>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }
 
-        public async Task<Return<bool>> UpdateCoinPackage(Package package)
+        public async Task<Return<Package>> UpdateCoinPackage(Package package)
         {
-            Return<bool> res = new()
+            Return<Package> res = new()
             {
-                Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
+                Message = ErrorEnumApplication.SERVER_ERROR,
             };
             try
             {
                 _db.Packages.Update(package);
                 await _db.SaveChangesAsync();
                 res.IsSuccess = true;
-                res.Data = true;
+                res.Data = package;
                 res.Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY;
                 return res;
             }
-            catch
+            catch(Exception e)
             {
+                res.InternalErrorMessage = e;
                 return res;
             }
         }
@@ -185,12 +171,13 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Data = result
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<Package>
                 {
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }

@@ -33,8 +33,8 @@ namespace FUParkingRepository
             {
                 return new Return<Deposit>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -55,7 +55,7 @@ namespace FUParkingRepository
                 return new Return<Deposit>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e.Message
+                    InternalErrorMessage = e
                 };
             }
         }

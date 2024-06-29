@@ -25,7 +25,7 @@ namespace FUParkingService
                         {
                             Message = ErrorEnumApplication.SERVER_ERROR,
                             IsSuccess = false,
-                            InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
+                            InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.NOT_FOUND)
                         };
                     }
                     else
@@ -57,7 +57,7 @@ namespace FUParkingService
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -100,7 +100,7 @@ namespace FUParkingService
                             {
                                 Message = ErrorEnumApplication.SERVER_ERROR,
                                 IsSuccess = false,
-                                InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
+                                InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.NOT_FOUND)
                             };
                         }
                     }
@@ -110,7 +110,7 @@ namespace FUParkingService
                         {
                             Message = ErrorEnumApplication.SERVER_ERROR,
                             IsSuccess = false,
-                            InternalErrorMessage = MinioErrorApplicationDefineEnum.FILE_NAME_IS_EXIST
+                            InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.FILE_NAME_IS_EXIST)
                         };
                     }
                 }
@@ -130,7 +130,7 @@ namespace FUParkingService
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -149,7 +149,7 @@ namespace FUParkingService
                         {
                             Message = ErrorEnumApplication.SERVER_ERROR,
                             IsSuccess = false,
-                            InternalErrorMessage = MinioErrorApplicationDefineEnum.NOT_FOUND
+                            InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.NOT_FOUND)
                         };
                     }
                     else
@@ -195,7 +195,7 @@ namespace FUParkingService
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -244,7 +244,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SERVER_ERROR,
                         IsSuccess = false, // Why is false, because the action is fail
-                        InternalErrorMessage = ex.Message
+                        InternalErrorMessage = ex
                     };
                 }
             }

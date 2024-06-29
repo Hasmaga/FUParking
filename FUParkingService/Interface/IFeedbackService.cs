@@ -7,8 +7,8 @@ namespace FUParkingService.Interface
 {
     public interface IFeedbackService
     {
-        Task<Return<Feedback>> CreateFeedbackAsync(FeedbackReqDto request, Guid customerId);
-        Task<Return<List<Feedback>>> GetFeedbacksByCustomerIdAsync(Guid customerId, int pageSize, int pageIndex);
-        Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex, Guid userGuid);
+        Task<Return<dynamic>> CreateFeedbackAsync(FeedbackReqDto request);
+        Task<Return<IEnumerable<Feedback>>> GetFeedbacksByCustomerIdAsync(int pageSize, int pageIndex);
+        Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex);
     }
 }

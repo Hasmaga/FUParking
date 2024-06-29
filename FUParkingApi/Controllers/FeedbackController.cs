@@ -27,7 +27,7 @@ namespace FUParkingApi.Controllers
         [HttpGet("customers")]
         public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            Return<List<Feedback>> res = new()
+            Return<IEnumerable<Feedback>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
@@ -45,7 +45,7 @@ namespace FUParkingApi.Controllers
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
 
-                res = await _feedbackService.GetFeedbacksByCustomerIdAsync(customerGuid, pageSize, pageIndex);
+                res = await _feedbackService.GetFeedbacksByCustomerIdAsync(pageSize, pageIndex);
 
                 if ((res.Message ?? "").Equals(ErrorEnumApplication.BANNED))
                 {
@@ -66,7 +66,7 @@ namespace FUParkingApi.Controllers
         [HttpPost("customers")]
         public async Task<IActionResult> CustomerCreateFeedbackAsync([FromBody] FeedbackReqDto request)
         {
-            Return<Feedback> res = new()
+            Return<dynamic> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
@@ -84,7 +84,7 @@ namespace FUParkingApi.Controllers
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
                 }
 
-                Return<Feedback> createFeedbackRes = await _feedbackService.CreateFeedbackAsync(request, customerGuid);
+                Return<dynamic> createFeedbackRes = await _feedbackService.CreateFeedbackAsync(request);
                 res.Message = createFeedbackRes.Message;
                 if (!createFeedbackRes.IsSuccess)
                 {
@@ -113,7 +113,7 @@ namespace FUParkingApi.Controllers
                     return Unauthorized();
                 }
 
-                res = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex, userGuid);
+                res = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex);
 
                 if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
                 {

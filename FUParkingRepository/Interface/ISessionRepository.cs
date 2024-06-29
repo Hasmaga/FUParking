@@ -8,5 +8,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Session>> CreateSessionAsync(Session session);
         Task<Return<Session>> GetSessionByCardIdAsync(Guid cardId);
         Task<Return<Session>> GetSessionByPlateNumberAsync(string plateNumber);
+        Task<Return<Session>> GetSessionByIdAsync(Guid sessionId);
     }
 }

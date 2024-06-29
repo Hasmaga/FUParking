@@ -25,7 +25,7 @@ namespace FUParkingService
         {
             try
             {
-                if (status == StatusPackageEnum.ACTIVE)
+                if (status == StatusPackageEnum.ACTIVE || status == null)
                 {
                     // Token is invalid, treat as customer and return active packages
                     var activePackagesResult = await _packageRepository.GetCoinPackages(StatusPackageEnum.ACTIVE, pageSize, pageIndex);
@@ -41,7 +41,7 @@ namespace FUParkingService
                             ExtraCoin = package.ExtraCoin,
                             EXPPackage = package.EXPPackage
                         }),
-                        Message = activePackagesResult.IsSuccess ? SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                        Message = activePackagesResult.IsSuccess ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.SERVER_ERROR
                     };
                 }
 
@@ -60,15 +60,13 @@ namespace FUParkingService
                 {
                     // Token is valid, check user role
                     var userLoggedResult = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                    if (userLoggedResult.Data == null || !userLoggedResult.IsSuccess)
+                    if (userLoggedResult.Data == null || !userLoggedResult.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
                         return new Return<IEnumerable<dynamic>>
-                        {
-                            IsSuccess = false,
+                        {                            
                             Message = ErrorEnumApplication.NOT_AUTHORITY
                         };
                     }
-
                     var userRole = userLoggedResult.Data.Role?.Name ?? "";
                     if (!Auth.AuthSupervisor.Contains(userRole))
                     {
@@ -95,42 +93,21 @@ namespace FUParkingService
                             CreateDate = package.CreatedDate.ToString("dd/MM/yyyy"),
                             DeletedDate = package.DeletedDate?.ToString("dd/MM/yyyy")
                         }),
-                        Message = allPackagesResult.IsSuccess ? SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                        Message = allPackagesResult.IsSuccess ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.SERVER_ERROR
                     };
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return new Return<IEnumerable<dynamic>>
-                {
-                    IsSuccess = false,
+                {                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }
+        }       
 
-        public async Task<Return<List<Package>>> GetAvailablePackageAsync()
-        {
-            Return<List<Package>> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                Return<List<Package>> packagesRes = await _packageRepository.GetPackagesByStatusAsync(true);
-                if (!packagesRes.IsSuccess)
-                {
-                    return res;
-                }
-                return packagesRes;
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public async Task<Return<bool>> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
+        public async Task<Return<dynamic>> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
         {
             try
             {
@@ -138,7 +115,7 @@ namespace FUParkingService
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
@@ -146,9 +123,9 @@ namespace FUParkingService
 
                 // Check role = Manager
                 var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
@@ -156,13 +133,13 @@ namespace FUParkingService
 
                 if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }               
 
                 var isExistPackage = await _packageRepository.GetPackageByNameAsync(reqDto.Name);
                 if (isExistPackage.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))    
                 {
-                    return new Return<bool> { Message = ErrorEnumApplication.OBJECT_EXISTED };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.OBJECT_EXISTED };
                 }
 
                 // Create package
@@ -173,142 +150,138 @@ namespace FUParkingService
                     CoinAmount = reqDto.CoinAmount,
                     ExtraCoin = reqDto.ExtraCoin,
                     EXPPackage = reqDto.EXPPackage,
-                    PackageStatus = StatusPackageEnum.ACTIVE,                    
+                    PackageStatus = StatusPackageEnum.ACTIVE, 
+                    CreatedById = userlogged.Data.Id,            
                 };
 
                 var res = await _packageRepository.CreatePackageAsync(package);
-                return new Return<bool>
+                if (!res.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    Data = res.IsSuccess,
-                    IsSuccess = res.IsSuccess,
-                    Message = res.IsSuccess ? SuccessfullyEnumServer.SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR,
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,                    
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new Return<bool>
+                return new Return<dynamic>
                 {                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<bool>> UpdateCoinPackage(UpdateCoinPackageReqDto updateCoinPackageReqDto)
+        public async Task<Return<dynamic>> UpdateCoinPackage(UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
             try
             {
                 // Check token validity
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
                 // Get the logged-in user
                 var userLoggedResponse = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userLoggedResponse.Data == null || !userLoggedResponse.IsSuccess)
+                if (userLoggedResponse.Data == null || !userLoggedResponse.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-
-                var userLogged = userLoggedResponse.Data;
-                if (!Auth.AuthManager.Contains(userLogged.Role?.Name ?? ""))
+                }                
+                if (!Auth.AuthManager.Contains(userLoggedResponse.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-                Guid packageId = updateCoinPackageReqDto.PackageId;
+                }                
                 // Check if the package exists
-                var packageResponse = await _packageRepository.GetPackageByPackageIdAsync(packageId);
-                if (packageResponse.Data == null || !packageResponse.IsSuccess)
+                var packageResponse = await _packageRepository.GetPackageByPackageIdAsync(updateCoinPackageReqDto.PackageId);
+                if (packageResponse.Data == null || !packageResponse.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
+                    return new Return<dynamic>
                     {
                         IsSuccess = false,
                         Message = ErrorEnumApplication.PACKAGE_NOT_EXIST
                     };
                 }
 
-                // Check for duplicate package name
-                var packagesResponse = await _packageRepository.GetPackagesByStatusAsync(true);
-                if (packagesResponse.Data == null || !packagesResponse.IsSuccess)
+                if (updateCoinPackageReqDto.Name?.Trim() is not null)
                 {
-                    return new Return<bool>
+                    var isNameExist = await _packageRepository.GetPackageByNameAsync(updateCoinPackageReqDto.Name);
+                    if (isNameExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
-                        IsSuccess = false,
+                        return new Return<dynamic>
+                        {
+                            IsSuccess = false,
+                            Message = ErrorEnumApplication.OBJECT_EXISTED
+                        };
+                    }
+                    packageResponse.Data.Name = updateCoinPackageReqDto.Name;
+                }          
+
+                if (updateCoinPackageReqDto.IsActive is not null)
+                {
+                    packageResponse.Data.PackageStatus = updateCoinPackageReqDto.IsActive.Value ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
+                }
+                // Update package details
+                var updateResponse = await _packageRepository.UpdateCoinPackage(packageResponse.Data);
+                if (!updateResponse.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-
-                var packages = packagesResponse.Data;
-                if (packages.Exists(p => p.Name == updateCoinPackageReqDto.Name && p.Id != packageId))
+                return new Return<dynamic>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.OBJECT_EXISTED
-                    };
-                }
-
-                // Update package details
-                var package = packageResponse.Data;
-                package.Name = updateCoinPackageReqDto.Name;
-                package.PackageStatus = updateCoinPackageReqDto.IsActive ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
-
-                var updateResponse = await _packageRepository.UpdateCoinPackage(package);
-                return updateResponse;
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new Return<bool>
-                {
-                    IsSuccess = false,
+                return new Return<dynamic>
+                {                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<bool>> DeleteCoinPackage(Guid packageId)
+        public async Task<Return<dynamic>> DeleteCoinPackage(Guid packageId)
         {
             try
             {
                 // Check token validity
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
                 // Get the logged-in user
                 var userLoggedResponse = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userLoggedResponse.Data == null || !userLoggedResponse.IsSuccess)
+                if (userLoggedResponse.Data == null || !userLoggedResponse.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-
-                var userLogged = userLoggedResponse.Data;
-                if (!Auth.AuthManager.Contains(userLogged.Role?.Name ?? ""))
+                }               
+                if (!Auth.AuthManager.Contains(userLoggedResponse.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -317,26 +290,35 @@ namespace FUParkingService
                 var packageResponse = await _packageRepository.GetPackageByPackageIdAsync(packageId);
                 if (packageResponse.Data == null || !packageResponse.IsSuccess)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.PACKAGE_NOT_EXIST
                     };
                 }
+                
+                packageResponse.Data.DeletedDate = DateTime.Now;
+                packageResponse.Data.LastModifyById = userLoggedResponse.Data.Id;
+                packageResponse.Data.LastModifyDate = DateTime.Now;
 
-                // Update package details
-                var package = packageResponse.Data;
-                package.PackageStatus = StatusPackageEnum.INACTIVE;
-                package.DeletedDate = DateTime.Now;
-
-                var updateResponse = await _packageRepository.UpdateCoinPackage(package);
-                return updateResponse;
-            }
-            catch (Exception)
-            {
-                return new Return<bool>
+                var isUpdate = await _packageRepository.UpdateCoinPackage(packageResponse.Data);
+                if (!isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    IsSuccess = false,
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

@@ -11,6 +11,17 @@ namespace FUParkingModel.Object
         [Column("CardNumber")]
         public string CardNumber { get; set; } = null!;
 
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
+
         public ICollection<Session>? Sessions { get; set; }
     }
 }

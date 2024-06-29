@@ -33,9 +33,8 @@ namespace FUParkingRepository
             {
                 return new Return<Role>()
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -44,20 +43,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Roles.ToListAsync();
                 return new Return<IEnumerable<Role>>
                 {
-                    Data = await _db.Roles.ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.Count
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<Role>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -66,20 +66,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Roles.FirstOrDefaultAsync(x => x.Name == roleName);
                 return new Return<Role>
                 {
-                    Data = await _db.Roles.FirstOrDefaultAsync(x => x.Name == roleName),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<Role>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }

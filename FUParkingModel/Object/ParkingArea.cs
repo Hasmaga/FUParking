@@ -15,13 +15,24 @@ namespace FUParkingModel.Object
         public int MaxCapacity { get; set; }
 
         [Column("Block")]
-        public int Block { get; set; }
+        public required int Block { get; set; }
 
         [Column("Mode")]
-        public string? Mode { get; set; }
+        public required string Mode { get; set; }
 
         [Column("StatusParkingArea")]
-        public string? StatusParkingArea { get; set; }
+        public required string StatusParkingArea { get; set; }
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
 
         public ICollection<Feedback>? Feedbacks { get; set; }
         public ICollection<Gate>? Gates { get; set; }

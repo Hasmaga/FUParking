@@ -33,9 +33,8 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -44,20 +43,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Users.Include(r => r.Role).ToListAsync();
                 return new Return<IEnumerable<User>>
                 {
-                    Data = await _db.Users.Include(r => r.Role).ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<User>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -66,20 +66,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Email == email);
                 return new Return<User>
                 {
-                    Data = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Email == email),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -88,20 +88,20 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Id.Equals(id));
                 return new Return<User>
                 {
-                    Data = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(r => r.Id.Equals(id)),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -123,9 +123,8 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }

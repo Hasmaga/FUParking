@@ -313,7 +313,7 @@ namespace FUParkingService
                     Data = false,
                     Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }

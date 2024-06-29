@@ -290,8 +290,7 @@ namespace FUParkingService
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
-
-                res = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerGuid);
+                res.Data = (await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerGuid)).Data.ToList();
                 return res;
             }
             catch
@@ -427,8 +426,7 @@ namespace FUParkingService
                     ObjFile = reqDto.PlateImage,
                     ObjName = objNamePlateNumber,
                     BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                };
-                // Upload 3 images head, body, plateNumber of vehicle to bucket if fail then delete image success previous and return error
+                };                
                 var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imagePlateNumber);
                 if (!resultUploadImagePlateNumber.IsSuccess)
                 {
@@ -437,69 +435,13 @@ namespace FUParkingService
                         IsSuccess = false,
                         Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
                     };
-                }
-
-                var fileExtensionHead = Path.GetExtension(reqDto.HeadImage.FileName);
-                var objNameHead = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_head" + fileExtensionHead;
-
-                UploadObjectReqDto imageHead = new()
-                {
-                    ObjFile = reqDto.HeadImage,
-                    ObjName = objNameHead,
-                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                };
-
-                var resultUploadImageHead = await _minioService.UploadObjectAsync(imageHead);
-                if (!resultUploadImageHead.IsSuccess)
-                {
-                    var resultDeleteImagePlateNumber = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
-                    {
-                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
-                        ObjName = imagePlateNumber.ObjName
-                    });
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
-                    };
-                }
-
-                var fileExtensionBody = Path.GetExtension(reqDto.BodyImage.FileName);
-                var objNameBody = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_body" + fileExtensionBody;
-                UploadObjectReqDto imageBody = new()
-                {
-                    ObjFile = reqDto.BodyImage,
-                    ObjName = objNameBody,
-                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                };
-
-                var resultUploadImageBody = await _minioService.UploadObjectAsync(imageBody);
-                if (!resultUploadImageBody.IsSuccess)
-                {
-                    var resultDeleteImagePlateNumber = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
-                    {
-                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
-                        ObjName = imagePlateNumber.ObjName
-                    });
-                    var resultDeleteImageHead = await _minioService.DeleteObjectAsync(new DeleteObjectReqDto
-                    {
-                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE,
-                        ObjName = imageHead.ObjName
-                    });
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
-                    };
-                }
+                }                
                 var vehicle = new Vehicle
                 {
                     PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
                     CustomerId = userLogged.Data.Id,
-                    PlateImage = imagePlateNumber.ObjName,
-                    HeadImage = imageHead.ObjName,
-                    BodyImage = imageBody.ObjName,
+                    PlateImage = imagePlateNumber.ObjName,                    
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
 
@@ -516,7 +458,7 @@ namespace FUParkingService
                 return new Return<bool>()
                 {
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message,
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

@@ -32,10 +32,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Gate>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -44,20 +43,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.Gates.Where(t => t.DeletedDate == null).ToListAsync();
                 return new Return<IEnumerable<Gate>>
                 {
-                    Data = await _db.Gates.ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.Count
                 };
             }
             catch (Exception e)
             {
                 return new Return<IEnumerable<Gate>>
-                {
-                    IsSuccess = false,
-                    InternalErrorMessage = e.Message,
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                {                    
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
@@ -79,9 +79,8 @@ namespace FUParkingRepository
             {
                 return new Return<GateType>()
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -90,20 +89,21 @@ namespace FUParkingRepository
         {
             try
             {
+                var result = await _db.GateTypes.ToListAsync();
                 return new Return<IEnumerable<GateType>>
                 {
-                    Data = await _db.GateTypes.ToListAsync(),
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<GateType>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -124,10 +124,9 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Gate>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR,
-                    InternalErrorMessage = e.Message
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
                 };
             }
         }
@@ -140,20 +139,52 @@ namespace FUParkingRepository
             };
             try
             {
-                Gate? gate = await _db.Gates.FirstOrDefaultAsync(p => p.Id.Equals(id));
-                if (gate == null)
-                {
-                    res.Message = ErrorEnumApplication.GATE_NOT_EXIST;
-                    return res;
-                }
-                res.Data = gate;
-                res.Message = SuccessfullyEnumServer.GET_OBJECT_SUCCESSFULLY;
+                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Id.Equals(id));               
+                res.Data = result;
+                res.Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
                 return res;
             }
-            catch
+            catch(Exception ex)
             {
+                res.InternalErrorMessage = ex;
                 return res;
+            }                
+        }
+
+        public async Task<Return<Gate>> GetGateByNameAsync(string name)
+        {
+            try
+            {
+                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                return new Return<Gate>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<Gate>> GetGateTypeByIdAsync(Guid id)
+        {
+            try
+            {
+                var result = await _db.Gates.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(id));
+                return new Return<Gate>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

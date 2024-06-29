@@ -1,4 +1,4 @@
-﻿    using FUParkingModel.Enum;
+﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
@@ -51,74 +51,69 @@ namespace FUParkingService
                 // Check if the user is already registered
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(login.Email);
                 // If the user is not registered, create a new user
-                if (isUserRegistered.Data != null)
+                if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data != null)
                 {
-                    if (isUserRegistered != null && isUserRegistered.Data != null)
-                    {
-                        return new Return<LoginResDto>
-                        {
-                            Data = new LoginResDto
-                            {
-                                BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
-                                Name = isUserRegistered.Data.FullName,
-                                Email = isUserRegistered.Data.Email
-                            },
-                            IsSuccess = true,
-                            Message = SuccessfullyEnumServer.SUCCESSFULLY
-                        };
-                    }
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.SERVER_ERROR,
-                        InternalErrorMessage = isUserRegistered?.InternalErrorMessage
+                        Data = new LoginResDto
+                        {
+                            BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
+                            Name = isUserRegistered.Data.FullName ?? "",
+                            Email = isUserRegistered.Data.Email ?? ""
+                        },
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                     };
+                }
+                else if (isUserRegistered.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
+                {
+                    return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isUserRegistered.InternalErrorMessage };
                 }
                 // Get the customer type
                 var customerType = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
-                if (customerType.Data == null)
+                if (customerType.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || customerType.Data == null)
                 {
-                    return new Return<LoginResDto> { Message = ErrorEnumApplication.GET_OBJECT_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
+                    return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
                 }
                 Customer newCustomer = new() { FullName = login.Name, Email = login.Email, CustomerTypeId = customerType.Data.Id, StatusCustomer = StatusCustomerEnum.ACTIVE };
                 var result = await _customerRepository.CreateNewCustomerAsync(newCustomer);
-                if (result.IsSuccess == false || result.Data == null)
+                if (result.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || result.Data == null)
                 {
                     transaction.Dispose();
-                    return new Return<LoginResDto> { Message = ErrorEnumApplication.ADD_OBJECT_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                    return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
                 }
                 // Create waller for the new customer
-                Wallet cusWalletMain = new() { WalletType = WalletType.MAIN, CustomerId = result.Data.Id, WalletStatus = StatusWalletEnum.ACTIVE };
+                Wallet cusWalletMain = new() { WalletType = WalletType.MAIN, CustomerId = result.Data.Id };
                 var resultWallet = await _walletRepository.CreateWalletAsync(cusWalletMain);
-                if (resultWallet.IsSuccess == false || resultWallet.Data == null)
+                if (resultWallet.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWallet.Data == null)
                 {
                     transaction.Dispose();
-                    return new Return<LoginResDto> { Message = ErrorEnumApplication.ADD_OBJECT_ERROR, InternalErrorMessage = resultWallet.InternalErrorMessage };
+                    return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWallet.InternalErrorMessage };
                 }
-                Wallet cusWalletExtra = new() { CustomerId = result.Data.Id, WalletType = WalletType.EXTRA, WalletStatus = StatusWalletEnum.ACTIVE };
+                Wallet cusWalletExtra = new() { CustomerId = result.Data.Id, WalletType = WalletType.EXTRA };
                 var resultWalletExtra = await _walletRepository.CreateWalletAsync(cusWalletExtra);
-                if (resultWalletExtra.IsSuccess == false || resultWalletExtra.Data == null)
+                if (resultWalletExtra.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWalletExtra.Data == null)
                 {
                     transaction.Dispose();
-                    return new Return<LoginResDto> { Message = ErrorEnumApplication.ADD_OBJECT_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
+                    return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
                 }
                 transaction.Complete();
-
                 return new Return<LoginResDto>
                 {
                     Data = new LoginResDto
                     {
                         BearerToken = CreateBearerTokenAccount(result.Data.Id),
-                        Name = result.Data.FullName,
-                        Email = result.Data.Email
+                        Name = result.Data.FullName ?? "",
+                        Email = result.Data.Email ?? ""
                     },
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 transaction.Dispose();
-                return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex.Message };
+                return new Return<LoginResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 
@@ -128,12 +123,19 @@ namespace FUParkingService
             {
                 // Check the email is registered
                 var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());
-                if (isUserRegistered.IsSuccess == false || isUserRegistered.Data == null)
+                if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isUserRegistered.Data == null)
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
+                    };
+                }
+                else if (isUserRegistered.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = isUserRegistered.InternalErrorMessage
                     };
                 }
                 // Check the password is correct
@@ -141,8 +143,7 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
                 }
                 return new Return<LoginResDto>
@@ -150,12 +151,12 @@ namespace FUParkingService
                     Data = new LoginResDto
                     {
                         BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
-                        Name = isUserRegistered.Data.FullName,
-                        Email = isUserRegistered.Data.Email,
-                        Role = isUserRegistered.Data.Role?.Name
+                        Name = isUserRegistered.Data.FullName ?? "",
+                        Email = isUserRegistered.Data.Email ?? "",
+                        Role = isUserRegistered.Data.Role?.Name ?? ""
                     },
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
@@ -163,8 +164,7 @@ namespace FUParkingService
                 return new Return<LoginResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -193,22 +193,32 @@ namespace FUParkingService
                     };
                 }
                 var user = await _userRepository.GetUserByIdAsync(id);
-                if (user.IsSuccess == false || user.Data == null)
+                if (!user.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || user.Data == null)
                 {
-                    return new Return<LoginResDto>
+                    if (user.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                     {
-                        Message = ErrorEnumApplication.USER_NOT_EXIST,
-                        IsSuccess = false
-                    };
+                        return new Return<LoginResDto>
+                        {
+                            Message = ErrorEnumApplication.USER_NOT_EXIST
+                        };
+                    }
+                    else
+                    {
+                        return new Return<LoginResDto>
+                        {
+                            Message = ErrorEnumApplication.SERVER_ERROR,
+                            InternalErrorMessage = user.InternalErrorMessage
+                        };
+                    }
                 }
                 return new Return<LoginResDto>
                 {
                     Data = new LoginResDto
                     {
-                        Role = user.Data.Role?.Name
+                        Role = user.Data.Role?.Name ?? ""
                     },
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
@@ -217,7 +227,7 @@ namespace FUParkingService
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     IsSuccess = false,
-                    InternalErrorMessage = ex.Message
+                    InternalErrorMessage = ex
                 };
             }
         }
@@ -227,9 +237,8 @@ namespace FUParkingService
             using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                var clientSecrets = _configuration.GetSection("Authentication:Google:ClientSecret").Value;
                 var clientId = _configuration.GetSection("Authentication:Google:ClientId").Value;
-                if (string.IsNullOrEmpty(clientSecrets) || string.IsNullOrEmpty(clientId))
+                if (string.IsNullOrEmpty(clientId))
                 {
                     return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
@@ -248,15 +257,16 @@ namespace FUParkingService
                 {
                     // Create new customer
                     var customerType = await _customerRepository.GetCustomerTypeByNameAsync(CustomerTypeEnum.PAID);
-                    if (customerType.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || customerType.IsSuccess == false || customerType.Data == null)
+                    if (customerType.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || customerType.Data == null)
                     {
                         return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerType.InternalErrorMessage };
                     }
-                    Customer newCustomer = new() {
+                    Customer newCustomer = new()
+                    {
                         FullName = payload.Name,
                         Email = payload.Email,
                         CustomerTypeId = customerType.Data.Id,
-                        StatusCustomer = StatusCustomerEnum.ACTIVE,                        
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
                     };
                     var resultCreateCus = await _customerRepository.CreateNewCustomerAsync(newCustomer);
                     if (resultCreateCus.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultCreateCus.Data == null)
@@ -265,10 +275,10 @@ namespace FUParkingService
                         return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultCreateCus.InternalErrorMessage };
                     }
                     // Create waller for the new customer
-                    Wallet cusWalletMain = new() { 
-                        WalletType = WalletType.MAIN, 
-                        CustomerId = resultCreateCus.Data.Id, 
-                        WalletStatus = StatusWalletEnum.ACTIVE 
+                    Wallet cusWalletMain = new()
+                    {
+                        WalletType = WalletType.MAIN,
+                        CustomerId = resultCreateCus.Data.Id
                     };
                     var resultWallet = await _walletRepository.CreateWalletAsync(cusWalletMain);
                     if (resultWallet.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWallet.Data == null)
@@ -278,9 +288,8 @@ namespace FUParkingService
                     }
                     Wallet cusWalletExtra = new()
                     {
-                        CustomerId = resultCreateCus.Data.Id, 
-                        WalletType = WalletType.EXTRA, 
-                        WalletStatus = StatusWalletEnum.ACTIVE 
+                        CustomerId = resultCreateCus.Data.Id,
+                        WalletType = WalletType.EXTRA
                     };
                     var resultWalletExtra = await _walletRepository.CreateWalletAsync(cusWalletExtra);
                     if (resultWalletExtra.Message.Equals(ErrorEnumApplication.SERVER_ERROR) || resultWalletExtra.Data == null)
@@ -299,9 +308,10 @@ namespace FUParkingService
                             Avatar = payload.Picture
                         },
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.SUCCESSFULLY
+                        Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                     };
-                } else if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
+                }
+                else if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
                 {
                     transaction.Complete();
                     return new Return<LoginWithGoogleMoblieResDto>
@@ -314,9 +324,10 @@ namespace FUParkingService
                             Avatar = payload.Picture
                         },
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.SUCCESSFULLY
+                        Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                     };
-                } else
+                }
+                else
                 {
                     transaction.Dispose();
                     return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isUserRegistered.InternalErrorMessage };
@@ -326,8 +337,8 @@ namespace FUParkingService
             {
                 return new Return<LoginWithGoogleMoblieResDto>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
-                    InternalErrorMessage = ex.Message
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }

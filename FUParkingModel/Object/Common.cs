@@ -11,12 +11,10 @@ namespace FUParkingModel.Object
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
-        [Column("CreatedDate")]
-        [JsonIgnore]
+        [Column("CreatedDate")]        
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        [Column("DeletedDate")]
-        [JsonIgnore]
+        [Column("DeletedDate")]        
         public DateTime? DeletedDate { get; set; }
     }
 }

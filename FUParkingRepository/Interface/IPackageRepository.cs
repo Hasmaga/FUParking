@@ -7,10 +7,10 @@ namespace FUParkingRepository.Interface
     {
         Task<Return<Package>> CreatePackageAsync(Package package);
         Task<Return<Package>> GetPackageByPackageIdAsync(Guid id);
-        Task<Return<List<Package>>> GetPackagesByStatusAsync(bool active);
-        Task<Return<List<Package>>> GetAllPackagesAsync();
+        Task<Return<IEnumerable<Package>>> GetPackagesByStatusAsync(bool active);
+        Task<Return<IEnumerable<Package>>> GetAllPackagesAsync();
         Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex);
-        Task<Return<bool>> UpdateCoinPackage(Package package);
-        Task<Return<Package>> GetPackageByNameAsync(string PacketName);
+        Task<Return<Package>> UpdateCoinPackage(Package package);
+        Task<Return<Package>> GetPackageByNameAsync(string PacketName);        
     }
 }

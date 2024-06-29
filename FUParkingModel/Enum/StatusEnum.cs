@@ -9,10 +9,8 @@
     public class StatusVehicleEnum
     {
         public const string PENDING = "PENDING";
-        public const string ACCEPTED = "ACCEPTED";
-        public const string REJECTED = "REJECTED";
-        public const string BANNED = "BANNED";
-        public const string DELETED = "DELETED";
+        public const string ACTIVE = "ACTIVE";        
+        public const string INACTIVE = "INACTIVE";
     }
 
     public class StatusPriceTableEnum
