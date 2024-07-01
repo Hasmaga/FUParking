@@ -84,7 +84,7 @@ namespace FUParkingApi.Controllers
 
         [HttpPut("{CardId}")]
         [Authorize]
-        public async Task<IActionResult> UpdatePlateNumberCard([FromBody] UpdatePlateNumberReqDto req, [FromRoute] Guid CardId)
+        public async Task<IActionResult> UpdatePlateNumberInCardAsync([FromBody] UpdatePlateNumberReqDto req, [FromRoute] Guid CardId)
         {
             try
             {
@@ -101,15 +101,25 @@ namespace FUParkingApi.Controllers
                         Message = ErrorEnumApplication.INVALID_INPUT
                     });
                 }
-                var result = await _cardService.UpdatePlateNumberCard(req.PlateNumber, CardId);
-                if (result.IsSuccess)
+                var result = await _cardService.UpdatePlateNumberInCardAsync(req.PlateNumber, CardId);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.CARD_NOT_EXIST:
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST });
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        default:
+                            _logger.LogError("Error when update plate number in card: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
                 }
-                return BadRequest(result);
+                return StatusCode(200, new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when update plate number in card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
                 {
                     IsSuccess = false,
@@ -157,8 +167,7 @@ namespace FUParkingApi.Controllers
             {
                 _logger.LogError("Error when create new card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
