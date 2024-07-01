@@ -85,12 +85,23 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<VehicleType>>> GetAllVehicleTypeAsync(GetListObjectWithFiller req)
+        public async Task<Return<IEnumerable<VehicleType>>> GetAllVehicleTypeAsync(GetListObjectWithFiller? req = null)
         {
             try
             {
                 var query = _db.VehicleTypes.Where(e => e.DeletedDate == null).AsQueryable();
-                if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
+                if (req == null)
+                {
+                    var resul = await query.Where(e => e.DeletedDate == null).ToListAsync();
+                    return new Return<IEnumerable<VehicleType>>()
+                    {
+                        Data = resul,
+                        IsSuccess = true,
+                        TotalRecord = resul.Count,
+                        Message = resul.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    };
+                }
+                else if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {
                     switch (req.Attribute.ToLower())
                     {
@@ -118,7 +129,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<VehicleType>>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };

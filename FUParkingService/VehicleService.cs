@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
+using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -69,6 +70,41 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetVehicleTypeByCustomerResDto>>> GetListVehicleTypeByCustomer()
+        {
+            try
+            {
+                var result = await _vehicleRepository.GetAllVehicleTypeAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,                        
+                    };                    
+                }
+                return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord,
+                    Data = result.Data?.Select(x => new GetVehicleTypeByCustomerResDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name
+                    })
+                };
+            } catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
 
         public async Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto)
         {

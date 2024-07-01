@@ -245,7 +245,7 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("ParkingAreaId");
 
-                    b.Property<Guid?>("SessionId")
+                    b.Property<Guid>("SessionId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("SessionId");
 
@@ -1185,7 +1185,8 @@ namespace FUParkingModel.Migrations
                     b.HasOne("FUParkingModel.Object.Session", "Session")
                         .WithMany("Feedbacks")
                         .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Customer");
 

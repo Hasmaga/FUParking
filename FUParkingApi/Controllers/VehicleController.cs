@@ -16,14 +16,15 @@ namespace FUParkingApi.Controllers
     public class VehicleController : Controller
     {
         private readonly IVehicleService _vehicleService;
+        private readonly ILogger<VehicleController> _logger;
 
-        public VehicleController(IVehicleService vehicleService)
+        public VehicleController(IVehicleService vehicleService, ILogger<VehicleController> logger)
         {
             _vehicleService = vehicleService;
+            _logger = logger;
         }
 
-
-        [HttpGet("types")]
+        [HttpGet("types")]        
         public async Task<IActionResult> GetVehicleTypesAsync(GetListObjectWithFiller req)
         {
             try
@@ -45,7 +46,37 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("types")]
+        [HttpGet("type")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetVehicleTypesByCustomerAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetListVehicleTypeByCustomer();
+                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+                {
+                    switch (result.Message)
+                    {                        
+                        case ErrorEnumApplication.SERVER_ERROR:
+                            _logger.LogError("Error at get vehicle types by customer: {ex}", result.Message);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                        default:
+                            return BadRequest(result);
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at get vehicle types by customer: {ex}", ex.Message);
+                return StatusCode(500, new Return<dynamic>
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpPost("types")]        
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try

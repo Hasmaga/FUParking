@@ -9,6 +9,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req);
         Task<Return<IEnumerable<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req);
         Task<Return<dynamic>> DeleteCardByIdAsync(Guid id);
-        Task<Return<dynamic>> UpdatePlateNumberInCardAsync(string PlateNumber, Guid CardId)
+        Task<Return<dynamic>> UpdatePlateNumberInCardAsync(string PlateNumber, Guid CardId);
     }
 }

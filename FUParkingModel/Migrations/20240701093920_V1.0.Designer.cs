@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    [Migration("20240609105108_v1.6")]
-    partial class V16
+    [Migration("20240701093920_V1.0")]
+    partial class V10
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,40 +24,6 @@ namespace FUParkingModel.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("FUParkingModel.Object.Camera", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Id");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreatedDate");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedDate");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Description");
-
-                    b.Property<Guid>("GateId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("GateId");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Name");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GateId");
-
-                    b.ToTable("Camera", "dbo");
-                });
 
             modelBuilder.Entity("FUParkingModel.Object.Card", b =>
                 {
@@ -71,6 +37,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("CardNumber");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -79,11 +49,23 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("PlateNumber")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PlateNumber");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("Card", "dbo");
                 });
@@ -94,6 +76,10 @@ namespace FUParkingModel.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
@@ -108,20 +94,22 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("DeletedDate");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Email");
 
                     b.Property<string>("FullName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("FullName");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("PasswordHash");
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
 
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Phone");
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
 
                     b.Property<string>("StatusCustomer")
                         .IsRequired()
@@ -130,7 +118,11 @@ namespace FUParkingModel.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedById");
+
                     b.HasIndex("CustomerTypeId");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("Customer", "dbo");
                 });
@@ -142,6 +134,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -151,14 +147,28 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("DeletedDate");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("CustomerType", "dbo");
                 });
@@ -170,30 +180,42 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<int>("Amount")
+                        .HasColumnType("int")
+                        .HasColumnName("Amount");
+
+                    b.Property<string>("AppTranId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("AppTranId");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CustomerId");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Name");
-
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("PackageId");
 
+                    b.Property<Guid>("PaymentMethodId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("PaymentMethodId");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("PackageId");
+
+                    b.HasIndex("PaymentMethodId");
 
                     b.ToTable("Deposit", "dbo");
                 });
@@ -218,12 +240,17 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("DeletedDate");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
                     b.Property<Guid>("ParkingAreaId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("ParkingAreaId");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("SessionId");
 
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)")
@@ -235,6 +262,8 @@ namespace FUParkingModel.Migrations
 
                     b.HasIndex("ParkingAreaId");
 
+                    b.HasIndex("SessionId");
+
                     b.ToTable("Feedback", "dbo");
                 });
 
@@ -244,6 +273,10 @@ namespace FUParkingModel.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
@@ -261,6 +294,14 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("GateTypeId");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -271,16 +312,17 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("ParkingAreaId");
 
                     b.Property<string>("StatusGate")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("StatusGate");
 
-                    b.Property<Guid>("WPFCode")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("WPFCode");
-
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedById");
+
                     b.HasIndex("GateTypeId");
+
+                    b.HasIndex("LastModifyById");
 
                     b.HasIndex("ParkingAreaId");
 
@@ -294,6 +336,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -303,14 +349,28 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("DeletedDate");
 
                     b.Property<string>("Descriptipn")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Descriptipn");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("GateType", "dbo");
                 });
@@ -325,6 +385,10 @@ namespace FUParkingModel.Migrations
                     b.Property<int>("CoinAmount")
                         .HasColumnType("int")
                         .HasColumnName("CoinAmount");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
@@ -342,6 +406,14 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ExtraCoin");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -352,11 +424,15 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PackageStatus");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18, 0)")
+                    b.Property<int>("Price")
+                        .HasColumnType("int")
                         .HasColumnName("Price");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("Package", "dbo");
                 });
@@ -372,6 +448,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("int")
                         .HasColumnName("Block");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -384,11 +464,20 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<int>("MaxCapacity")
                         .HasColumnType("int")
                         .HasColumnName("MaxCapacity");
 
                     b.Property<string>("Mode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Mode");
 
@@ -398,10 +487,15 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("Name");
 
                     b.Property<string>("StatusParkingArea")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("StatusParkingArea");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("ParkingArea", "dbo");
                 });
@@ -429,10 +523,6 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("SessionId");
 
-                    b.Property<string>("StatusPayment")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("StatusPayment");
-
                     b.Property<int>("TotalPrice")
                         .HasColumnType("int")
                         .HasColumnName("TotalPrice");
@@ -453,6 +543,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -465,11 +559,24 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("PaymentMethod", "dbo");
                 });
@@ -489,6 +596,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("time")
                         .HasColumnName("ApplyToHour");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -497,11 +608,19 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
-                    b.Property<int>("MaxPrice")
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
+                    b.Property<int?>("MaxPrice")
                         .HasColumnType("int")
                         .HasColumnName("MaxPrice");
 
-                    b.Property<int>("MinPrice")
+                    b.Property<int?>("MinPrice")
                         .HasColumnType("int")
                         .HasColumnName("MinPrice");
 
@@ -510,6 +629,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("PriceTableId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.HasIndex("PriceTableId");
 
@@ -531,6 +654,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("ApplyToDate");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -538,6 +665,14 @@ namespace FUParkingModel.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
+
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -549,6 +684,7 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("Priority");
 
                     b.Property<string>("StatusPriceTable")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("StatusPriceTable");
 
@@ -557,6 +693,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("VehicleTypeId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.HasIndex("VehicleTypeId");
 
@@ -570,6 +710,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -582,12 +726,24 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("Role", "dbo");
                 });
@@ -607,6 +763,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
 
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CustomerId");
+
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
@@ -620,10 +780,12 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("GateOutId");
 
                     b.Property<string>("ImageInUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ImageInUrl");
 
                     b.Property<string>("ImageOutUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ImageOutUrl");
 
@@ -647,6 +809,8 @@ namespace FUParkingModel.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CardId");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("GateInId");
 
@@ -683,14 +847,16 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("PaymentId");
 
                     b.Property<string>("TransactionDescription")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("TransactionDescription");
 
                     b.Property<string>("TransactionStatus")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("TransactionStatus");
 
-                    b.Property<Guid>("WalletId")
+                    b.Property<Guid?>("WalletId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("WalletId");
 
@@ -712,6 +878,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -721,18 +891,30 @@ namespace FUParkingModel.Migrations
                         .HasColumnName("DeletedDate");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Email");
 
                     b.Property<string>("FullName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("FullName");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PasswordHash");
 
                     b.Property<string>("PasswordSalt")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PasswordSalt");
 
@@ -747,6 +929,10 @@ namespace FUParkingModel.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LastModifyById")
+                        .IsUnique()
+                        .HasFilter("[LastModifyById] IS NOT NULL");
+
                     b.HasIndex("RoleId");
 
                     b.ToTable("User", "dbo");
@@ -758,10 +944,6 @@ namespace FUParkingModel.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
-
-                    b.Property<string>("BodyImage")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("BodyImage");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
@@ -775,19 +957,30 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletedDate");
 
-                    b.Property<string>("HeadImage")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("HeadImage");
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
 
                     b.Property<string>("PlateImage")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PlateImage");
 
                     b.Property<string>("PlateNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PlateNumber");
 
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("StaffId");
+
                     b.Property<string>("StatusVehicle")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("StatusVehicle");
 
@@ -798,6 +991,10 @@ namespace FUParkingModel.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("LastModifyById");
+
+                    b.HasIndex("StaffId");
 
                     b.HasIndex("VehicleTypeId");
 
@@ -811,6 +1008,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
@@ -823,12 +1024,24 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Description");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LastModifyById");
 
                     b.ToTable("VehicleType", "dbo");
                 });
@@ -860,9 +1073,10 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("EXPDate");
 
-                    b.Property<string>("WalletStatus")
+                    b.Property<string>("WalletType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("WalletStatus");
+                        .HasColumnName("WalletType");
 
                     b.HasKey("Id");
 
@@ -871,37 +1085,90 @@ namespace FUParkingModel.Migrations
                     b.ToTable("Wallet", "dbo");
                 });
 
-            modelBuilder.Entity("FUParkingModel.Object.Camera", b =>
+            modelBuilder.Entity("FUParkingModel.Object.Card", b =>
                 {
-                    b.HasOne("FUParkingModel.Object.Gate", "Gate")
-                        .WithMany("Cameras")
-                        .HasForeignKey("GateId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("CardsCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
 
-                    b.Navigation("Gate");
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("CardsLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Customer", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("CustomersCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.CustomerType", "CustomerType")
                         .WithMany("Customers")
                         .HasForeignKey("CustomerTypeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("CustomersLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
                     b.Navigation("CustomerType");
+
+                    b.Navigation("LastModifyBy");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.CustomerType", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("CustomerTypeCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("CustomerTypeLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Deposit", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.Customer", "Customer")
+                        .WithMany("Deposits")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("FUParkingModel.Object.Package", "Package")
                         .WithMany("Deposits")
                         .HasForeignKey("PackageId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.PaymentMethod", "PaymentMethod")
+                        .WithMany("Deposits")
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
                     b.Navigation("Package");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Feedback", b =>
@@ -918,18 +1185,36 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.Session", "Session")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Customer");
 
                     b.Navigation("ParkingArea");
+
+                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Gate", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("GateCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.GateType", "GateType")
                         .WithMany("Gates")
                         .HasForeignKey("GateTypeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("GateLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FUParkingModel.Object.ParkingArea", "ParkingArea")
                         .WithMany("Gates")
@@ -937,9 +1222,64 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.Navigation("CreateBy");
+
                     b.Navigation("GateType");
 
+                    b.Navigation("LastModifyBy");
+
                     b.Navigation("ParkingArea");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.GateType", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("GateTypeCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("GateTypeLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.Package", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("PackageCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("PackageLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.ParkingArea", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("ParkingAreaCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("ParkingAreaLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Payment", b =>
@@ -961,26 +1301,88 @@ namespace FUParkingModel.Migrations
                     b.Navigation("Session");
                 });
 
+            modelBuilder.Entity("FUParkingModel.Object.PaymentMethod", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("PaymentMethodCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("PaymentMethodLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
+                });
+
             modelBuilder.Entity("FUParkingModel.Object.PriceItem", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("PriceItemCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("PriceItemLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.PriceTable", "PriceTable")
                         .WithMany("PriceItems")
                         .HasForeignKey("PriceTableId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
+
                     b.Navigation("PriceTable");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.PriceTable", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("PriceTableCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("PriceTableLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.VehicleType", "VehicleType")
                         .WithMany("PriceTables")
                         .HasForeignKey("VehicleTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
+
                     b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.Role", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("RoleCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("RoleLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Session", b =>
@@ -990,6 +1392,11 @@ namespace FUParkingModel.Migrations
                         .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("FUParkingModel.Object.Customer", "Customer")
+                        .WithMany("Sessions")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FUParkingModel.Object.Gate", "GateIn")
                         .WithMany("SessionGateIns")
@@ -1003,6 +1410,8 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Card");
+
+                    b.Navigation("Customer");
 
                     b.Navigation("GateIn");
 
@@ -1024,8 +1433,7 @@ namespace FUParkingModel.Migrations
                     b.HasOne("FUParkingModel.Object.Wallet", "Wallet")
                         .WithMany("Transactions")
                         .HasForeignKey("WalletId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Deposit");
 
@@ -1036,11 +1444,17 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.User", b =>
                 {
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithOne("CreateBy")
+                        .HasForeignKey("FUParkingModel.Object.User", "LastModifyById");
+
                     b.HasOne("FUParkingModel.Object.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("LastModifyBy");
 
                     b.Navigation("Role");
                 });
@@ -1053,6 +1467,16 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("VehicleLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "Staff")
+                        .WithMany("VehicleStaffs")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.VehicleType", "VehicleType")
                         .WithMany("Vehicles")
                         .HasForeignKey("VehicleTypeId")
@@ -1061,7 +1485,28 @@ namespace FUParkingModel.Migrations
 
                     b.Navigation("Customer");
 
+                    b.Navigation("LastModifyBy");
+
+                    b.Navigation("Staff");
+
                     b.Navigation("VehicleType");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.VehicleType", b =>
+                {
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("VehicleTypeCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("VehicleTypeLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("LastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Wallet", b =>
@@ -1082,7 +1527,11 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Customer", b =>
                 {
+                    b.Navigation("Deposits");
+
                     b.Navigation("Feedbacks");
+
+                    b.Navigation("Sessions");
 
                     b.Navigation("Vehicles");
 
@@ -1101,8 +1550,6 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Gate", b =>
                 {
-                    b.Navigation("Cameras");
-
                     b.Navigation("SessionGateIns");
 
                     b.Navigation("SessionGateOuts");
@@ -1132,6 +1579,8 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.PaymentMethod", b =>
                 {
+                    b.Navigation("Deposits");
+
                     b.Navigation("Payments");
                 });
 
@@ -1147,7 +1596,66 @@ namespace FUParkingModel.Migrations
 
             modelBuilder.Entity("FUParkingModel.Object.Session", b =>
                 {
+                    b.Navigation("Feedbacks");
+
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("FUParkingModel.Object.User", b =>
+                {
+                    b.Navigation("CardsCreateBy");
+
+                    b.Navigation("CardsLastModifyBy");
+
+                    b.Navigation("CreateBy");
+
+                    b.Navigation("CustomerTypeCreateBy");
+
+                    b.Navigation("CustomerTypeLastModifyBy");
+
+                    b.Navigation("CustomersCreateBy");
+
+                    b.Navigation("CustomersLastModifyBy");
+
+                    b.Navigation("GateCreateBy");
+
+                    b.Navigation("GateLastModifyBy");
+
+                    b.Navigation("GateTypeCreateBy");
+
+                    b.Navigation("GateTypeLastModifyBy");
+
+                    b.Navigation("PackageCreateBy");
+
+                    b.Navigation("PackageLastModifyBy");
+
+                    b.Navigation("ParkingAreaCreateBy");
+
+                    b.Navigation("ParkingAreaLastModifyBy");
+
+                    b.Navigation("PaymentMethodCreateBy");
+
+                    b.Navigation("PaymentMethodLastModifyBy");
+
+                    b.Navigation("PriceItemCreateBy");
+
+                    b.Navigation("PriceItemLastModifyBy");
+
+                    b.Navigation("PriceTableCreateBy");
+
+                    b.Navigation("PriceTableLastModifyBy");
+
+                    b.Navigation("RoleCreateBy");
+
+                    b.Navigation("RoleLastModifyBy");
+
+                    b.Navigation("VehicleLastModifyBy");
+
+                    b.Navigation("VehicleStaffs");
+
+                    b.Navigation("VehicleTypeCreateBy");
+
+                    b.Navigation("VehicleTypeLastModifyBy");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.VehicleType", b =>
