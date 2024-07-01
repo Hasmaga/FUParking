@@ -57,17 +57,26 @@ namespace FUParkingApi.Controllers
             try
             {
                 var result = await _cardService.DeleteCardByIdAsync(CardId);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.CARD_NOT_EXIST:
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST });
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        default:
+                            _logger.LogError("Error when delete card: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
                 }
-                return BadRequest(result);
+                return StatusCode(200, new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when delete card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
@@ -142,7 +151,7 @@ namespace FUParkingApi.Controllers
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
-                return StatusCode(201, new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY });
+                return StatusCode(201, new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, IsSuccess = true });
             }
             catch (Exception ex)
             {

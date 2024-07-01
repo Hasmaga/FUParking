@@ -99,16 +99,14 @@ namespace FUParkingService
         public async Task<Return<IEnumerable<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req)
         {
             try
-            {
-                // Check token valid
+            {                
                 if (!_helpperService.IsTokenValid())
                 {
                     return new Return<IEnumerable<GetCardResDto>>
                     {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-                // Check logged in account is manager or supervisor
+                }                
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                 {
@@ -160,16 +158,14 @@ namespace FUParkingService
         public async Task<Return<dynamic>> DeleteCardByIdAsync(Guid id)
         {
             try
-            {
-                // Check token valid
+            {                
                 if (!_helpperService.IsTokenValid())
                 {
                     return new Return<dynamic>
                     {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-                // Check logged in account is manager or supervisor
+                }                
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (accountLogin.IsSuccess == false || accountLogin.Data == null)
                 {
@@ -184,12 +180,18 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
-                }
-
-                // Check card is exist
+                }                
                 var card = await _cardRepository.GetCardByIdAsync(id);
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                 {
+                    if (card.InternalErrorMessage != null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = card.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
                     return new Return<dynamic>
                     {
                         Message = ErrorEnumApplication.CARD_NOT_EXIST
