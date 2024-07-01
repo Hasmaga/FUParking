@@ -29,10 +29,16 @@ namespace FUParkingService
                 {
                     // Token is invalid, treat as customer and return active packages
                     var activePackagesResult = await _packageRepository.GetCoinPackages(StatusPackageEnum.ACTIVE, pageSize, pageIndex);
-
+                    if (!activePackagesResult.IsSuccess)
+                    {
+                        return new Return<IEnumerable<dynamic>>
+                        {
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
                     return new Return<IEnumerable<dynamic>>
                     {
-                        IsSuccess = activePackagesResult.IsSuccess,
+                        IsSuccess = true,
                         Data = activePackagesResult.Data?.Select(package => new CustomerGetCoinPackageResDto
                         {
                             Name = package.Name,

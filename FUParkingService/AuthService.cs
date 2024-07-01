@@ -311,7 +311,7 @@ namespace FUParkingService
                         Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
                     };
                 }
-                else if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
+                if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
                 {
                     transaction.Complete();
                     return new Return<LoginWithGoogleMoblieResDto>

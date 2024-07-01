@@ -25,28 +25,26 @@ namespace FUParkingService
         {
             try
             {
-                // Check token valid
                 if (!_helpperService.IsTokenValid())
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                // Check logged in account is manager or supervisor
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
 
@@ -56,28 +54,29 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_IS_EXIST                        
+                        Message = ErrorEnumApplication.CARD_IS_EXIST
                     };
                 }
-                else if (card.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
+                if (card.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.SERVER_ERROR                        
+                        InternalErrorMessage = card.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                // Create new card
                 Card newCard = new()
                 {
                     PlateNumber = req.PlateNumber,
-                    CardNumber = req.CardNumber
+                    CardNumber = req.CardNumber,
+                    CreatedById = accountLogin.Data.Id,
                 };
-
                 var res = await _cardRepository.CreateCardAsync(newCard);
                 if (!res.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = res.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
@@ -97,64 +96,61 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<List<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req)
+        public async Task<Return<IEnumerable<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req)
         {
             try
             {
                 // Check token valid
                 if (!_helpperService.IsTokenValid())
                 {
-                    return new Return<List<GetCardResDto>>
+                    return new Return<IEnumerable<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 // Check logged in account is manager or supervisor
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
+                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                 {
-                    return new Return<List<GetCardResDto>>
+                    return new Return<IEnumerable<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
-                    return new Return<List<GetCardResDto>>
+                    return new Return<IEnumerable<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
                 var res = await _cardRepository.GetAllCardsAsync(req);
                 if (!res.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || !res.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
-                    return new Return<List<GetCardResDto>>
+                    return new Return<IEnumerable<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.SERVER_ERROR                        
+                        InternalErrorMessage = res.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                var listCard = new List<GetCardResDto>();
-                foreach (var item in res.Data ?? [])
-                {
-                    listCard.Add(new GetCardResDto
-                    {
-                        Id = item.Id,
-                        CardNumber = item.CardNumber,
-                        PlateNumber = item.PlateNumber
-                    });
-                }
-                return new Return<List<GetCardResDto>>
+                return new Return<IEnumerable<GetCardResDto>>
                 {
                     IsSuccess = true,
-                    Data = listCard,
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                    Data = res.Data?.Select(x => new GetCardResDto
+                    {
+                        Id = x.Id,
+                        PlateNumber = x.PlateNumber,
+                        CardNumber = x.CardNumber,
+                        CreatedDate = x.CreatedDate,
+                    }),
+                    TotalRecord = res.TotalRecord,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
-                return new Return<List<GetCardResDto>>
-                {                    
+                return new Return<IEnumerable<GetCardResDto>>
+                {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -170,7 +166,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 // Check logged in account is manager or supervisor
@@ -179,14 +175,14 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
 
@@ -196,7 +192,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_NOT_EXIST                        
+                        Message = ErrorEnumApplication.CARD_NOT_EXIST
                     };
                 }
                 card.Data.DeletedDate = DateTime.Now;
@@ -218,7 +214,7 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic>
-                {         
+                {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -234,7 +230,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                       
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 // Check logged in account is manager or supervisor
@@ -243,14 +239,14 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,                        
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,
                     };
                 }
                 // Check card is exist
@@ -259,7 +255,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.CARD_NOT_EXIST,                        
+                        Message = ErrorEnumApplication.CARD_NOT_EXIST,
                     };
                 }
                 card.Data.PlateNumber = PlateNumber;
@@ -278,11 +274,11 @@ namespace FUParkingService
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new Return<dynamic>
                 {
-                    InternalErrorMessage = ex,                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

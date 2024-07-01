@@ -12,10 +12,12 @@ namespace FUParkingApi.Controllers
     public class CardController : Controller
     {
         private readonly ICardService _cardService;
+        private readonly ILogger<CardController> _logger;
 
-        public CardController(ICardService cardService)
+        public CardController(ICardService cardService, ILogger<CardController> logger)
         {
             _cardService = cardService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -25,17 +27,24 @@ namespace FUParkingApi.Controllers
             try
             {
                 var result = await _cardService.GetListCardAsync(req);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        default:
+                            _logger.LogError("Error when get list card: " + result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
                 }
-                return BadRequest(result);
+                return StatusCode(200, result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, new Return<bool>
+                _logger.LogError("Error when get list card: {ex}", ex.Message);
+                return StatusCode(500, new Return<dynamic>
                 {
-                    IsSuccess = false,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
@@ -119,19 +128,25 @@ namespace FUParkingApi.Controllers
                         Message = ErrorEnumApplication.INVALID_INPUT
                     });
                 }
-
                 var result = await _cardService.CreateNewCardAsync(req);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.CARD_IS_EXIST:
+                            return StatusCode(422, new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_EXIST });
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        default:
+                            _logger.LogError("Error when create new card: " + result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
                 }
-                else
-                {
-                    return BadRequest(result);
-                }
+                return StatusCode(201, new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error when create new card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
                 {
                     IsSuccess = false,
