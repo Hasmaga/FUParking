@@ -11,8 +11,9 @@ namespace FUParkingModel.RequestObject.Vehicle
 
         [FromForm]
         [Required(ErrorMessage = "Must have Plate Number")]
-        [RegularExpression("^[0-9]{2}[A-Za-z][0-9]{5,6}$", ErrorMessage = "Wrong Format PlateNumber")]
+        [RegularExpression("^[0-9]{2}[A-Za-z]{1,2}[0-9]{5,7}$", ErrorMessage = "Wrong Format PlateNumber")]
         public string PlateNumber { get; set; } = null!;
+
 
         [FromForm]
         [Required(ErrorMessage = "Must have Vehicle Type")]
