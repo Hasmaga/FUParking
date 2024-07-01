@@ -220,5 +220,37 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        [HttpGet("customer")]
+        [Authorize]
+        public async Task<IActionResult> GetCustomerVehicleByCustomerIdAsync()
+        {
+            try
+            {
+                var result = await _vehicleService.GetCustomerVehicleByCustomerIdAsync();
+                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        case ErrorEnumApplication.BANNED:                            
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.BANNED });
+                        default:
+                            _logger.LogError("Error at get customer vehicle by customer: {ex}", result.Message);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at get customer vehicle by customer: {ex}", ex.Message);
+                return StatusCode(500, new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }

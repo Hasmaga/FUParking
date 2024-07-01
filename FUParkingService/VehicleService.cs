@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
+using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -273,8 +274,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<IEnumerable<Vehicle>>
-                    {
-                        IsSuccess = false,
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -283,8 +283,7 @@ namespace FUParkingService
                 if (userlogged.Data == null || userlogged.IsSuccess == false)
                 {
                     return new Return<IEnumerable<Vehicle>>
-                    {
-                        IsSuccess = false,
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -298,39 +297,62 @@ namespace FUParkingService
             catch
             {
                 return new Return<IEnumerable<Vehicle>>
-                {
-                    IsSuccess = false,
+                {                    
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
         }
 
-        public async Task<Return<List<Vehicle>>> GetCustomerVehicleByCustomerIdAsync(Guid customerGuid)
+        public async Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetCustomerVehicleByCustomerIdAsync()
         {
-            Return<List<Vehicle>> res = new()
+            Return<IEnumerable<GetCustomerVehicleByCustomerResDto>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };
             try
             {
-                Return<Customer> customerRes = await _customerRepository.GetCustomerByIdAsync(customerGuid);
-                if (customerRes.Data == null)
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                {
+                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    return res;
+                }
+                Return<Customer> customerLogin = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!customerLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogin.Data == null)
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
 
-                if (customerRes.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
+                if (customerLogin.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
-                res.Data = (await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerGuid)).Data.ToList();
+                var result = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerLogin.Data.Id);
+                if (!result.IsSuccess)
+                {
+                    res.InternalErrorMessage = result.InternalErrorMessage;
+                    return res;
+                }
+                res.Data = result.Data?.Select(x => new GetCustomerVehicleByCustomerResDto
+                {
+                    Id = x.Id,
+                    PlateNumber = x.PlateNumber,
+                    VehicleTypeName = x.VehicleType?.Name ?? "",
+                    PlateImage = x.PlateImage,
+                    StatusVehicle = x.StatusVehicle,
+                    CreateDate = x.CreatedDate
+                });
+                res.TotalRecord = result.TotalRecord;
+                res.IsSuccess = true;
+                res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
                 return res;
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
 
@@ -490,7 +512,7 @@ namespace FUParkingService
                     PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
                     CustomerId = userLogged.Data.Id,
-                    PlateImage = imagePlateNumber.ObjName,                    
+                    PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + imagePlateNumber.ObjName,                    
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
                 var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);
