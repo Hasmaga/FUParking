@@ -248,5 +248,27 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Vehicle>> GetVehicleByPlateNumberAsync(string PlateNumber)
+        {
+            try
+            {
+                var result = await _db.Vehicles.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(v => v.PlateNumber.Equals(PlateNumber.ToUpper()));
+                return new Return<Vehicle>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }           
+            catch (Exception e)
+            {
+                return new Return<Vehicle>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

@@ -24,7 +24,6 @@ namespace FUParkingService
                         return new Return<ReturnObjectUrlResDto>
                         {
                             Message = ErrorEnumApplication.SERVER_ERROR,
-                            IsSuccess = false,
                             InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.NOT_FOUND)
                         };
                     }
@@ -99,7 +98,6 @@ namespace FUParkingService
                             return new Return<ReturnObjectUrlResDto>
                             {
                                 Message = ErrorEnumApplication.SERVER_ERROR,
-                                IsSuccess = false,
                                 InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.NOT_FOUND)
                             };
                         }
@@ -109,7 +107,6 @@ namespace FUParkingService
                         return new Return<ReturnObjectUrlResDto>
                         {
                             Message = ErrorEnumApplication.SERVER_ERROR,
-                            IsSuccess = false,
                             InternalErrorMessage = new Exception(MinioErrorApplicationDefineEnum.FILE_NAME_IS_EXIST)
                         };
                     }
@@ -119,7 +116,6 @@ namespace FUParkingService
                     return new Return<ReturnObjectUrlResDto>
                     {
                         Message = ErrorEnumApplication.SERVER_ERROR,
-                        IsSuccess = false,
                         InternalErrorMessage = isExist.InternalErrorMessage
                     };
                 }
@@ -129,7 +125,6 @@ namespace FUParkingService
                 return new Return<ReturnObjectUrlResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    IsSuccess = false,
                     InternalErrorMessage = ex
                 };
             }
@@ -238,15 +233,12 @@ namespace FUParkingService
                         IsSuccess = true // Why is true, because the action is success but the file is not found
                     };
                 }
-                else
+                return new Return<ObjectStat>
                 {
-                    return new Return<ObjectStat>
-                    {
-                        Message = ErrorEnumApplication.SERVER_ERROR,
-                        IsSuccess = false, // Why is false, because the action is fail
-                        InternalErrorMessage = ex
-                    };
-                }
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    IsSuccess = false, // Why is false, because the action is fail
+                    InternalErrorMessage = ex
+                };
             }
         }
         #endregion

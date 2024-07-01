@@ -190,26 +190,29 @@ namespace FUParkingApi.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    var errors = ModelState.ToDictionary(
-                        error => error.Key,
-                        error => error.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                    );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
                 var result = await _vehicleService.CreateCustomerVehicleAsync(reqDto);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    return Ok(result);
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:                            
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST });
+                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:                            
+                            return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST });
+                        default:
+                            _logger.LogError("Error at create customer vehicle: {ex}", result.InternalErrorMessage);
+                            return BadRequest(result);
+                    }
                 }
-                return BadRequest(result);
+                return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("Error at create customer vehicle: {ex}", ex.Message);
                 return StatusCode(500, new Return<string>
                 {
                     IsSuccess = false,

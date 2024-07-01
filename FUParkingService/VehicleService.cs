@@ -105,7 +105,6 @@ namespace FUParkingService
             }
         }
 
-
         public async Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -422,7 +421,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> CreateCustomerVehicleAsync(CreateCustomerVehicleReqDto reqDto)
+        public async Task<Return<dynamic>> CreateCustomerVehicleAsync(CreateCustomerVehicleReqDto reqDto)
         {
             try
             {
@@ -430,27 +429,41 @@ namespace FUParkingService
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (userLogged.Data == null || !userLogged.IsSuccess)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                // Check plate number is existed
+                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(reqDto.PlateNumber);
+                if (!vehicle.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                {
+                    if (vehicle.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = vehicle.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
                     };
                 }
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.VehicleTypeId);
                 if (vehicleType.Data == null || !vehicleType.IsSuccess)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
                 }
@@ -464,15 +477,15 @@ namespace FUParkingService
                     BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
                 };                
                 var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imagePlateNumber);
-                if (!resultUploadImagePlateNumber.IsSuccess)
+                if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED
+                    return new Return<dynamic>
+                    {                        
+                        InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                     };
                 }                
-                var vehicle = new Vehicle
+                var newVehicle = new Vehicle
                 {
                     PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
@@ -480,20 +493,25 @@ namespace FUParkingService
                     PlateImage = imagePlateNumber.ObjName,                    
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
-
-                var result = await _vehicleRepository.CreateVehicleAsync(vehicle);
-                return new Return<bool>
+                var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    IsSuccess = result.IsSuccess,
-                    Data = result.IsSuccess,
-                    Message = result.IsSuccess ? SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
-                };
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };                
             }
             catch (Exception ex)
             {
-                return new Return<bool>()
-                {
-                    IsSuccess = false,
+                return new Return<dynamic>()
+                {                    
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
