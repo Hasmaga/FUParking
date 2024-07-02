@@ -37,6 +37,7 @@ namespace FUParkingModel.Enum
         public const string NOT_FOUND_OBJECT = "Not found object";
         public const string GATE_TYPE_NOT_EXIST = "Gate type is not exist in system";
         public const string PLATE_NUMBER_IS_EXIST = "Plate Number is exist in system";
+        public const string VEHICLE_NOT_EXIST = "Vehicle is not exist in system";
     }
 
     public class MinioErrorServerDefineEnum

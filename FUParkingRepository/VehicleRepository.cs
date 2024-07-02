@@ -55,7 +55,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Vehicle>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -78,7 +78,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -151,7 +151,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR
                 };
@@ -174,7 +174,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -197,7 +197,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Vehicle>>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -220,7 +220,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Vehicle>>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -242,7 +242,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<VehicleType>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -260,7 +260,52 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
-            }           
+            }
+            catch (Exception e)
+            {
+                return new Return<Vehicle>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<Vehicle>> GetVehicleByIdAsync(Guid vehicleId)
+        {
+            try
+            {
+                var result = await _db.Vehicles.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(v => v.Id == vehicleId);
+                return new Return<Vehicle>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Vehicle>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<Vehicle>> UpdateVehicleAsync(Vehicle vehicle)
+        {
+            try
+            {
+                _db.Vehicles.Update(vehicle);
+                await _db.SaveChangesAsync();
+                return new Return<Vehicle>
+                {
+                    Data = vehicle,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
             catch (Exception e)
             {
                 return new Return<Vehicle>

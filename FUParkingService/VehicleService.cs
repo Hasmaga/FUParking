@@ -82,8 +82,8 @@ namespace FUParkingService
                     return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR,                        
-                    };                    
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                    };
                 }
                 return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
                 {
@@ -96,7 +96,8 @@ namespace FUParkingService
                         Name = x.Name
                     })
                 };
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
                 {
@@ -274,7 +275,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<IEnumerable<Vehicle>>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -283,7 +284,7 @@ namespace FUParkingService
                 if (userlogged.Data == null || userlogged.IsSuccess == false)
                 {
                     return new Return<IEnumerable<Vehicle>>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -297,7 +298,7 @@ namespace FUParkingService
             catch
             {
                 return new Return<IEnumerable<Vehicle>>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -356,88 +357,45 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> DeleteVehicleTypeAsync(Guid id)
+        public async Task<Return<dynamic>> DeleteVehicleTypeAsync(Guid id)
         {
             try
             {
-                // check token validity
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                // Check role = Manager
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
                 var userLogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userLogged.Data == null || !userLogged.IsSuccess)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
 
-                if (!Auth.AuthManager.Contains(userLogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
+                if (!userLogged.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = userLogged.InternalErrorMessage };
 
-                // Check if the vehicle type id exists
+                if (userLogged.Data == null || !userLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
+                if (!Auth.AuthSupervisor.Contains(userLogged.Data.Role?.Name ?? ""))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(id);
-                if (vehicleType.Data == null || !vehicleType.IsSuccess)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
-                    };
-                }
 
-                // Check if any vehicle is using the vehicle type
-                var vehiclesUsingType = await _vehicleRepository.GetVehiclesByVehicleTypeId(id);
-                if (vehiclesUsingType.Data != null && vehiclesUsingType.Data.Any())
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.IN_USE
-                    };
-                }
+                if (!vehicleType.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
 
-                // Update DeletedDate to delete the vehicle type
+                if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST };
+
                 vehicleType.Data.DeletedDate = DateTime.Now;
+
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
-                if (result.IsSuccess)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = true,
-                        Data = true,
-                        Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
-                    };
-                }
-                else
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.DELETE_OBJECT_ERROR
-                    };
-                }
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new Return<bool>
+                return new Return<dynamic>
                 {
-                    IsSuccess = false,
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -452,7 +410,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -460,7 +418,7 @@ namespace FUParkingService
                 if (userLogged.Data == null || !userLogged.IsSuccess)
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -485,7 +443,7 @@ namespace FUParkingService
                 if (vehicleType.Data == null || !vehicleType.IsSuccess)
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
                 }
@@ -497,22 +455,22 @@ namespace FUParkingService
                     ObjFile = reqDto.PlateImage,
                     ObjName = objNamePlateNumber,
                     BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                };                
+                };
                 var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imagePlateNumber);
                 if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR,
                     };
-                }                
+                }
                 var newVehicle = new Vehicle
                 {
                     PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
                     CustomerId = userLogged.Data.Id,
-                    PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + imagePlateNumber.ObjName,                    
+                    PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + imagePlateNumber.ObjName,
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
                 var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);
@@ -528,12 +486,57 @@ namespace FUParkingService
                 {
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };                
+                };
             }
             catch (Exception ex)
             {
                 return new Return<dynamic>()
-                {                    
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> DeleteVehicleByCustomerAsync(Guid vehicleId)
+        {
+            try
+            {
+                var isValidToken = _helpperService.IsTokenValid();
+                if (!isValidToken)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
+                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!userLogged.IsSuccess) 
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = userLogged.InternalErrorMessage };
+
+                if (userLogged.Data == null || !userLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
+                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(vehicleId);
+                if (!vehicle.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+
+                if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+
+                if (vehicle.Data.CustomerId != userLogged.Data.Id)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
+                if (!vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+
+                vehicle.Data.DeletedDate = DateTime.Now;
+
+                var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
+            } 
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };

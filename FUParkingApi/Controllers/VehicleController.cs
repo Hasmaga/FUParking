@@ -252,5 +252,36 @@ namespace FUParkingApi.Controllers
                 });
             }
         }
+
+        [HttpDelete("customer/{id}")]
+        public async Task<IActionResult> DeleteCustomerVehicle([FromRoute] Guid id)
+        {
+            try
+            {
+                var result = await _vehicleService.DeleteVehicleByCustomerAsync(id);
+                if (!result.Message.Equals(SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY))
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:                            
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST });
+                        default:
+                            _logger.LogError("Error at delete customer vehicle: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at delete customer vehicle: {ex}", ex.Message);
+                return StatusCode(500, new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
     }
 }
