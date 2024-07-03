@@ -4,6 +4,7 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace FUParkingRepository
 {
@@ -95,6 +96,50 @@ namespace FUParkingRepository
                     Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
+            catch (Exception e)
+            {
+                return new Return<Session>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<Session>> GetNewestSessionByCardIdAsync(Guid cardId)
+        {
+            try
+            {
+                var result = await _db.Sessions.Where(x => x.CardId == cardId).OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                return new Return<Session>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Session>
+                {
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<Session>> GetNewestSessionByPlateNumberAsync(string plateNumber)
+        {
+            try
+            {
+                var result = await _db.Sessions.Where(x => x.PlateNumber == plateNumber).OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                return new Return<Session>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }           
             catch (Exception e)
             {
                 return new Return<Session>

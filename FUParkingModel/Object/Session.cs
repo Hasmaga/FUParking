@@ -24,7 +24,7 @@ namespace FUParkingModel.Object
         public required string ImageInUrl { get; set; }
 
         [Column("ImageOutUrl")]
-        public required string ImageOutUrl { get; set; }
+        public string ImageOutUrl { get; set; } = null!;
 
         [Column("TimeIn")]
         public required DateTime TimeIn { get; set; }
@@ -38,7 +38,21 @@ namespace FUParkingModel.Object
         [Column("CustomerId")]
         public Guid? CustomerId { get; set; }
         public Customer? Customer { get; set; }
-        
+
+        [Column("Status")]
+        public required string Status { get; set; } = null!;
+
+        [Column("CreateById")]
+        public Guid? CreatedById { get; set; }
+        public User? CreateBy { get; set; }
+
+        [Column("LastModifyById")]
+        public Guid? LastModifyById { get; set; }
+        public User? LastModifyBy { get; set; }
+
+        [Column("LastModifyDate")]
+        public DateTime? LastModifyDate { get; set; }
+
         public ICollection<Payment>? Payments { get; set; }        
         public ICollection<Feedback>? Feedbacks { get; set; }
     }

@@ -61,5 +61,7 @@ namespace FUParkingModel.Object
         public ICollection<Vehicle>? VehicleLastModifyBy { get; set; }
         public ICollection<VehicleType>? VehicleTypeCreateBy { get; set; }
         public ICollection<VehicleType>? VehicleTypeLastModifyBy { get; set; }
+        public ICollection<Session>? SessionCreateBy { get; set; }
+        public ICollection<Session>? SessionLastModifyBy { get; set; }
     }
 }

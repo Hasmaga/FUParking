@@ -244,5 +244,32 @@ namespace FUParkingRepository
                 return res;
             }
         }
+
+        public async Task<Return<Customer>> GetCustomerByPlateNumberAsync(string plateNumber)
+        {
+            try
+            {
+                var query = await (
+                    from c in _db.Customers
+                    join u in _db.Vehicles on c.Id equals u.CustomerId
+                    where u.PlateNumber == plateNumber && c.StatusCustomer == StatusCustomerEnum.ACTIVE && c.DeletedDate == null
+                    select c
+                ).FirstOrDefaultAsync();
+                return new Return<Customer>
+                {
+                    Data = query,
+                    IsSuccess = true,
+                    Message = query != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<Customer>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

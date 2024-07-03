@@ -1,4 +1,6 @@
-﻿namespace FUParkingModel.Enum
+﻿using System.Runtime.CompilerServices;
+
+namespace FUParkingModel.Enum
 {
     public class StatusCustomerEnum
     {
@@ -114,5 +116,12 @@
         public const string CASH = "CASH";
         public const string WALLET = "WALLET";
         public const string ZALOPAY = "ZALOPAY";
+    }
+
+    public class SessionEnum
+    {
+        public const string PARKED = "PARKED";
+        public const string CLOSED = "CLOSED";
+        public const string CANCELLED = "CANCELLED";
     }
 }
