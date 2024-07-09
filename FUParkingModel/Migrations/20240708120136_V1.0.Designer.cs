@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    [Migration("20240701093920_V1.0")]
+    [Migration("20240708120136_V1.0")]
     partial class V10
     {
         /// <inheritdoc />
@@ -588,12 +588,12 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
-                    b.Property<TimeOnly>("ApplyFromHour")
-                        .HasColumnType("time")
+                    b.Property<int?>("ApplyFromHour")
+                        .HasColumnType("int")
                         .HasColumnName("ApplyFromHour");
 
-                    b.Property<TimeOnly>("ApplyToHour")
-                        .HasColumnType("time")
+                    b.Property<int?>("ApplyToHour")
+                        .HasColumnType("int")
                         .HasColumnName("ApplyToHour");
 
                     b.Property<Guid?>("CreatedById")
@@ -616,11 +616,11 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModifyDate");
 
-                    b.Property<int?>("MaxPrice")
+                    b.Property<int>("MaxPrice")
                         .HasColumnType("int")
                         .HasColumnName("MaxPrice");
 
-                    b.Property<int?>("MinPrice")
+                    b.Property<int>("MinPrice")
                         .HasColumnType("int")
                         .HasColumnName("MinPrice");
 
@@ -646,11 +646,11 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
-                    b.Property<DateTime>("ApplyFromDate")
+                    b.Property<DateTime?>("ApplyFromDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("ApplyFromDate");
 
-                    b.Property<DateTime>("ApplyToDate")
+                    b.Property<DateTime?>("ApplyToDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("ApplyToDate");
 
@@ -755,9 +755,17 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("Id");
 
+                    b.Property<int>("Block")
+                        .HasColumnType("int")
+                        .HasColumnName("Block");
+
                     b.Property<Guid>("CardId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CardId");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreateById");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
@@ -789,14 +797,28 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ImageOutUrl");
 
+                    b.Property<Guid?>("LastModifyById")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifyById");
+
+                    b.Property<DateTime?>("LastModifyDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifyDate");
+
                     b.Property<string>("Mode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Mode");
 
                     b.Property<string>("PlateNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("PlateNumber");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Status");
 
                     b.Property<DateTime>("TimeIn")
                         .HasColumnType("datetime2")
@@ -806,15 +828,25 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("TimeOut");
 
+                    b.Property<Guid>("VehicleTypeId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("VehicleTypeId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CardId");
+
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("GateInId");
 
                     b.HasIndex("GateOutId");
+
+                    b.HasIndex("LastModifyById");
+
+                    b.HasIndex("VehicleTypeId");
 
                     b.ToTable("Session", "dbo");
                 });
@@ -1393,6 +1425,11 @@ namespace FUParkingModel.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FUParkingModel.Object.User", "CreateBy")
+                        .WithMany("SessionCreateBy")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FUParkingModel.Object.Customer", "Customer")
                         .WithMany("Sessions")
                         .HasForeignKey("CustomerId")
@@ -1409,13 +1446,30 @@ namespace FUParkingModel.Migrations
                         .HasForeignKey("GateOutId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("FUParkingModel.Object.User", "LastModifyBy")
+                        .WithMany("SessionLastModifyBy")
+                        .HasForeignKey("LastModifyById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FUParkingModel.Object.VehicleType", "VehicleType")
+                        .WithMany("Sessions")
+                        .HasForeignKey("VehicleTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Card");
+
+                    b.Navigation("CreateBy");
 
                     b.Navigation("Customer");
 
                     b.Navigation("GateIn");
 
                     b.Navigation("GateOut");
+
+                    b.Navigation("LastModifyBy");
+
+                    b.Navigation("VehicleType");
                 });
 
             modelBuilder.Entity("FUParkingModel.Object.Transaction", b =>
@@ -1649,6 +1703,10 @@ namespace FUParkingModel.Migrations
 
                     b.Navigation("RoleLastModifyBy");
 
+                    b.Navigation("SessionCreateBy");
+
+                    b.Navigation("SessionLastModifyBy");
+
                     b.Navigation("VehicleLastModifyBy");
 
                     b.Navigation("VehicleStaffs");
@@ -1661,6 +1719,8 @@ namespace FUParkingModel.Migrations
             modelBuilder.Entity("FUParkingModel.Object.VehicleType", b =>
                 {
                     b.Navigation("PriceTables");
+
+                    b.Navigation("Sessions");
 
                     b.Navigation("Vehicles");
                 });

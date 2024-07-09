@@ -6,7 +6,7 @@ namespace FUParkingModel.Object
     public class User : Common
     {
         [Column("RoleId")]
-        public required Guid RoleId { get; set; }
+        public Guid RoleId { get; set; }
         public Role? Role { get; set; }
 
         [Column("FullName")]

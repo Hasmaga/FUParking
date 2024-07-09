@@ -10,11 +10,11 @@ namespace FUParkingModel.Object
         public required string PlateNumber { get; set; }
 
         [Column("CustomerId")]        
-        public required Guid CustomerId { get; set; }        
+        public Guid CustomerId { get; set; }        
         public Customer? Customer { get; set; }
 
         [Column("VehicleTypeId")]        
-        public required Guid VehicleTypeId { get; set; }
+        public Guid VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
         [Column("PlateImage")]

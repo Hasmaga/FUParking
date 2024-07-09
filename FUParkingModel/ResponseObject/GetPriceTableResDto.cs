@@ -6,8 +6,8 @@
         public string VehicleType { get; set; } = null!;
         public int Priority { get; set; }
         public string Name { get; set; } = null!;
-        public DateTime ApplyFromDate { get; set; }
-        public DateTime ApplyToDate { get; set; }
+        public DateTime? ApplyFromDate { get; set; }
+        public DateTime? ApplyToDate { get; set; }
         public string StatusPriceTable { get; set; } = null!;
     }
 }

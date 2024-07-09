@@ -38,6 +38,9 @@ namespace FUParkingModel.Enum
         public const string GATE_TYPE_NOT_EXIST = "Gate type is not exist in system";
         public const string PLATE_NUMBER_IS_EXIST = "Plate Number is exist in system";
         public const string VEHICLE_NOT_EXIST = "Vehicle is not exist in system";
+        public const string SESSION_CLOSE = "This session is allready close";
+        public const string SESSION_CANCELLED = "This session is canceled";
+        public const string NOT_ENOUGH_MONEY = "This account is not have enough money in account";
     }
 
     public class MinioErrorServerDefineEnum

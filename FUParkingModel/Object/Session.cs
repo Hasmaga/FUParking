@@ -6,11 +6,11 @@ namespace FUParkingModel.Object
     public class Session : Common
     {
         [Column("CardId")]        
-        public required Guid CardId { get; set; }
+        public Guid CardId { get; set; }
         public Card? Card { get; set; }
 
         [Column("GateInId")]
-        public required Guid GateInId { get; set; }
+        public Guid GateInId { get; set; }
         public Gate? GateIn { get; set; }
 
         [Column("GateOutId")]
@@ -18,7 +18,7 @@ namespace FUParkingModel.Object
         public Gate? GateOut { get; set; }
 
         [Column("PlateNumber")]
-        public string? PlateNumber { get; set; }
+        public required string PlateNumber { get; set; }
 
         [Column("ImageInUrl")]
         public required string ImageInUrl { get; set; }
@@ -34,6 +34,13 @@ namespace FUParkingModel.Object
 
         [Column("Mode")]
         public required string Mode { get; set; } = null!;
+
+        [Column("Block")]
+        public required int Block { get; set; }
+
+        [Column("VehicleTypeId")]
+        public Guid VehicleTypeId { get; set; }
+        public VehicleType? VehicleType { get; set; }
 
         [Column("CustomerId")]
         public Guid? CustomerId { get; set; }

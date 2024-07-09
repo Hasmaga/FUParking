@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
@@ -7,20 +8,22 @@ namespace FUParkingModel.Object
     public class PriceItem : Common
     {
         [Column("PriceTableId")]
-        public required Guid PriceTableId { get; set; }        
+        public Guid PriceTableId { get; set; }        
         public PriceTable? PriceTable { get; set; }
 
         [Column("ApplyFromHour")]
-        public TimeOnly ApplyFromHour { get; set; }
+        [Range(0, 24)]
+        public int? ApplyFromHour { get; set; }
 
         [Column("ApplyToHour")]
-        public TimeOnly ApplyToHour { get; set; }
+        [Range(0,24)]
+        public int? ApplyToHour { get; set; }
 
         [Column("MaxPrice")]
-        public int? MaxPrice { get; set; }
+        public int MaxPrice { get; set; }
 
         [Column("MinPrice")]
-        public int? MinPrice { get; set; }
+        public int MinPrice { get; set; }
 
         [Column("CreateById")]
         public Guid? CreatedById { get; set; }

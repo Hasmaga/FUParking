@@ -16,10 +16,10 @@ namespace FUParkingModel.Object
         public required string Name { get; set; } = null!;
 
         [Column("ApplyFromDate")]
-        public DateTime ApplyFromDate { get; set; }
+        public DateTime? ApplyFromDate { get; set; }
 
         [Column("ApplyToDate")]
-        public DateTime ApplyToDate { get; set; }
+        public DateTime? ApplyToDate { get; set; }
 
         [Column("StatusPriceTable")]
         public required string StatusPriceTable { get; set; }

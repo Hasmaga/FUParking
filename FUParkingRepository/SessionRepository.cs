@@ -56,7 +56,7 @@ namespace FUParkingRepository
             {
                 return new Return<Session>
                 {                    
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }
@@ -78,7 +78,7 @@ namespace FUParkingRepository
             {
                 return new Return<Session>
                 {                    
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }
@@ -100,7 +100,7 @@ namespace FUParkingRepository
             {
                 return new Return<Session>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }
@@ -122,7 +122,7 @@ namespace FUParkingRepository
             {
                 return new Return<Session>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }
@@ -144,7 +144,30 @@ namespace FUParkingRepository
             {
                 return new Return<Session>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<Session>> UpdateSessionAsync(Session session)
+        {
+            try
+            {
+                _db.Sessions.Update(session);
+                await _db.SaveChangesAsync();
+                return new Return<Session>
+                {
+                    Data = session,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }           
+            catch (Exception e)
+            {
+                return new Return<Session>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }

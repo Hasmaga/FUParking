@@ -13,5 +13,6 @@ namespace FUParkingRepository.Interface
         Task<Return<dynamic>> DeletePriceItemAsync(PriceItem priceItem);
         Task<Return<PriceItem>> GetPriceItemByIdAsync(Guid id);
         Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
+        Task<Return<IEnumerable<PriceTable>>> GetListPriceTableActiveByVehicleTypeAsync(Guid vehicleTypeId);
     }
 }

@@ -67,8 +67,8 @@ namespace FUParkingService
                 var priceItem = new PriceItem
                 {
                     PriceTableId = req.PriceTableId,
-                    ApplyFromHour = req.ApplyFromHour ?? DefaultType.DefaultTimeOnly,
-                    ApplyToHour = req.ApplyToHour ?? DefaultType.DefaultTimeOnly,
+                    ApplyFromHour = req.ApplyFromHour.HasValue ? req.ApplyFromHour.Value.Hour : null,
+                    ApplyToHour = req.ApplyToHour.HasValue ? req.ApplyToHour.Value.Hour : null,
                     MaxPrice = req.MaxPrice,
                     MinPrice = req.MinPrice
                 };

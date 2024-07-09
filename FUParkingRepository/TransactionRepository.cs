@@ -63,7 +63,7 @@ namespace FUParkingRepository
 
         public async Task<Return<IEnumerable<Transaction>>> GetTransactionListAsync(DateTime FromDate, DateTime ToDate, int pageSize, int pageIndex)
         {
-            Return<IEnumerable<Transaction>> res = new() { Message = ErrorEnumApplication.GET_OBJECT_ERROR };
+            Return<IEnumerable<Transaction>> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
             try
             {
                 var result = await _db.Transactions.Include(t => t.Payment).Where(t => t.CreatedDate >= FromDate && t.CreatedDate <= ToDate)

@@ -60,6 +60,7 @@ builder.Services.AddScoped<IGateRepository, GateRepository>();
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 builder.Services.AddScoped<IParkingAreaRepository, ParkingAreaRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPriceRepository, PriceRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();

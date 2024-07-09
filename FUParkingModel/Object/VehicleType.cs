@@ -25,5 +25,6 @@ namespace FUParkingModel.Object
 
         public ICollection<Vehicle>? Vehicles { get; set; }        
         public ICollection<PriceTable>? PriceTables { get; set; }
+        public ICollection<Session>? Sessions { get; set; }
     }
 }

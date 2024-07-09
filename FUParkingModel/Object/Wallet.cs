@@ -13,7 +13,7 @@ namespace FUParkingModel.Object
         public required string WalletType { get; set; }
         
         [Column("CustomerId")]
-        public required Guid CustomerId { get; set; }        
+        public Guid CustomerId { get; set; }        
         public Customer? Customer { get; set; }        
 
         [Column("EXPDate")]

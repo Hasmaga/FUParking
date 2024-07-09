@@ -7,7 +7,7 @@ namespace FUParkingModel.Object
     public class Customer : Common
     {
         [Column("CustomerTypeId")]        
-        public required Guid CustomerTypeId { get; set; }
+        public Guid CustomerTypeId { get; set; }
         public CustomerType? CustomerType { get; set; }
 
         [Column("FullName")]

@@ -6,15 +6,15 @@ namespace FUParkingModel.Object
     public class Deposit : Common
     {
         [Column("PaymentMethodId")]
-        public required Guid PaymentMethodId { get; set; }
+        public Guid PaymentMethodId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
 
         [Column("PackageId")]
-        public required Guid PackageId { get; set; }
+        public Guid PackageId { get; set; }
         public Package? Package { get; set; }
 
         [Column("CustomerId")]
-        public required Guid CustomerId { get; set; }
+        public Guid CustomerId { get; set; }
         public Customer? Customer { get; set; }
 
         [Column("Amount")]

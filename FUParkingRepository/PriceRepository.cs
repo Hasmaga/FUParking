@@ -32,7 +32,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PriceItem>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -54,7 +54,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<dynamic>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -77,7 +77,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<PriceItem>>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -93,13 +93,13 @@ namespace FUParkingRepository
                 {
                     Data = result,
                     IsSuccess = true,
-                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,                    
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception e)
             {
                 return new Return<PriceItem>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -145,7 +145,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<PriceTable>>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -167,7 +167,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PriceTable>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -190,7 +190,39 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PriceTable>
-                {                   
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<PriceTable>>> GetListPriceTableActiveByVehicleTypeAsync(Guid vehicleTypeId)
+        {
+            try
+            {
+                var result = await _db.PriceTables
+                    .Include(r => r.VehicleType)
+                    .Where(t => t.DeletedDate == null &&
+                        t.VehicleTypeId.Equals(vehicleTypeId) &&
+                        (
+                            (t.ApplyFromDate == null && t.ApplyToDate == null) || // Active forever
+                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= DateTime.Now) || // Check ApplyFromDate
+                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= DateTime.Now) // Check ApplyToDate
+                        )
+                    ).ToListAsync();
+                return new Return<IEnumerable<PriceTable>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<PriceTable>>
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };

@@ -170,54 +170,6 @@ namespace FUParkingModel.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Session",
-                schema: "dbo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CardId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GateInId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GateOutId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PlateNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ImageInUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ImageOutUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TimeIn = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TimeOut = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Mode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Session", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Session_Card_CardId",
-                        column: x => x.CardId,
-                        principalSchema: "dbo",
-                        principalTable: "Card",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Session_Customer_CustomerId",
-                        column: x => x.CustomerId,
-                        principalSchema: "dbo",
-                        principalTable: "Customer",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Session_Gate_GateInId",
-                        column: x => x.GateInId,
-                        principalSchema: "dbo",
-                        principalTable: "Gate",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Session_Gate_GateOutId",
-                        column: x => x.GateOutId,
-                        principalSchema: "dbo",
-                        principalTable: "Gate",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "GateType",
                 schema: "dbo",
                 columns: table => new
@@ -297,12 +249,6 @@ namespace FUParkingModel.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Payment", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Payment_Session_SessionId",
-                        column: x => x.SessionId,
-                        principalSchema: "dbo",
-                        principalTable: "Session",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -369,10 +315,10 @@ namespace FUParkingModel.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PriceTableId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ApplyFromHour = table.Column<TimeOnly>(type: "time", nullable: false),
-                    ApplyToHour = table.Column<TimeOnly>(type: "time", nullable: false),
-                    MaxPrice = table.Column<int>(type: "int", nullable: true),
-                    MinPrice = table.Column<int>(type: "int", nullable: true),
+                    ApplyFromHour = table.Column<int>(type: "int", nullable: true),
+                    ApplyToHour = table.Column<int>(type: "int", nullable: true),
+                    MaxPrice = table.Column<int>(type: "int", nullable: false),
+                    MinPrice = table.Column<int>(type: "int", nullable: false),
                     CreateById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     LastModifyById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     LastModifyDate = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -393,8 +339,8 @@ namespace FUParkingModel.Migrations
                     VehicleTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Priority = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApplyFromDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ApplyToDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ApplyFromDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ApplyToDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     StatusPriceTable = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreateById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     LastModifyById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -490,6 +436,79 @@ namespace FUParkingModel.Migrations
                         principalSchema: "dbo",
                         principalTable: "User",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Session",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CardId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GateInId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GateOutId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    PlateNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageInUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageOutUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TimeIn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TimeOut = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Mode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Block = table.Column<int>(type: "int", nullable: false),
+                    VehicleTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreateById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    LastModifyById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    LastModifyDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Session", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Session_Card_CardId",
+                        column: x => x.CardId,
+                        principalSchema: "dbo",
+                        principalTable: "Card",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_Customer_CustomerId",
+                        column: x => x.CustomerId,
+                        principalSchema: "dbo",
+                        principalTable: "Customer",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_Gate_GateInId",
+                        column: x => x.GateInId,
+                        principalSchema: "dbo",
+                        principalTable: "Gate",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_Gate_GateOutId",
+                        column: x => x.GateOutId,
+                        principalSchema: "dbo",
+                        principalTable: "Gate",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_User_CreateById",
+                        column: x => x.CreateById,
+                        principalSchema: "dbo",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_User_LastModifyById",
+                        column: x => x.LastModifyById,
+                        principalSchema: "dbo",
+                        principalTable: "User",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Session_VehicleType_VehicleTypeId",
+                        column: x => x.VehicleTypeId,
+                        principalSchema: "dbo",
+                        principalTable: "VehicleType",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -755,6 +774,12 @@ namespace FUParkingModel.Migrations
                 column: "CardId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Session_CreateById",
+                schema: "dbo",
+                table: "Session",
+                column: "CreateById");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Session_CustomerId",
                 schema: "dbo",
                 table: "Session",
@@ -771,6 +796,18 @@ namespace FUParkingModel.Migrations
                 schema: "dbo",
                 table: "Session",
                 column: "GateOutId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Session_LastModifyById",
+                schema: "dbo",
+                table: "Session",
+                column: "LastModifyById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Session_VehicleTypeId",
+                schema: "dbo",
+                table: "Session",
+                column: "VehicleTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transaction_DepositId",
@@ -1045,6 +1082,15 @@ namespace FUParkingModel.Migrations
                 principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
+                name: "FK_Payment_Session_SessionId",
+                schema: "dbo",
+                table: "Payment",
+                column: "SessionId",
+                principalSchema: "dbo",
+                principalTable: "Session",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_PaymentMethod_User_CreateById",
                 schema: "dbo",
                 table: "PaymentMethod",
@@ -1182,10 +1228,6 @@ namespace FUParkingModel.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
-                name: "VehicleType",
-                schema: "dbo");
-
-            migrationBuilder.DropTable(
                 name: "Package",
                 schema: "dbo");
 
@@ -1207,6 +1249,10 @@ namespace FUParkingModel.Migrations
 
             migrationBuilder.DropTable(
                 name: "Gate",
+                schema: "dbo");
+
+            migrationBuilder.DropTable(
+                name: "VehicleType",
                 schema: "dbo");
 
             migrationBuilder.DropTable(
