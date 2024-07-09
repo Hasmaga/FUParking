@@ -83,6 +83,41 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<IEnumerable<Transaction>>> GetTransByWalletIdAsync(Guid walletId, int pageSize, int pageIndex, DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                DateTime endDateValue = endDate ?? DateTime.Now;        
+                DateTime startDateValue = startDate ?? DateTime.MinValue;
+
+                var res = await _db.Transactions.Include(t => t.Payment)
+                    .Where(t => t.WalletId.Equals(walletId) && t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .ToListAsync();
+
+
+                var result = res
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize);                    
+
+                return new Return<IEnumerable<Transaction>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = res.Count(),
+                    Message = res.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Transaction>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
         public async Task<Return<Transaction>> UpdateTransactionAsync(Transaction transaction)
         {
             try
