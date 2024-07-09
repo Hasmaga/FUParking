@@ -124,4 +124,10 @@ namespace FUParkingModel.Enum
         public const string CLOSED = "CLOSED";
         public const string CANCELLED = "CANCELLED";
     }
+
+    public class TransactionTypeEnum
+    {
+        public const string IN = "IN";
+        public const string OUT = "OUT";        
+    }
 }
