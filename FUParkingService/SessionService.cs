@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Session;
+using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -42,29 +43,29 @@ namespace FUParkingService
             _vehicleRepository = vehicleRepository;
         }
 
-        public async Task<Return<bool>> CheckInAsync(CreateSessionReqDto req)
+        public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req)
         {
             try
             {
                 // Check token
                 if (!_helpperService.IsTokenValid())
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check role
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (!accountLogin.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check CardId
                 var card = await _cardRepository.GetCardByIdAsync(req.CardId);
                 if (!card.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(req.CardId);
                 if (!isSessionClosed.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
                 if (isSessionClosed.Data != null && isSessionClosed.Data.GateOutId == null)
                 {
                     // Close this session
@@ -75,33 +76,33 @@ namespace FUParkingService
                 // Check this plate number is in another session
                 var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!sessionPlate.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionPlate.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionPlate.InternalErrorMessage };
                 if (sessionPlate.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && sessionPlate.Data != null && sessionPlate.Data.Status.Equals(SessionEnum.PARKED))
-                    return new Return<bool> { Message = ErrorEnumApplication.PLATE_NUMBER_IN_USE };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_IN_USE };
                 // Check GateInId
                 var gateIn = await _gateRepository.GetGateByIdAsync(req.GateInId);
                 if (!gateIn.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
                 if (!parkingArea.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = parkingArea.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = parkingArea.InternalErrorMessage };
                 if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
                 // Check plateNumber is belong to any customer
                 var customer = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
                 if (!customer.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
                 if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
                 // Check vehicle type of plate number
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
                 if (!vehicle.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
                 if (vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicle.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
                 // Object name = PlateNumber + TimeIn + extension file
                 var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
                 // Create new UploadObjectReqDto                
@@ -114,7 +115,7 @@ namespace FUParkingService
                 // Upload image to Minio server and get url image
                 var imageInUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                 if (imageInUrl.IsSuccess == false || imageInUrl.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
                 // Create session
                 var newSession = new Session
                 {
@@ -133,12 +134,12 @@ namespace FUParkingService
                 // Create session
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
             {
-                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 
@@ -227,43 +228,43 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> CheckOutAsync(string CardNumber, Guid GateOutId, DateTime TimeOut, IFormFile ImageOut)
+        public async Task<Return<CheckOutResDto>> CheckOutAsync(string CardNumber, Guid GateOutId, DateTime TimeOut, IFormFile ImageOut)
         {
             try
             {
                 if (!_helpperService.IsTokenValid())
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check role
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (!accountLogin.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check CardId
                 var card = await _cardRepository.GetCardByCardNumberAsync(CardNumber);
                 if (!card.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 var sessionCard = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!sessionCard.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionCard.InternalErrorMessage };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionCard.InternalErrorMessage };
                 if (sessionCard.Data == null || sessionCard.Data.GateOutId != null)
-                    return new Return<bool> { Message = ErrorEnumApplication.SESSION_CLOSE };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CLOSE };
                 if (sessionCard.Data.Status.Equals(SessionEnum.CANCELLED))
-                    return new Return<bool> { Message = ErrorEnumApplication.SESSION_CANCELLED };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CANCELLED };
                 var gateOut = await _gateRepository.GetGateByIdAsync(GateOutId);
                 if (!gateOut.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateOut.InternalErrorMessage };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateOut.InternalErrorMessage };
                 if (gateOut.Data == null || !gateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
 
                 if ((sessionCard.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.PAID) || sessionCard.Data.CustomerId == null)
                 {
                     // Calculate total block time in minutes
                     // Check block of parking area                    
                     if (gateOut.Data.ParkingArea?.Block == null)
-                        return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
+                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
                     var totalBlockTime = (int)(TimeOut - sessionCard.Data.TimeIn).TotalMinutes / sessionCard.Data.Block;
                     int price = 0;
                     switch (sessionCard.Data.Mode)
@@ -274,24 +275,24 @@ namespace FUParkingService
                                 // Check VehicleTypeId
                                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(sessionCard.Data.VehicleTypeId);
                                 if (!vehicleType.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                                 if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                                 if (!listPriceTable.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                                 if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Check which package is have higher piority
                                 var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                                 if (priceTable == null)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get list price item in price table
                                 var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                                 if (!listPriceItem.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                                 if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                                 var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
                                 if (priceItem == null)
@@ -299,7 +300,7 @@ namespace FUParkingService
                                     // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                     priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).LastOrDefault();
                                     if (priceItem == null)
-                                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
                                 // Calculate price
                                 price = priceItem.MinPrice * totalBlockTime > priceItem.MaxPrice ? priceItem.MaxPrice : priceItem.MinPrice * totalBlockTime;
@@ -311,24 +312,24 @@ namespace FUParkingService
                                 // Check VehicleTypeId
                                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(sessionCard.Data.VehicleTypeId);
                                 if (!vehicleType.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                                 if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                                 if (!listPriceTable.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                                 if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Check which package is have higher piority
                                 var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                                 if (priceTable == null)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get list price item in price table
                                 var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                                 if (!listPriceItem.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                                 if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                                 var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
                                 if (priceItem == null)
@@ -336,7 +337,7 @@ namespace FUParkingService
                                     // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                     priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).FirstOrDefault();
                                     if (priceItem == null)
-                                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
                                 // Calculate price
                                 price = priceItem.MinPrice * totalBlockTime > priceItem.MaxPrice ? priceItem.MaxPrice : priceItem.MinPrice * totalBlockTime;
@@ -348,24 +349,24 @@ namespace FUParkingService
                                 // Check VehicleTypeId
                                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(sessionCard.Data.VehicleTypeId);
                                 if (!vehicleType.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                                 if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                                 if (!listPriceTable.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                                 if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Check which package is have higher piority
                                 var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                                 if (priceTable == null)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get list price item in price table
                                 var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                                 if (!listPriceItem.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                                 if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                                 var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
                                 if (priceItem == null)
@@ -373,7 +374,7 @@ namespace FUParkingService
                                     // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                     priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
                                     if (priceItem == null)
-                                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
                                 // Calculate price
                                 price = priceItem.MinPrice * totalBlockTime > priceItem.MaxPrice ? priceItem.MaxPrice : priceItem.MinPrice * totalBlockTime;
@@ -385,24 +386,24 @@ namespace FUParkingService
                                 // Check VehicleTypeId
                                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(sessionCard.Data.VehicleTypeId);
                                 if (!vehicleType.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                                 if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                                 if (!listPriceTable.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                                 if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Check which package is have higher piority
                                 var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                                 if (priceTable == null)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get list price item in price table
                                 var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                                 if (!listPriceItem.IsSuccess)
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                                 if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                                 var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
                                 if (priceItem == null)
@@ -410,14 +411,14 @@ namespace FUParkingService
                                     // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                     priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
                                     if (priceItem == null)
-                                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
                                 // Calculate price
                                 price = priceItem.MinPrice * totalBlockTime > priceItem.MaxPrice ? priceItem.MaxPrice : priceItem.MinPrice * totalBlockTime;
                                 break;
                             }
                         default:
-                            return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
                     // Upload image out
                     var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_Out" + Path.GetExtension(ImageOut.FileName);
@@ -429,27 +430,27 @@ namespace FUParkingService
                     };
                     var imageOutUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                     if (imageOutUrl.IsSuccess == false || imageOutUrl.Data == null)
-                        return new Return<bool> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
                     // Try minus balance of customer wallet
 
                     if (sessionCard.Data.CustomerId.HasValue)
                     {
                         var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                         if (!walletMain.IsSuccess)
-                            return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletMain.InternalErrorMessage };
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletMain.InternalErrorMessage };
                         if (walletMain.Data == null || !walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                            return new Return<bool> { Message = ErrorEnumApplication.WALLET_NOT_EXIST };
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.WALLET_NOT_EXIST };
                         var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                         if (!walletExtra.IsSuccess)
-                            return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletExtra.InternalErrorMessage };
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletExtra.InternalErrorMessage };
                         if (walletExtra.Data == null || !walletExtra.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                            return new Return<bool> { Message = ErrorEnumApplication.WALLET_NOT_EXIST };                   // Minus balance of waller Extra first if balance of wallet Extra is enough to pay price of session then minus balance of walletExtra + walletMain if not enough then return error
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.WALLET_NOT_EXIST };                   // Minus balance of waller Extra first if balance of wallet Extra is enough to pay price of session then minus balance of walletExtra + walletMain if not enough then return error
                         if (walletExtra.Data.Balance >= price)
                         {
                             // Get PaymentMethodId
                             var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
                             if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                             // Create Payment
                             var payment = new Payment
                             {
@@ -459,7 +460,7 @@ namespace FUParkingService
                             };
                             var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
                             if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Create transaction
                             var transaction = new Transaction
                             {
@@ -471,18 +472,18 @@ namespace FUParkingService
                             };
                             var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                             if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             walletExtra.Data.Balance -= price;
                             var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
                             if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
                         else if (walletExtra.Data.Balance + walletMain.Data.Balance >= price)
                         {
                             // Get PaymentMethodId
                             var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
                             if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                             // Create 2 Payment for 2 wallet main and extra
                             var paymentMain = new Payment
                             {
@@ -492,7 +493,7 @@ namespace FUParkingService
                             };
                             var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
                             if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var paymentExtra = new Payment
                             {
                                 PaymentMethodId = paymentMethod.Data.Id,
@@ -501,7 +502,7 @@ namespace FUParkingService
                             };
                             var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
                             if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Create 2 transaction for 2 wallet main and extra
                             var transactionMain = new Transaction
                             {
@@ -513,7 +514,7 @@ namespace FUParkingService
                             };
                             var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
                             if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var transactionExtra = new Transaction
                             {
                                 WalletId = walletExtra.Data.Id,
@@ -524,15 +525,15 @@ namespace FUParkingService
                             };
                             var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
                             if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             walletExtra.Data.Balance = 0;
                             walletMain.Data.Balance -= price - walletExtra.Data.Balance;
                             var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
                             if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
                             if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
                         else
                         {
@@ -544,8 +545,19 @@ namespace FUParkingService
                             sessionCard.Data.LastModifyDate = DateTime.Now;
                             var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                             if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };                            
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            return new Return<CheckOutResDto>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
+                                Data = new CheckOutResDto
+                                {
+                                    Amount = price,
+                                    Message = "Need to pay",
+                                    ImageIn = sessionCard.Data.ImageInUrl,
+                                    PlateNumber = sessionCard.Data.PlateNumber,
+                                }
+                            };
                         }
                     }
                 }
@@ -556,12 +568,62 @@ namespace FUParkingService
                 sessionCard.Data.LastModifyDate = DateTime.Now;
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                 if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                return new Return<CheckOutResDto>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
+                    Data = new CheckOutResDto
+                    {
+                        ImageIn = sessionCard.Data.ImageInUrl,
+                        Message = "Check out successfully",
+                        PlateNumber = sessionCard.Data.PlateNumber,
+                    }
+                };
             }
             catch (Exception ex)
             {
-                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<dynamic>> UpdatePaymentSessionAsync(string CardNumber)
+        {
+            try
+            {
+                if (!_helpperService.IsTokenValid())
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                // Check role
+                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!accountLogin.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
+                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                // Check CardId
+                var card = await _cardRepository.GetCardByCardNumberAsync(CardNumber);
+                if (!card.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
+                if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
+                var sessionCard = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
+                if (!sessionCard.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionCard.InternalErrorMessage };
+                if (sessionCard.Data == null || sessionCard.Data.GateOutId != null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SESSION_CLOSE };
+                if (sessionCard.Data.Status.Equals(SessionEnum.CANCELLED))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SESSION_CANCELLED };
+                // Update session to close
+                sessionCard.Data.Status = SessionEnum.CLOSED;
+                sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                sessionCard.Data.LastModifyDate = DateTime.Now;
+                var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

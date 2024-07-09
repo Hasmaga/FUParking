@@ -41,28 +41,7 @@ namespace FUParkingRepository
                 res.InternalErrorMessage = ex;
                 return res;
             }
-        }
-
-        public async Task<Return<Wallet>> GetWalletByCustomerId(Guid customerId)
-        {
-            Return<Wallet> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                var wallet = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId));
-                res.Message = wallet == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT;
-                res.Data = wallet;
-                res.IsSuccess = true;
-                return res;
-            }
-            catch (Exception ex)
-            {
-                res.InternalErrorMessage = ex;
-                return res;
-            }
-        }
+        }       
 
         public async Task<Return<Wallet>> CreateWalletAsync(Wallet wallet)
         {

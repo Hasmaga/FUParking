@@ -22,31 +22,7 @@ namespace FUParkingApi.Controllers
         {
             _walletService = walletService;
             _logger = logger;
-        }
-
-        [HttpGet("transaction")]
-        public async Task<IActionResult> GetWalletTransaction([FromQuery] int pageSize = Pagination.PAGE_SIZE, [FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int numberOfDays = 7)
-        {
-            Return<List<Transaction>> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                string? userIdToken = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
-                res = await _walletService.GetWalletTransactionByCustomerIdAsync(userIdToken, pageIndex, pageSize, numberOfDays);
-                if (res.Data == null)
-                {
-                    return NotFound(res);
-                }
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                res.InternalErrorMessage = ex;
-                return StatusCode(502, res);
-            }
-        }
+        }        
 
         [HttpGet("transaction/main")]
         public async Task<IActionResult> GetTransactionWalletMain([FromQuery] GetListObjectWithFillerDateReqDto req)
