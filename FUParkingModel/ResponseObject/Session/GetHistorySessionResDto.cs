@@ -15,5 +15,6 @@ namespace FUParkingModel.ResponseObject.Session
         public int? Amount { get; set; }
         public string GateIn { get; set; } = null!;
         public string? GateOut { get; set; }
+        public string? PaymentMethod { get; set; }
     }
 }

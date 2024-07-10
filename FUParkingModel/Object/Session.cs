@@ -42,6 +42,10 @@ namespace FUParkingModel.Object
         public Guid VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
+        [Column("PaymentMethodId")]
+        public Guid PaymentMethodId { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; }
+
         [Column("CustomerId")]
         public Guid? CustomerId { get; set; }
         public Customer? Customer { get; set; }

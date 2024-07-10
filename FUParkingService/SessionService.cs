@@ -542,10 +542,15 @@ namespace FUParkingService
                         {
                             // Show money customer/guest need to pay
                             // Update session
+                            // Get payment method id is Cash
+                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
+                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                             sessionCard.Data.GateOutId = GateOutId;
                             sessionCard.Data.TimeOut = TimeOut;
                             sessionCard.Data.LastModifyById = accountLogin.Data.Id;
                             sessionCard.Data.LastModifyDate = DateTime.Now;
+                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                             var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                             if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -564,11 +569,17 @@ namespace FUParkingService
                         }
                     }
                 }
+                // GetPaymentMethod wallet
+                var paymentMethodWallet = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                if (!paymentMethodWallet.IsSuccess || paymentMethodWallet.Data == null || !paymentMethodWallet.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodWallet.InternalErrorMessage };
+
                 sessionCard.Data.GateOutId = GateOutId;
                 sessionCard.Data.TimeOut = TimeOut;
                 sessionCard.Data.Status = SessionEnum.CLOSED;
                 sessionCard.Data.LastModifyById = accountLogin.Data.Id;
                 sessionCard.Data.LastModifyDate = DateTime.Now;
+                sessionCard.Data.PaymentMethodId = paymentMethodWallet.Data.Id;
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                 if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -651,9 +662,9 @@ namespace FUParkingService
                 foreach (var item in listSession.Data)
                 {
                     string? GateOutName = null;
-                    var amount = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
-                    if (!amount.IsSuccess)
-                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = amount.InternalErrorMessage };
+                    var payment = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
+                    if (!payment.IsSuccess)
+                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = payment.InternalErrorMessage };
                     var GateIn = await _gateRepository.GetGateByIdAsync(item.GateInId);
                     if (!GateIn.IsSuccess)
                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = GateIn.InternalErrorMessage };
@@ -667,16 +678,17 @@ namespace FUParkingService
                         if (!GateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || GateOut.Data == null)
                             return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                         GateOutName = GateOut.Data.Name;
-                    }
+                    }                    
                     listSessionData.Add(new GetHistorySessionResDto
                     {
                         PlateNumber = item.PlateNumber,
                         TimeIn = item.TimeIn,
                         TimeOut = item.TimeOut,
                         Status = item.Status,
-                        Amount = amount.Data?.TotalPrice,
+                        Amount = payment.Data?.TotalPrice,
                         GateIn = GateIn.Data.Name,
                         GateOut = GateOutName,
+                        PaymentMethod = payment.Data?.PaymentMethod?.Name,
                     });
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>
