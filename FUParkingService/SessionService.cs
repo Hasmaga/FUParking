@@ -10,6 +10,7 @@ using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Identity.Client;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -146,7 +147,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> CheckInForGuestAsync(string PlateNumber, Guid CardId, Guid GateInId, IFormFile ImageIn, Guid VehicleType)
+        public async Task<Return<bool>> CheckInForGuestAsync(CheckInForGuestReqDto req)
         {
             try
             {
@@ -160,13 +161,13 @@ namespace FUParkingService
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check CardId
-                var card = await _cardRepository.GetCardByIdAsync(CardId);
+                var card = await _cardRepository.GetCardByIdAsync(req.CardId);
                 if (!card.IsSuccess)
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 // Check newest session of this card, check this session is closed
-                var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(CardId);
+                var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(req.CardId);
                 if (!isSessionClosed.IsSuccess)
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
                 if (isSessionClosed.Data != null && isSessionClosed.Data.GateOutId == null)
@@ -177,29 +178,35 @@ namespace FUParkingService
                     isSessionClosed.Data.LastModifyDate = DateTime.Now;
                 }
                 // Check this plate number is in another session
-                var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(PlateNumber);
+                var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!sessionPlate.IsSuccess)
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionPlate.InternalErrorMessage };
                 if (sessionPlate.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && sessionPlate.Data != null && sessionPlate.Data.Status.Equals(SessionEnum.PARKED))
                     return new Return<bool> { Message = ErrorEnumApplication.PLATE_NUMBER_IN_USE };
                 // Check GateInId
-                var gateIn = await _gateRepository.GetGateByIdAsync(GateInId);
+                var gateIn = await _gateRepository.GetGateByIdAsync(req.GateInId);
                 if (!gateIn.IsSuccess)
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
+                // check vehicle type
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
+                if (!vehicleType.IsSuccess)
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<bool> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST };
                 // Check parking area
-                var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(GateInId);
+                var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
                 if (!parkingArea.IsSuccess)
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = parkingArea.InternalErrorMessage };
                 if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
                 // Create new UploadObjectReqDto
-                var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_In" + Path.GetExtension(ImageIn.FileName);
+                var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
                     BucketName = BucketMinioEnum.BUCKET_PARKiNG,
-                    ObjFile = ImageIn,
+                    ObjFile = req.ImageIn,
                     ObjName = objName
                 };
                 // Upload image to Minio server and get url image
@@ -209,16 +216,16 @@ namespace FUParkingService
                 // Create session
                 var newSession = new Session
                 {
-                    CardId = CardId,
+                    CardId = card.Data.Id,
                     Block = parkingArea.Data.Block,
-                    PlateNumber = PlateNumber,
-                    GateInId = GateInId,
+                    PlateNumber = req.PlateNumber,
+                    GateInId = gateIn.Data.Id,
                     ImageInUrl = imageInUrl.Data.ObjUrl,
                     TimeIn = DateTime.Now,
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
                     CreatedById = accountLogin.Data.Id,
-                    VehicleTypeId = VehicleType,
+                    VehicleTypeId = vehicleType.Data.Id,
                 };
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
@@ -231,8 +238,9 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<CheckOutResDto>> CheckOutAsync(string CardNumber, Guid GateOutId, DateTime TimeOut, IFormFile ImageOut)
+        public async Task<Return<CheckOutResDto>> CheckOutAsync(CheckOutAsyncReqDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 if (!_helpperService.IsTokenValid())
@@ -244,7 +252,7 @@ namespace FUParkingService
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check CardId
-                var card = await _cardRepository.GetCardByCardNumberAsync(CardNumber);
+                var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
                 if (!card.IsSuccess)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
@@ -256,7 +264,7 @@ namespace FUParkingService
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CLOSE };
                 if (sessionCard.Data.Status.Equals(SessionEnum.CANCELLED))
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CANCELLED };
-                var gateOut = await _gateRepository.GetGateByIdAsync(GateOutId);
+                var gateOut = await _gateRepository.GetGateByIdAsync(req.GateOutId);
                 if (!gateOut.IsSuccess)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateOut.InternalErrorMessage };
                 if (gateOut.Data == null || !gateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
@@ -268,7 +276,7 @@ namespace FUParkingService
                     // Check block of parking area                    
                     if (gateOut.Data.ParkingArea?.Block == null)
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
-                    var totalBlockTime = (int)(TimeOut - sessionCard.Data.TimeIn).TotalMinutes / sessionCard.Data.Block;
+                    var totalBlockTime = (int)(req.TimeOut - sessionCard.Data.TimeIn).TotalMinutes / sessionCard.Data.Block;
                     int price = 0;
                     switch (sessionCard.Data.Mode)
                     {
@@ -424,11 +432,11 @@ namespace FUParkingService
                             return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
                     // Upload image out
-                    var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_Out" + Path.GetExtension(ImageOut.FileName);
+                    var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
                     var uploadObjectReqDto = new UploadObjectReqDto
                     {
                         BucketName = BucketMinioEnum.BUCKET_PARKiNG,
-                        ObjFile = ImageOut,
+                        ObjFile = req.ImageOut,
                         ObjName = objName
                     };
                     var imageOutUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
@@ -463,9 +471,12 @@ namespace FUParkingService
                             };
                             var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
                             if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             // Create transaction
-                            var transaction = new Transaction
+                            var transaction = new FUParkingModel.Object.Transaction
                             {
                                 WalletId = walletExtra.Data.Id,
                                 PaymentId = createPayment.Data.Id,
@@ -475,11 +486,17 @@ namespace FUParkingService
                             };
                             var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                             if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             walletExtra.Data.Balance -= price;
                             var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
                             if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                         }
                         else if (walletExtra.Data.Balance + walletMain.Data.Balance >= price)
                         {
@@ -496,7 +513,10 @@ namespace FUParkingService
                             };
                             var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
                             if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             var paymentExtra = new Payment
                             {
                                 PaymentMethodId = paymentMethod.Data.Id,
@@ -505,9 +525,12 @@ namespace FUParkingService
                             };
                             var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
                             if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             // Create 2 transaction for 2 wallet main and extra
-                            var transactionMain = new Transaction
+                            var transactionMain = new FUParkingModel.Object.Transaction
                             {
                                 WalletId = walletMain.Data.Id,
                                 PaymentId = createPaymentMain.Data.Id,
@@ -517,8 +540,11 @@ namespace FUParkingService
                             };
                             var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
                             if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            var transactionExtra = new Transaction
+                            }
+                            var transactionExtra = new FUParkingModel.Object.Transaction
                             {
                                 WalletId = walletExtra.Data.Id,
                                 PaymentId = createPaymentExtra.Data.Id,
@@ -528,15 +554,24 @@ namespace FUParkingService
                             };
                             var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
                             if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             walletExtra.Data.Balance = 0;
                             walletMain.Data.Balance -= price - walletExtra.Data.Balance;
                             var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
                             if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
                             if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                         }
                         else
                         {
@@ -545,15 +580,21 @@ namespace FUParkingService
                             // Get payment method id is Cash
                             var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
                             if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-                            sessionCard.Data.GateOutId = GateOutId;
-                            sessionCard.Data.TimeOut = TimeOut;
+                            }
+                            sessionCard.Data.GateOutId = req.GateOutId;
+                            sessionCard.Data.TimeOut = req.TimeOut;
                             sessionCard.Data.LastModifyById = accountLogin.Data.Id;
                             sessionCard.Data.LastModifyDate = DateTime.Now;
                             sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                             var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                             if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
                                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                             return new Return<CheckOutResDto>
                             {
                                 IsSuccess = true,
@@ -572,17 +613,22 @@ namespace FUParkingService
                 // GetPaymentMethod wallet
                 var paymentMethodWallet = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
                 if (!paymentMethodWallet.IsSuccess || paymentMethodWallet.Data == null || !paymentMethodWallet.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    scope.Dispose();
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodWallet.InternalErrorMessage };
-
-                sessionCard.Data.GateOutId = GateOutId;
-                sessionCard.Data.TimeOut = TimeOut;
+                }
+                sessionCard.Data.GateOutId = req.GateOutId;
+                sessionCard.Data.TimeOut = req.TimeOut;
                 sessionCard.Data.Status = SessionEnum.CLOSED;
                 sessionCard.Data.LastModifyById = accountLogin.Data.Id;
                 sessionCard.Data.LastModifyDate = DateTime.Now;
                 sessionCard.Data.PaymentMethodId = paymentMethodWallet.Data.Id;
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                 if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    scope.Dispose();
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
                 return new Return<CheckOutResDto>
                 {
                     IsSuccess = true,
@@ -597,6 +643,7 @@ namespace FUParkingService
             }
             catch (Exception ex)
             {
+                scope.Dispose();
                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }

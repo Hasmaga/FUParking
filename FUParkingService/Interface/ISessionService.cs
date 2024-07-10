@@ -1,4 +1,5 @@
-﻿using FUParkingModel.RequestObject.Common;
+﻿using CommunityToolkit.HighPerformance;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
@@ -10,9 +11,9 @@ namespace FUParkingService.Interface
     public interface ISessionService
     {
         Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req);
-        Task<Return<bool>> CheckInForGuestAsync(string PlateNumber, Guid CardId, Guid GateInId, IFormFile ImageIn, Guid VehicleType);
+        Task<Return<bool>> CheckInForGuestAsync(CheckInForGuestReqDto req);
         Task<Return<dynamic>> UpdatePaymentSessionAsync(string CardNumber);
-        Task<Return<CheckOutResDto>> CheckOutAsync(string CardNumber, Guid GateOutId, DateTime TimeOut, IFormFile ImageOut);
+        Task<Return<CheckOutResDto>> CheckOutAsync(CheckOutAsyncReqDto req);
         Task<Return<IEnumerable<GetHistorySessionResDto>>> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req);
     }
 }
