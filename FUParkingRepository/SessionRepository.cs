@@ -33,7 +33,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Session>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -55,7 +55,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Session>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -77,7 +77,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Session>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -139,7 +139,7 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
-            }           
+            }
             catch (Exception e)
             {
                 return new Return<Session>
@@ -162,7 +162,7 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
-            }           
+            }
             catch (Exception e)
             {
                 return new Return<Session>
@@ -172,5 +172,48 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<Session>>> GetListSessionByCustomerIdAsync(Guid customerId, DateTime? startDate, DateTime? endDate, int pageSize, int pageIndex)
+        {
+            try
+            {
+                var query = _db.Sessions
+                    .Where(x => x.CustomerId == customerId && (x.Status == SessionEnum.CLOSED || x.Status == SessionEnum.PARKED));
+
+                // Date filtering
+                if (startDate.HasValue)
+                {
+                    query = query.Where(x => x.CreatedDate >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    query = query.Where(x => x.CreatedDate <= endDate.Value);
+                }
+
+                // Pagination
+                var paginatedResult = await query
+                    .OrderBy(x => x.CreatedDate)
+                    .Skip(pageSize * (pageIndex - 1))
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<Session>>
+                {
+                    Data = paginatedResult,
+                    IsSuccess = true,
+                    TotalRecord = query.Count(),
+                    Message = paginatedResult.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Session>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
     }
 }

@@ -1,5 +1,8 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
+using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -27,16 +30,7 @@ namespace FUParkingApi.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    var errors = ModelState.ToDictionary(
-                            kvp => kvp.Key,
-                            kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                        );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
                 var result = await _sessionService.CheckInAsync(req);
                 if (!result.IsSuccess)
@@ -65,6 +59,36 @@ namespace FUParkingApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError("Error at Check In: {ex}", ex.Message);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost("history")]
+        public async Task<IActionResult> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _sessionService.GetListSessionByCustomerAsync(req);
+                if (!result.IsSuccess)
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });                        
+                        default:
+                            _logger.LogError("Error at Get List Session By Customer: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+                return StatusCode(200, new Return<IEnumerable<GetHistorySessionResDto>> { IsSuccess = true, Data = result.Data, Message = SuccessfullyEnumServer.SUCCESSFULLY });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at Get List Session By Customer: {ex}", ex.Message);
                 return StatusCode(500);
             }
         }

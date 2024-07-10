@@ -153,5 +153,29 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Payment>> GetPaymentBySessionIdAsync(Guid sessionId)
+        {
+            try
+            {
+                var result = await _db.Payments
+                    .Where(t => t.SessionId == sessionId)
+                    .FirstOrDefaultAsync();
+                return new Return<Payment>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Payment>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

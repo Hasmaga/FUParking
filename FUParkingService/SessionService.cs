@@ -1,12 +1,15 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
+using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Identity.Client;
 
 namespace FUParkingService
 {
@@ -624,6 +627,51 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetHistorySessionResDto>>> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req)
+        {
+            try
+            {
+                if (!_helpperService.IsTokenValid())
+                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!customerLogged.IsSuccess)
+                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
+                if (customerLogged.Data == null || !customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };                
+                var listSession = await _sessionRepository.GetListSessionByCustomerIdAsync(customerLogged.Data.Id, req.StartDate, req.EndDate, req.PageSize, req.PageIndex);
+                if (!listSession.IsSuccess)
+                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listSession.InternalErrorMessage };
+                if (listSession.Data == null || !listSession.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT, Data = [], IsSuccess = true };
+
+                var listSessionData = new List<GetHistorySessionResDto>();
+                foreach (var item in listSession.Data)
+                {
+                    var amount = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
+                    if (!amount.IsSuccess)
+                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = amount.InternalErrorMessage };
+                    listSessionData.Add(new GetHistorySessionResDto
+                    {
+                        PlateNumber = item.PlateNumber,
+                        TimeIn = item.TimeIn,
+                        TimeOut = item.TimeOut,
+                        Status = item.Status,
+                        Amount = amount.Data?.TotalPrice,
+                    });
+                }
+                return new Return<IEnumerable<GetHistorySessionResDto>>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = listSessionData
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

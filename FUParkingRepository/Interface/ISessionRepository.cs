@@ -12,5 +12,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Session>> GetNewestSessionByCardIdAsync(Guid cardId);
         Task<Return<Session>> GetNewestSessionByPlateNumberAsync(string plateNumber);
         Task<Return<Session>> UpdateSessionAsync(Session session);
+        Task<Return<IEnumerable<Session>>> GetListSessionByCustomerIdAsync(Guid customerId, DateTime? startDate, DateTime? endDate, int pageSize, int pageIndex);
     }
 }
