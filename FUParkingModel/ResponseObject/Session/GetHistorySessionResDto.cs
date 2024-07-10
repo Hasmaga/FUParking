@@ -13,5 +13,7 @@ namespace FUParkingModel.ResponseObject.Session
         public string Status { get; set; } = null!;
         public string PlateNumber { get; set; } = null!;
         public int? Amount { get; set; }
+        public string GateIn { get; set; } = null!;
+        public string? GateOut { get; set; }
     }
 }

@@ -650,9 +650,24 @@ namespace FUParkingService
                 var listSessionData = new List<GetHistorySessionResDto>();
                 foreach (var item in listSession.Data)
                 {
+                    string? GateOutName = null;
                     var amount = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
                     if (!amount.IsSuccess)
                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = amount.InternalErrorMessage };
+                    var GateIn = await _gateRepository.GetGateByIdAsync(item.GateInId);
+                    if (!GateIn.IsSuccess)
+                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = GateIn.InternalErrorMessage };
+                    if (!GateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || GateIn.Data == null)
+                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    if (item.GateOutId is not null)
+                    {
+                        var GateOut = await _gateRepository.GetGateByIdAsync(item.GateOutId.Value);
+                        if (!GateOut.IsSuccess)
+                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = GateOut.InternalErrorMessage };
+                        if (!GateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || GateOut.Data == null)
+                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        GateOutName = GateOut.Data.Name;
+                    }
                     listSessionData.Add(new GetHistorySessionResDto
                     {
                         PlateNumber = item.PlateNumber,
@@ -660,6 +675,8 @@ namespace FUParkingService
                         TimeOut = item.TimeOut,
                         Status = item.Status,
                         Amount = amount.Data?.TotalPrice,
+                        GateIn = GateIn.Data.Name,
+                        GateOut = GateOutName,
                     });
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>
