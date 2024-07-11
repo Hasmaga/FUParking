@@ -41,6 +41,7 @@ namespace FUParkingModel.Enum
         public const string SESSION_CLOSE = "This session is allready close";
         public const string SESSION_CANCELLED = "This session is canceled";
         public const string NOT_ENOUGH_MONEY = "This account is not have enough money in account";
+        public const string PARKING_AREA_INACTIVE = "This parking area is inactive";
     }
 
     public class MinioErrorServerDefineEnum

@@ -88,7 +88,7 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Id.Equals(id));
+                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Id.Equals(id) && u.DeletedDate == null);
                 return new Return<User>
                 {
                     Data = result,

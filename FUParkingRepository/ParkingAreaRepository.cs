@@ -162,7 +162,7 @@ namespace FUParkingRepository
             {
                 var query = from parkingArea in _db.ParkingAreas
                             join gate in _db.Gates on parkingArea.Id equals gate.ParkingAreaId
-                            where gate.Id == gateId
+                            where gate.Id == gateId && parkingArea.DeletedDate == null
                             select parkingArea;
                 var result = await query.FirstOrDefaultAsync();
                 return new Return<ParkingArea> { Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT, IsSuccess = true, Data = result };

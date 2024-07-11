@@ -1,28 +1,29 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject.Session
 {
     public class CheckInForGuestReqDto
     {
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have PlateNumber")]
         public string PlateNumber { get; set; } = null!;
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have CardId")]
         public Guid CardId { get; set; }
-
-        [Required]
+        
+        [FromForm]
+        [Required(ErrorMessage = "Must have GateInId")]
         public Guid GateInId { get; set; }
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have ImageIn")]
         public IFormFile ImageIn { get; set; } = null!;
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have VehicleTypeId")]
         public Guid VehicleTypeId { get; set; }
     }
 }

@@ -63,6 +63,46 @@ namespace FUParkingApi.Controllers
             }
         }
 
+        [HttpPost("checkout")]
+        public async Task<IActionResult> CheckOutAsync([FromForm] CheckOutAsyncReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _sessionService.CheckOutAsync(req);
+                if (!result.IsSuccess)
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        case ErrorEnumApplication.CARD_NOT_EXIST:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.CARD_NOT_EXIST });
+                        case ErrorEnumApplication.SESSION_CLOSE:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.SESSION_CLOSE });
+                        case ErrorEnumApplication.GATE_NOT_EXIST:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST });
+                        case ErrorEnumApplication.SESSION_CANCELLED:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.SESSION_CANCELLED });
+                        case ErrorEnumApplication.PARKING_AREA_NOT_EXIST:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST });
+                        default:
+                            _logger.LogError("Error at Check Out: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at Check Out: {ex}", ex.Message);
+                return StatusCode(500);
+            }
+        }
+
         [HttpPost("history")]
         public async Task<IActionResult> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req)
         {

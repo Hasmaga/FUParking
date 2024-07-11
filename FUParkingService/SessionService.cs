@@ -8,8 +8,6 @@ using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Identity.Client;
 using System.Transactions;
 
 namespace FUParkingService
@@ -47,7 +45,7 @@ namespace FUParkingService
             _vehicleRepository = vehicleRepository;
         }
 
-        public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req)
+        public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req) // Check vehicle is pending
         {
             try
             {
@@ -60,14 +58,16 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                if (!accountLogin.Data.StatusUser.Equals(StatusUserEnum.ACTIVE))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check CardId
-                var card = await _cardRepository.GetCardByIdAsync(req.CardId);
+                var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
                 if (!card.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 // Check newest session of this card, check this session is closed
-                var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(req.CardId);
+                var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
                 if (isSessionClosed.Data != null && isSessionClosed.Data.GateOutId == null)
@@ -89,17 +89,22 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
+                if (gateIn.Data.GateType == null || gateIn.Data.GateType.Name.Equals(GateTypeEnum.OUT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                // Check 
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
                 if (!parkingArea.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = parkingArea.InternalErrorMessage };
                 if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
+                if (!parkingArea.Data.StatusParkingArea.Equals(StatusParkingEnum.ACTIVE))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_INACTIVE };
                 // Check plateNumber is belong to any customer
                 var customer = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
                 if (!customer.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
-                if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
+                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
                 // Check vehicle type of plate number
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
@@ -123,7 +128,7 @@ namespace FUParkingService
                 // Create session
                 var newSession = new Session
                 {
-                    CardId = req.CardId,
+                    CardId = card.Data.Id,
                     Block = parkingArea.Data.Block,
                     PlateNumber = req.PlateNumber,
                     GateInId = req.GateInId,

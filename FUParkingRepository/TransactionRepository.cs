@@ -91,10 +91,9 @@ namespace FUParkingRepository
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
                 var res = await _db.Transactions.Include(t => t.Payment)
-                    .Where(t => t.WalletId.Equals(walletId) && t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue)
+                    .Where(t => t.WalletId.Equals(walletId) && t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.TransactionStatus != StatusTransactionEnum.PENDING)
                     .OrderByDescending(t => t.CreatedDate)
                     .ToListAsync();
-
 
                 var result = res
                     .Skip((pageIndex - 1) * pageSize)

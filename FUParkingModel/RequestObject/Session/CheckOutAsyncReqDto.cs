@@ -1,25 +1,25 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject.Session
 {
     public class CheckOutAsyncReqDto
     {
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have CardNumber")]
         public string CardNumber { get; set; } = null!;
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have GateOutId")]
         public Guid GateOutId { get; set; }
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have TimeOut")]
         public DateTime TimeOut { get; set; }
 
-        [Required]
+        [FromForm]
+        [Required(ErrorMessage = "Must have ImageOut")]
         public IFormFile ImageOut { get; set; } = null!;
     }
 }

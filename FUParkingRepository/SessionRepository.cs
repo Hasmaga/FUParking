@@ -110,7 +110,10 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Sessions.Where(x => x.CardId == cardId).OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                var result = await _db.Sessions
+                    .Where(x => x.CardId == cardId && x.DeletedDate == null)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .FirstOrDefaultAsync();
                 return new Return<Session>
                 {
                     Data = result,
@@ -132,7 +135,10 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Sessions.Where(x => x.PlateNumber == plateNumber).OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                var result = await _db.Sessions
+                    .Where(x => x.PlateNumber == plateNumber && x.DeletedDate == null)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .FirstOrDefaultAsync();
                 return new Return<Session>
                 {
                     Data = result,

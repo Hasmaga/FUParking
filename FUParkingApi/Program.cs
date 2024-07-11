@@ -138,15 +138,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FU_Parking"));
     AccessCloudflare.Access();
 }
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FU_Parking"));
 
 app.UseAuthorization();
 

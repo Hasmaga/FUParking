@@ -139,7 +139,10 @@ namespace FUParkingRepository
             };
             try
             {
-                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Id.Equals(id));               
+                var result = await _db.Gates
+                    .Include(p => p.GateType)
+                    .Where(p => p.DeletedDate == null && p.Id.Equals(id))
+                    .FirstOrDefaultAsync();               
                 res.Data = result;
                 res.Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
