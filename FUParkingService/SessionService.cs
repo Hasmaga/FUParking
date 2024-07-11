@@ -5,6 +5,7 @@ using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
+using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -45,7 +46,7 @@ namespace FUParkingService
             _vehicleRepository = vehicleRepository;
         }
 
-        public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req) // Check vehicle is pending
+        public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req)
         {
             try
             {
@@ -112,6 +113,21 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
                 if (vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicle.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+                if (vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
+                    // show information vehicle 
+                    return new Return<dynamic>
+                    {
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetVehicleInformationByStaffResDto
+                        {
+                            CreateDate = vehicle.Data.CreatedDate,
+                            PlateImage = vehicle.Data.PlateImage,
+                            PlateNumber = vehicle.Data.PlateNumber,
+                            StatusVehicle = vehicle.Data.StatusVehicle,
+                            VehicleType = vehicle.Data.VehicleType?.Name ?? "",
+                        }
+                    };
                 // Object name = PlateNumber + TimeIn + extension file
                 var objName = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_PARKiNG + "/" + DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + new Guid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
                 // Create new UploadObjectReqDto                

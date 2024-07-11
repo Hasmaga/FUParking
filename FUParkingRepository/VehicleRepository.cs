@@ -253,7 +253,11 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Vehicles.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(v => v.PlateNumber.Equals(PlateNumber.ToUpper()));
+                var result = await _db.Vehicles
+                    .Where(t => t.DeletedDate == null)
+                    .Include(v => v.Customer)
+                    .Include(v => v.VehicleType)
+                    .FirstOrDefaultAsync(v => v.PlateNumber.Equals(PlateNumber.ToUpper()));
                 return new Return<Vehicle>
                 {
                     Data = result,
