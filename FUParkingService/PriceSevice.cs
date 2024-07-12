@@ -242,7 +242,8 @@ namespace FUParkingService
                 };
             }
         }
-        public async Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableReqDto req)
+
+        public async Task<Return<dynamic>> CreatePriceTableAsync(CreatePriceTableReqDto req)
         {
             try
             {
@@ -250,9 +251,8 @@ namespace FUParkingService
                 var isValidToken = _helpperService.IsTokenValid();
                 if (!isValidToken)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -260,62 +260,61 @@ namespace FUParkingService
                 var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
                 if (userlogged.Data == null || userlogged.IsSuccess == false)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
-                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 // Check VehicleType is exist
                 var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
                 if (isVehicleTypeExist.Data == null || isVehicleTypeExist.IsSuccess == false)
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
+                    return new Return<dynamic>
+                    {                        
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
                 }
-
+                // Check priority is exist
+                var isPriorityExist = await _priceRepository.GetPriceTableByPriorityAndVehicleTypeAsync(req.Priority, isVehicleTypeExist.Data.Id);
+                if (!isPriorityExist.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isPriorityExist.InternalErrorMessage };
+                if (isPriorityExist.Data != null && isPriorityExist.IsSuccess == true)
+                {
+                    return new Return<dynamic>
+                    {                        
+                        Message = ErrorEnumApplication.PRIORITY_IS_EXIST
+                    };
+                }
+                // Check 
                 var priceTable = new PriceTable
                 {
                     VehicleTypeId = req.VehicleTypeId,
                     Priority = req.Priority,
                     Name = req.Name,
-                    ApplyFromDate = req.ApplyFromDate ?? DefaultType.DefaultDateTime,
-                    ApplyToDate = req.ApplyToDate ?? DefaultType.DefaultDateTime,
+                    ApplyFromDate = req.ApplyFromDate,
+                    ApplyToDate = req.ApplyToDate,
                     StatusPriceTable = StatusPriceTableEnum.ACTIVE
                 };
-
                 var result = await _priceRepository.CreatePriceTableAsync(priceTable);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<bool>
-                    {
-                        Data = true,
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                    };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
                 }
-                else
+                return new Return<dynamic>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR
-                    };
-                }
+                    Data = result.Data,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
             }
             catch (Exception e)
             {
-                return new Return<bool>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
+                return new Return<dynamic>
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }

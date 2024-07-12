@@ -14,5 +14,6 @@ namespace FUParkingRepository.Interface
         Task<Return<PriceItem>> GetPriceItemByIdAsync(Guid id);
         Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
         Task<Return<IEnumerable<PriceTable>>> GetListPriceTableActiveByVehicleTypeAsync(Guid vehicleTypeId);
+        Task<Return<PriceTable>> GetPriceTableByPriorityAndVehicleTypeAsync(int priority, Guid vehicleTypeId);
     }
 }

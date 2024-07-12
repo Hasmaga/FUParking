@@ -228,5 +228,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<PriceTable>> GetPriceTableByPriorityAndVehicleTypeAsync(int priority, Guid vehicleTypeId)
+        {
+            try
+            {
+                var result = await _db.PriceTables
+                    .Include(r => r.VehicleType)
+                    .Where(t => t.DeletedDate == null &&
+                        t.VehicleTypeId.Equals(vehicleTypeId) &&
+                        t.Priority == priority
+                    ).FirstOrDefaultAsync();
+                return new Return<PriceTable>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<PriceTable>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace FUParkingModel.RequestObject
         public Guid VehicleTypeId { get; set; }
 
         [Required(ErrorMessage = "Must have Priority")]
+        [Range(1,5, ErrorMessage = "Priority is from 1 to 5")]
         public int Priority { get; set; }
 
         [Required(ErrorMessage = "Must have Name")]
@@ -15,6 +16,7 @@ namespace FUParkingModel.RequestObject
 
         public DateTime? ApplyFromDate { get; set; }
 
+        [Compare("ApplyFromDate", ErrorMessage = "Apply To Date must be greater than Apply From Date")]
         public DateTime? ApplyToDate { get; set; }
     }
 }

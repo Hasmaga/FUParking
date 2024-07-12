@@ -10,7 +10,7 @@ namespace FUParkingService.Interface
         Task<Return<bool>> CreatePriceItemAsync(CreatePriceItemReqDto req);
         Task<Return<bool>> DeletePriceItemAsync(Guid id);
         Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
-        Task<Return<bool>> CreatePriceTableAsync(CreatePriceTableReqDto req);
+        Task<Return<dynamic>> CreatePriceTableAsync(CreatePriceTableReqDto req);
         Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableReqDto req);
         Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync();
     }
