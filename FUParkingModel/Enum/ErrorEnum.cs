@@ -43,6 +43,9 @@ namespace FUParkingModel.Enum
         public const string NOT_ENOUGH_MONEY = "This account is not have enough money in account";
         public const string PARKING_AREA_INACTIVE = "This parking area is inactive";
         public const string PRIORITY_IS_EXIST = "This priority of vehicle type is exist";
+        public const string DEFAULT_PRICE_TABLE_IS_EXIST = "This vehicle type is exist default price table";
+        public const string DEFAULT_PRICE_TABLE_IS_NOT_EXIST = "This vehicle type is not exist default price table";
+        public const string PRICE_ITEM_IS_EXIST = "Price item is allready exist in database";
     }
 
     public class MinioErrorServerDefineEnum

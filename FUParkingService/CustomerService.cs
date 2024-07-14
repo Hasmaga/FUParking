@@ -265,7 +265,7 @@ namespace FUParkingService
                 IEnumerable<GetCustomersWithFillerResDto> listCustomer = [];
                 foreach (var item in listCustomerRes.Data ?? [])
                 {
-                    listCustomer.Append(new GetCustomersWithFillerResDto
+                    _ = listCustomer.Append(new GetCustomersWithFillerResDto
                     {
                         CustomerId = item.Id,
                         FullName = item.FullName ?? "",

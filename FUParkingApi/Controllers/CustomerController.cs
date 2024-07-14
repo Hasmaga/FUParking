@@ -106,53 +106,7 @@ namespace FUParkingApi.Controllers
             {
                 return StatusCode(502, res);
             }
-        }
-
-        [HttpGet("vehicle")]
-        public async Task<IActionResult> GetCustomerVehicleAsync()
-        {
-            Return<List<Vehicle>> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
-            try
-            {                
-
-                
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
-            }
-            catch
-            {
-                return StatusCode(502, res);
-            }
-        }
-
-        [HttpGet("profile")]
-        public async Task<IActionResult> GetCustomerProfile()
-        {
-            Return<Customer> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
-            try
-            {
-               
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
-
-            }
-            catch
-            {
-                return StatusCode(502, res);
-            }
-        }
+        }        
 
         [Authorize]
         [HttpPut("status")]

@@ -39,7 +39,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when get transaction wallet main: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when get transaction wallet main: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
@@ -72,7 +72,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when get transaction wallet extra: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when get transaction wallet extra: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
@@ -101,7 +101,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when get balance wallet main: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when get balance wallet main: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
@@ -130,7 +130,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when get balance wallet extra: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when get balance wallet extra: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }

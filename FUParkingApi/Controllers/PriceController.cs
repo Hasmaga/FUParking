@@ -1,9 +1,11 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using FUParkingModel.RequestObject.Price;
 
 namespace FUParkingApi.Controllers
 {
@@ -12,14 +14,16 @@ namespace FUParkingApi.Controllers
     public class PriceController : Controller
     {
         private readonly IPriceService _priceService;
+        private readonly ILogger<PriceController> _logger;
 
-        public PriceController(IPriceService priceService)
+        public PriceController(IPriceService priceService, ILogger<PriceController> logger)
         {
             _priceService = priceService;
+            _logger = logger;
         }
 
         [HttpPost("/api/price/item")]
-        public async Task<IActionResult> CreatePriceItemAsync(CreatePriceItemReqDto req)
+        public async Task<IActionResult> CreatePriceItemAsync(CreateListPriceItemReqDto req)
         {
             try
             {
@@ -193,6 +197,115 @@ namespace FUParkingApi.Controllers
                 return StatusCode(500, new Return<object>
                 {
                     IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpPost("/api/price/vehicle/default")]
+        public async Task<IActionResult> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _priceService.CreateDefaultPriceTableAsync(req);
+                if (!result.IsSuccess)
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(403, result);
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
+                            return StatusCode(404, result);
+                        case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_EXIST:
+                            return StatusCode(400, result);
+                        default:
+                            _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, result);
+                    }
+                }
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", ex.Message);
+                return StatusCode(500, new Return<object>
+                {                    
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpPost("/api/price/vehicle/item/default")]
+        public async Task<IActionResult> CreateDefaultPriceItemForDefaultPriceTableAsync(CreateDefaultItemPriceReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _priceService.CreateDefaultPriceItemForDefaultPriceTableAsync(req);
+                if (!result.IsSuccess)
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(403, result);
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
+                            return StatusCode(404, result);
+                        case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_NOT_EXIST:
+                            return StatusCode(404, result);
+                        default:
+                            _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, result);
+                    }
+                }
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", ex);
+                return StatusCode(500, new Return<object>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
+        [HttpPost("/api/price/vehicle/item")]
+        public async Task<IActionResult> CreateListPriceItemAsync(CreateListPriceItemReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _priceService.CreatePriceItemAsync(req);
+                if (!result.IsSuccess)
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(403, result);
+                        case ErrorEnumApplication.PRICE_TABLE_NOT_EXIST:
+                            return StatusCode(404, result);
+                        default:
+                            _logger.LogError("Error at CreateListPriceItemAsync: {ex}", result.Message);
+                            return StatusCode(500, result);
+                    }
+                }
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at CreateListPriceItemAsync: {ex}", ex.Message);
+                return StatusCode(500, new Return<object>
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }

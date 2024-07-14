@@ -34,7 +34,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when get list card: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when get list card: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
@@ -157,7 +157,7 @@ namespace FUParkingApi.Controllers
                         case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
-                            _logger.LogError("Error when create new card: " + result.InternalErrorMessage);
+                            _logger.LogError("Error when create new card: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }

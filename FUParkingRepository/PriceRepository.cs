@@ -255,5 +255,91 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<PriceTable>> GetDefaultPriceTableByVehicleTypeAsync(Guid vehicleTypeId)
+        {
+            try
+            {
+                var result = await _db.PriceTables
+                    .Include(r => r.VehicleType)
+                    .Where(t => t.DeletedDate == null &&
+                        t.VehicleTypeId.Equals(vehicleTypeId) &&
+                        t.Priority == 1
+                    ).FirstOrDefaultAsync();
+                return new Return<PriceTable>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<PriceTable>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<PriceItem>>> GetListOverlapPriceItemAsync(Guid priceTableId, int from, int to)
+        {
+            try
+            {
+                var result = await _db.PriceItems
+                    .Where(r => r.DeletedDate == null &&
+                        r.PriceTableId.Equals(priceTableId) &&
+                        (
+                            (r.ApplyFromHour >= from && r.ApplyFromHour <= to) ||
+                            (r.ApplyToHour >= from && r.ApplyToHour <= to) ||
+                            (r.ApplyFromHour <= from && r.ApplyToHour >= to)
+                        )
+                    ).ToListAsync();
+                return new Return<IEnumerable<PriceItem>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<PriceItem>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+                
+            }
+        }
+
+        public async Task<Return<PriceItem>> GetDefaultPriceItemByPriceTableIdAsync(Guid priceTableId)
+        {
+            try
+            {
+                var result = await _db.PriceItems
+                    .Where(r => r.DeletedDate == null &&
+                        r.PriceTableId.Equals(priceTableId) &&
+                        r.ApplyFromHour == null &&
+                        r.ApplyToHour == null
+                    ).FirstOrDefaultAsync();
+                return new Return<PriceItem>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<PriceItem>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }
