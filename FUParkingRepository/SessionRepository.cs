@@ -110,10 +110,21 @@ namespace FUParkingRepository
         {
             try
             {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var result = await _db.Sessions
+                    .Include(x => x.Card)
+                    .Include(x => x.GateIn)
+                    .Include(x => x.GateOut)
+                    .Include(x => x.VehicleType)
+                    .Include(x => x.PaymentMethod)
+                    .Include(x => x.Customer)
+                    .Include(x => x.Customer.CustomerType)
+                    .Include(x => x.CreateBy)
+                    .Include(x => x.LastModifyBy)                    
                     .Where(x => x.CardId == cardId && x.DeletedDate == null)
                     .OrderByDescending(x => x.CreatedDate)
                     .FirstOrDefaultAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 return new Return<Session>
                 {
                     Data = result,

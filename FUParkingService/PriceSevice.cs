@@ -91,6 +91,7 @@ namespace FUParkingService
                     PriceTableId = isDefaultPriceTableExist.Data.Id,                    
                     MaxPrice = req.MaxPrice,
                     MinPrice = req.MinPrice,
+                    BlockPricing = req.BlockPricing,
                     CreatedById = userlogged.Data.Id
                 };
                 var result = await _priceRepository.CreatePriceItemAsync(priceItem);
@@ -231,7 +232,8 @@ namespace FUParkingService
                         From = 0,
                         To = listTime[0].From,
                         MaxPrice = priceItemDefault.Data.MaxPrice,
-                        MinPrice = priceItemDefault.Data.MinPrice
+                        MinPrice = priceItemDefault.Data.MinPrice,
+                        BlockPricing = priceItemDefault.Data.BlockPricing,                        
                     });
                 }
                 // To avoid modifying the collection while iterating, we'll collect required changes first
@@ -245,7 +247,8 @@ namespace FUParkingService
                             From = listTime[i - 1].To,
                             To = listTime[i].From,
                             MaxPrice = priceItemDefault.Data.MaxPrice,
-                            MinPrice = priceItemDefault.Data.MinPrice
+                            MinPrice = priceItemDefault.Data.MinPrice,
+                            BlockPricing = priceItemDefault.Data.BlockPricing,
                         };
                         inserts.Add((i, newItem));
                     }
@@ -264,7 +267,8 @@ namespace FUParkingService
                         From = listTime[^1].To,
                         To = 24,
                         MaxPrice = priceItemDefault.Data.MaxPrice,
-                        MinPrice = priceItemDefault.Data.MinPrice
+                        MinPrice = priceItemDefault.Data.MinPrice,
+                        BlockPricing = priceItemDefault.Data.BlockPricing,
                     });
                 }
                 // Create PriceItem
@@ -277,7 +281,8 @@ namespace FUParkingService
                         ApplyToHour = item.To,
                         MaxPrice = item.MaxPrice,
                         MinPrice = item.MinPrice,
-                        CreatedById = userlogged.Data.Id
+                        CreatedById = userlogged.Data.Id,
+                        BlockPricing = item.BlockPricing,
                     };
                     var result = await _priceRepository.CreatePriceItemAsync(priceItem);
                     if (!result.IsSuccess)

@@ -16,6 +16,9 @@ namespace FUParkingModel.RequestObject
         [Range(0, int.MaxValue, ErrorMessage = "MinPrice must be greater than or equal to 0")]
         public int MinPrice { get; set; }
 
+        [Range(0, int.MaxValue, ErrorMessage = "BlockPricing must be greater than or equal to 0")]
+        public int BlockPricing { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (From.HasValue && To.HasValue && From >= To)

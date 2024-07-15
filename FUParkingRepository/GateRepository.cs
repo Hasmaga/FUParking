@@ -141,6 +141,7 @@ namespace FUParkingRepository
             {
                 var result = await _db.Gates
                     .Include(p => p.GateType)
+                    .Include(p => p.ParkingArea)
                     .Where(p => p.DeletedDate == null && p.Id.Equals(id))
                     .FirstOrDefaultAsync();               
                 res.Data = result;

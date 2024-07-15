@@ -268,9 +268,9 @@ namespace FUParkingService
                     _ = listCustomer.Append(new GetCustomersWithFillerResDto
                     {
                         CustomerId = item.Id,
-                        FullName = item.FullName ?? "",
-                        Email = item.Email ?? "",
-                        StatusCustomer = item.StatusCustomer ?? "",
+                        FullName = item.FullName,
+                        Email = item.Email,
+                        StatusCustomer = item.StatusCustomer,
                         CustomerType = item.CustomerType?.Name ?? "",
                         CreateDate = DateOnly.FromDateTime(item.CreatedDate)
                     });

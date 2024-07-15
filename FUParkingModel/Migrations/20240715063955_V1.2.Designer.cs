@@ -4,6 +4,7 @@ using FUParkingModel.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    partial class FUParkingDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20240715063955_V1.2")]
+    partial class V12
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -593,10 +596,6 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ApplyToHour");
 
-                    b.Property<int>("BlockPricing")
-                        .HasColumnType("int")
-                        .HasColumnName("BlockPricing");
-
                     b.Property<Guid?>("CreatedById")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CreateById");
@@ -810,7 +809,7 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Mode");
 
-                    b.Property<Guid?>("PaymentMethodId")
+                    b.Property<Guid>("PaymentMethodId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("PaymentMethodId");
 
@@ -828,7 +827,7 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("TimeIn");
 
-                    b.Property<DateTime?>("TimeOut")
+                    b.Property<DateTime>("TimeOut")
                         .HasColumnType("datetime2")
                         .HasColumnName("TimeOut");
 
@@ -1460,7 +1459,8 @@ namespace FUParkingModel.Migrations
                     b.HasOne("FUParkingModel.Object.PaymentMethod", "PaymentMethod")
                         .WithMany("Sessions")
                         .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.HasOne("FUParkingModel.Object.VehicleType", "VehicleType")
                         .WithMany("Sessions")

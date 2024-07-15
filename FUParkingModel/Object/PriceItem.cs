@@ -22,6 +22,9 @@ namespace FUParkingModel.Object
         [Column("MaxPrice")]
         public int MaxPrice { get; set; }
 
+        [Column("BlockPricing")]
+        public int BlockPricing { get; set; }
+
         [Column("MinPrice")]
         public int MinPrice { get; set; }
 

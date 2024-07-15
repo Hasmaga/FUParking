@@ -19,5 +19,9 @@ namespace FUParkingModel.RequestObject.Price
         [Required(ErrorMessage = "Must have Min Price")]
         [Range(1, int.MaxValue, ErrorMessage = "")]
         public int MinPrice { get; set; }
+
+        [Required(ErrorMessage = "Must have BlockPricing")]
+        [Range(1, int.MaxValue, ErrorMessage = "")]
+        public int BlockPricing { get; set; }
     }
 }

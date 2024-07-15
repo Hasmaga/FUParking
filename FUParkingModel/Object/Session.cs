@@ -24,13 +24,13 @@ namespace FUParkingModel.Object
         public required string ImageInUrl { get; set; }
 
         [Column("ImageOutUrl")]
-        public string ImageOutUrl { get; set; } = null!;
+        public string? ImageOutUrl { get; set; } = null!;
 
         [Column("TimeIn")]
         public required DateTime TimeIn { get; set; }
 
         [Column("TimeOut")]
-        public DateTime TimeOut { get; set; }
+        public DateTime? TimeOut { get; set; }
 
         [Column("Mode")]
         public required string Mode { get; set; } = null!;
@@ -43,7 +43,7 @@ namespace FUParkingModel.Object
         public VehicleType? VehicleType { get; set; }
 
         [Column("PaymentMethodId")]
-        public Guid PaymentMethodId { get; set; }
+        public Guid? PaymentMethodId { get; set; }
         public PaymentMethod? PaymentMethod { get; set; }
 
         [Column("CustomerId")]

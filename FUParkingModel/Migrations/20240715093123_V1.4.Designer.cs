@@ -4,6 +4,7 @@ using FUParkingModel.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FUParkingModel.Migrations
 {
     [DbContext(typeof(FUParkingDatabaseContext))]
-    partial class FUParkingDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20240715093123_V1.4")]
+    partial class V14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -828,7 +831,7 @@ namespace FUParkingModel.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("TimeIn");
 
-                    b.Property<DateTime?>("TimeOut")
+                    b.Property<DateTime>("TimeOut")
                         .HasColumnType("datetime2")
                         .HasColumnName("TimeOut");
 
