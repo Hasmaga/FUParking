@@ -123,21 +123,20 @@ namespace FUParkingService
             {
                 // Check the email is registered
                 var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());
+                if (!isUserRegistered.IsSuccess)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
                 if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isUserRegistered.Data == null)
                 {
                     return new Return<LoginResDto>
                     {
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
-                }
-                else if (isUserRegistered.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
-                {
-                    return new Return<LoginResDto>
-                    {
-                        Message = ErrorEnumApplication.SERVER_ERROR,
-                        InternalErrorMessage = isUserRegistered.InternalErrorMessage
-                    };
-                }
+                }                
                 // Check the password is correct
                 if (!VerifyPasswordHash(req.Password, Convert.FromBase64String(isUserRegistered.Data.PasswordSalt ?? ""), isUserRegistered.Data.PasswordHash ?? ""))
                 {

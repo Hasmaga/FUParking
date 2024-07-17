@@ -138,5 +138,71 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<Transaction>>> GetListTransactionPaymentAsync(int pageSize, int pageIndex, DateTime? startDate, DateTime? endDate, string? searchInput = null, string? Attribute = null)
+        {
+            try 
+            {
+                DateTime endDateValue = endDate ?? DateTime.Now;        
+                DateTime startDateValue = startDate ?? DateTime.MinValue;
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var res = _db.Transactions
+                    .Include(t => t.Payment)
+                    .Include(t => t.Wallet)
+                    .Include(t => t.Wallet.Customer)
+                    .AsQueryable();
+                //.Where(t => t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.PaymentId.HasValue)
+                //.OrderByDescending(t => t.CreatedDate)
+                //.ToListAsync();
+                if (searchInput != null && Attribute != null)
+                {
+                    switch (Attribute.ToUpper())
+                    {
+                        case "EMAIL":
+                            res = res.Where(t => t.Wallet.Customer.Email.Contains(searchInput));
+                            break;
+                        case "PACKAGENAME":
+                            res = res.Where(t => t.Deposit.Package.Name.Contains(searchInput));
+                            break;
+                        case "TRANSACTIONSTATUS":
+                            res = res.Where(t => t.TransactionStatus.Equals(searchInput));
+                            break;                        
+                        case "PAYMENTMETHOD":
+                            res = res.Where(t => t.Payment.PaymentMethod.Equals(searchInput));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+                var filter = await res
+                    .Where(t => t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.PaymentId.HasValue)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .ToListAsync();
+
+                var result = filter
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize);                                 
+
+                return new Return<IEnumerable<Transaction>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = filter.Count,
+                    Message = filter.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Transaction>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+
+        }
     }
 }

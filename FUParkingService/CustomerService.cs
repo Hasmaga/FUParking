@@ -232,8 +232,7 @@ namespace FUParkingService
         {
             Return<IEnumerable<GetCustomersWithFillerResDto>> res = new()
             {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-                IsSuccess = false
+                Message = ErrorEnumApplication.SERVER_ERROR                
             };
             try
             {
@@ -243,40 +242,45 @@ namespace FUParkingService
                     return res;
                 }
                 var userLogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userLogged.Data == null || userLogged.IsSuccess == false)
+                if (userLogged.Data is null || !userLogged.IsSuccess)
                 {
+                    res.InternalErrorMessage = userLogged.InternalErrorMessage;
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
-
                 if (!Auth.AuthManager.Contains(userLogged.Data.Role?.Name ?? ""))
                 {
                     res.Message = ErrorEnumApplication.NOT_AUTHORITY;
                     return res;
                 }
-
                 if (userLogged.Data.StatusUser.Equals(StatusUserEnum.INACTIVE))
                 {
                     res.Message = ErrorEnumApplication.BANNED;
                     return res;
                 }
-
                 var listCustomerRes = await _customerRepository.GetListCustomerAsync(req);
-                IEnumerable<GetCustomersWithFillerResDto> listCustomer = [];
-                foreach (var item in listCustomerRes.Data ?? [])
+                if (!listCustomerRes.IsSuccess)
                 {
-                    _ = listCustomer.Append(new GetCustomersWithFillerResDto
-                    {
-                        CustomerId = item.Id,
-                        FullName = item.FullName,
-                        Email = item.Email,
-                        StatusCustomer = item.StatusCustomer,
-                        CustomerType = item.CustomerType?.Name ?? "",
-                        CreateDate = DateOnly.FromDateTime(item.CreatedDate)
-                    });
+                    res.InternalErrorMessage = listCustomerRes.InternalErrorMessage;
+                    return res;
+                }                
+                if (listCustomerRes.Data is null)
+                {
+                    res.Message = ErrorEnumApplication.NOT_FOUND_OBJECT;
+                    res.TotalRecord = 0;
+                    res.IsSuccess = true;
+                    return res;
                 }
-                res.Data = listCustomer;
-                res.TotalRecord = listCustomer.Count();
+                res.Data = listCustomerRes.Data?.Select(b => new GetCustomersWithFillerResDto
+                {
+                    CustomerId = b.Id,
+                    Email = b.Email,
+                    CreateDate = DateOnly.FromDateTime(b.CreatedDate),
+                    CustomerType = b.CustomerType?.Name ?? "",
+                    FullName = b.FullName,
+                    StatusCustomer = b.StatusCustomer
+                }).ToList();                
+                res.TotalRecord = listCustomerRes.Data?.Count();
                 res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
                 res.IsSuccess = true;
                 return res;

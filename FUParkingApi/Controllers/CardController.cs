@@ -32,7 +32,7 @@ namespace FUParkingApi.Controllers
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                            return StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
                             _logger.LogError("Error when get list card: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });

@@ -1,6 +1,5 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ResponseObject.Customer;
@@ -17,11 +16,13 @@ namespace FUParkingApi.Controllers
     {
         private readonly ICustomerService _customerService;
         private readonly IVehicleService _vehicleService;
+        private readonly ILogger<CustomerController> _logger;
 
-        public CustomerController(ICustomerService customerService, IVehicleService vehicleService)
+        public CustomerController(ICustomerService customerService, IVehicleService vehicleService, ILogger<CustomerController> logger)
         {
-            _customerService = customerService;            
+            _customerService = customerService;
             _vehicleService = vehicleService;
+            _logger = logger;
         }
 
         [HttpPost("free")]
@@ -65,46 +66,36 @@ namespace FUParkingApi.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetCustomerListAsync(GetCustomersWithFillerReqDto req)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                );
-                return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                {
-                    Data = errors,
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.INVALID_INPUT
-                });
-            }
-            Return<IEnumerable<GetCustomersWithFillerResDto>> res = new()
-            {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
+        {                        
             try
             {
-                res = await _customerService.GetListCustomerAsync(req);
-                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                if (!ModelState.IsValid)
                 {
-                    return Unauthorized(res);
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
                 }
-
-                if (res.Message.Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
-
+                var res = await _customerService.GetListCustomerAsync(req);
                 if (!res.IsSuccess)
                 {
-                    return BadRequest(res);
+                    switch (res.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:
+                            return StatusCode(401, res);
+                        case ErrorEnumApplication.BANNED:
+                            return StatusCode(403, res);
+                        default:
+                            if (res.InternalErrorMessage is not null)
+                            {
+                                _logger.LogError("Error at get list customer: {ex}", res.InternalErrorMessage);
+                            }
+                            return StatusCode(500, res);
+                    }
                 }
                 return Ok(res);
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(502, res);
+                _logger.LogError("Error at get list customer: {ex}", ex);
+                return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
             }
         }        
 

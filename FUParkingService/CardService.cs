@@ -108,6 +108,14 @@ namespace FUParkingService
                     };
                 }                
                 var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!accountLogin.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetCardResDto>>
+                    {
+                        InternalErrorMessage = accountLogin.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
                 if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
                 {
                     return new Return<IEnumerable<GetCardResDto>>
@@ -123,14 +131,14 @@ namespace FUParkingService
                     };
                 }
                 var res = await _cardRepository.GetAllCardsAsync(req);
-                if (!res.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || !res.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                if (!res.IsSuccess)
                 {
                     return new Return<IEnumerable<GetCardResDto>>
                     {
                         InternalErrorMessage = res.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                }
+                }                
                 return new Return<IEnumerable<GetCardResDto>>
                 {
                     IsSuccess = true,
@@ -142,7 +150,7 @@ namespace FUParkingService
                         CreatedDate = x.CreatedDate,
                     }),
                     TotalRecord = res.TotalRecord,
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                    Message = res.TotalRecord > 0 ? SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
