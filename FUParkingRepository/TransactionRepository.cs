@@ -151,6 +151,9 @@ namespace FUParkingRepository
                     .Include(t => t.Payment)
                     .Include(t => t.Wallet)
                     .Include(t => t.Wallet.Customer)
+                    .Include(t => t.Payment.PaymentMethod)
+                    .Include(t => t.Payment.Session)
+                    .Include(t => t.Payment.Session.GateIn)
                     .AsQueryable();
                 //.Where(t => t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.PaymentId.HasValue)
                 //.OrderByDescending(t => t.CreatedDate)

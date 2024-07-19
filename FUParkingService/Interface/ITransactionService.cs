@@ -9,5 +9,6 @@ namespace FUParkingService.Interface
     {
         //Task<Return<List<Transaction>>> GetTransactionsAsync(DateTime fromDate, DateTime toDate, int pageSize, int pageIndex, Guid userGuid);
         Task<Return<IEnumerable<GetTransactionPaymentResDto>>> GetListTransactionPaymentAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
+        //Task<Return<IEnumerable<>>>
     }
 }

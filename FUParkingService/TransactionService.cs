@@ -1,5 +1,4 @@
 ﻿using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ReturnCommon;
@@ -41,7 +40,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
+                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data is null)
                 {
                     return new Return<IEnumerable<GetTransactionPaymentResDto>>
                     {
@@ -80,7 +79,7 @@ namespace FUParkingService
                     }),
                     TotalRecord = result.TotalRecord,
                     IsSuccess = true,                   
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             } 
             catch (Exception ex)
@@ -91,41 +90,6 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }
-
-        //public async Task<Return<List<Transaction>>> GetTransactionsAsync(DateTime fromDate, DateTime toDate, int pageSize, int pageIndex, Guid userGuid)
-        //{
-        //    Return<List<Transaction>> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
-        //    try
-        //    {
-        //        Return<User> userRes = await _userRepository.GetUserByIdAsync(userGuid);
-        //        bool isStaff = userRes.Data?.Role?.Name?.ToLower().Equals(RoleEnum.STAFF.ToLower()) ?? false;
-        //        if (userRes.Data == null || isStaff)
-        //        {
-        //            res.Message = ErrorEnumApplication.NOT_AUTHORITY;
-        //            return res;
-        //        }
-
-        //        if ((userRes.Data.StatusUser ?? "").ToLower().Equals(StatusUserEnum.INACTIVE.ToLower()))
-        //        {
-        //            res.Message = ErrorEnumApplication.BANNED;
-        //            return res;
-        //        }
-
-        //        if (fromDate > toDate)
-        //        {
-        //            res.Message = ErrorEnumApplication.DATE_OVERLAPSED;
-        //            return res;
-        //        }
-        //        res.IsSuccess = true;
-        //        res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
-        //        res.Data = (await _transactionRepository.GetTransactionListAsync(fromDate, toDate, pageSize, pageIndex)).Data.ToList();
-        //        return res;
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
+        }        
     }
 }

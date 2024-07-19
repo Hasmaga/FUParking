@@ -1,8 +1,6 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +12,13 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class TransactionController : Controller
     {
-        private readonly ITransactionService _transactionService;        
+        private readonly ITransactionService _transactionService;
+        private readonly ILogger<TransactionController> _logger;
 
-        public TransactionController(ITransactionService transactionService)
+        public TransactionController(ITransactionService transactionService, ILogger<TransactionController> logger)
         {
-            _transactionService = transactionService;            
+            _transactionService = transactionService;
+            _logger = logger;
         }
 
         [HttpGet("deposit")]
@@ -36,17 +36,17 @@ namespace FUParkingApi.Controllers
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(403, new { message = "You do not have permission to access this resource." });
-                        case ErrorEnumApplication.SERVER_ERROR:
-                            return StatusCode(500, new { message = "Internal server error." });
+                            return StatusCode(403, new { message = ErrorEnumApplication.NOT_AUTHORITY });                        
                         default:
-                            return StatusCode(500, new { message = "Internal server error." });
+                            _logger.LogInformation("Error when get list transaction payment: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new { message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
                 return Ok(result.Data);
             }
             catch (Exception ex)
-            {
+            {   
+                _logger.LogError("Error when get list transaction payment: {ex}", ex.Message);
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }

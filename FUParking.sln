@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FUParkingService", "FUParki
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FUParkingRepository", "FUParkingRepository\FUParkingRepository.csproj", "{36C80D65-30FE-4118-9A74-3287C730DEAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FUParkingTesting", "FUParkingTesting\FUParkingTesting.csproj", "{32F6F30B-DEE7-4506-9B63-A6E48029955A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FUParkingTesting", "FUParkingTesting\FUParkingTesting.csproj", "{32F6F30B-DEE7-4506-9B63-A6E48029955A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FUParkingPlateNumberDetection", "FUParkingPlateNumberDetection\FUParkingPlateNumberDetection.csproj", "{2D9BF24D-C235-4F52-A379-D97191A30351}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{32F6F30B-DEE7-4506-9B63-A6E48029955A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32F6F30B-DEE7-4506-9B63-A6E48029955A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32F6F30B-DEE7-4506-9B63-A6E48029955A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D9BF24D-C235-4F52-A379-D97191A30351}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D9BF24D-C235-4F52-A379-D97191A30351}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D9BF24D-C235-4F52-A379-D97191A30351}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D9BF24D-C235-4F52-A379-D97191A30351}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
