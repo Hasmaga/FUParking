@@ -8,6 +8,9 @@ using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.AspNetCore.Http;
+using Microsoft.ML.Data;
+using SkiaSharp;
 
 namespace FUParkingService
 {
@@ -447,30 +450,107 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
                 }
-                // Upload Image to minio 
-                var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-                var objNamePlateNumber = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
-                UploadObjectReqDto imagePlateNumber = new()
+                // Check vehicle image using ML                
+                MLPlateDetecive.ModelInput checkIsPlateNumber = new()
                 {
-                    ObjFile = reqDto.PlateImage,
-                    ObjName = objNamePlateNumber,
-                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                    Image = MLImage.CreateFromStream(reqDto.PlateImage.OpenReadStream()),
                 };
-                var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imagePlateNumber);
-                if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
+                var predictionResult = MLPlateDetecive.Predict(checkIsPlateNumber);
+                if (predictionResult.PredictedBoundingBoxes == null)
                 {
                     return new Return<dynamic>
                     {
-                        InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        Message = ErrorEnumApplication.MUST_HAVE_ONLY_ONE_PLATE_NUMBER
                     };
                 }
+                var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
+                var objNamePlateNumber = userLogged.Data.Id + "_" + reqDto.PlateNumber + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
+                var boxes = predictionResult.PredictedBoundingBoxes.Chunk(4)
+                    .Select(x => new { XTop = x[0], YTop = x[1], XBottom = x[2], YBottom = x[3] })
+                    .Zip(predictionResult.Score, (a, b) => new { Box = a, Score = b });
+                if (boxes.Count() > 1)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.MUST_HAVE_ONLY_ONE_PLATE_NUMBER
+                    };
+                }
+                var boxe = boxes.First();
+                // Cut image to plate number
+                FormFile imagePlateNumber;
+                byte[] croppedImageData;
+                string contentType = reqDto.PlateImage.ContentType;
+                using (var imageStream = reqDto.PlateImage.OpenReadStream())
+                {
+                    var bitmap = SKBitmap.Decode(imageStream);
+                    var rect = new SKRect(boxe.Box.XTop, boxe.Box.YTop, boxe.Box.XBottom, boxe.Box.YBottom);
+                    using (var croppedBitmap = new SKBitmap((int)rect.Width, (int)rect.Height))
+                    {
+                        SKRect dest = new SKRect(0, 0, croppedBitmap.Width, croppedBitmap.Height);
+                        using (var canvas = new SKCanvas(croppedBitmap))
+                        {
+                            canvas.DrawBitmap(bitmap, rect, dest);
+                        }
+                        using (var ms = new MemoryStream())
+                        {
+                            switch (fileExtensionPlateNumber)
+                            {
+                                case ".jpg":
+                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
+                                    break;
+                                case ".jpeg":
+                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
+                                    break;
+                                case ".png":
+                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
+                                    break;
+                                default:
+                                    return new Return<dynamic>
+                                    {
+                                        Message = ErrorEnumApplication.FILE_EXTENSION_NOT_SUPPORT
+                                    };
+                            }
+                            croppedImageData = ms.ToArray();
+                        }
+                    }
+                }
+                using (var memoryStream = new MemoryStream(croppedImageData))
+                {                    
+                    memoryStream.Position = 0; // Reset the position to the beginning after copying
+
+                    // Create a new FormFile using the MemoryStream
+                    imagePlateNumber = new FormFile(memoryStream, 0, memoryStream.Length, reqDto.PlateImage.Name, reqDto.PlateImage.FileName)
+                    {
+                        Headers = reqDto.PlateImage.Headers,
+                        ContentType = reqDto.PlateImage.ContentType,
+                        ContentDisposition = reqDto.PlateImage.ContentDisposition,
+                    };
+
+                    // Prepare the UploadObjectReqDto with the new FormFile
+                    UploadObjectReqDto imageUpload = new()
+                    {
+                        ObjFile = imagePlateNumber,
+                        ObjName = objNamePlateNumber,
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                    };
+
+                    // Now, memoryStream will remain open for the duration of this upload operation
+                    var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imageUpload);
+                    if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR,
+                        };
+                    }
+                }         
                 var newVehicle = new Vehicle
                 {
                     PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
                     CustomerId = userLogged.Data.Id,
-                    PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + imagePlateNumber.ObjName,
+                    PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + objNamePlateNumber,
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
                 var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);

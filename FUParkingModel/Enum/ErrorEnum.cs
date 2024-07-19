@@ -46,6 +46,9 @@ namespace FUParkingModel.Enum
         public const string DEFAULT_PRICE_TABLE_IS_EXIST = "This vehicle type is exist default price table";
         public const string DEFAULT_PRICE_TABLE_IS_NOT_EXIST = "This vehicle type is not exist default price table";
         public const string PRICE_ITEM_IS_EXIST = "Price item is allready exist in database";
+        public const string MUST_HAVE_ONLY_ONE_PLATE_NUMBER = "Must only one plate number in image";
+        public const string NOT_A_PLATE_NUMBER = "This Image not contain any plate number";
+        public const string FILE_EXTENSION_NOT_SUPPORT = "File extension not support";
     }
 
     public class MinioErrorServerDefineEnum
