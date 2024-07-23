@@ -221,6 +221,45 @@ namespace FUParkingApi.Controllers
             }
         }
 
+        [HttpPut("customer")]
+        public async Task<IActionResult> UpdateCustomerVehicle([FromBody] UpdateCustomerVehicleReqDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                }
+                var result = await _vehicleService.UpdateVehicleInformationAsync(req);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    switch (result.Message)
+                    {
+                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
+                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:                            
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST });
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:                            
+                            return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST });
+                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:                            
+                            return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST });
+                        default:
+                            _logger.LogError("Error at update customer vehicle: {ex}", result.InternalErrorMessage);
+                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error at update customer vehicle: {ex}", ex.Message);
+                return StatusCode(500, new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+            }
+        }
+
         [HttpGet("customer")]
         [Authorize]
         public async Task<IActionResult> GetCustomerVehicleByCustomerIdAsync()

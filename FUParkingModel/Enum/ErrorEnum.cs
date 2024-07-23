@@ -49,6 +49,8 @@ namespace FUParkingModel.Enum
         public const string MUST_HAVE_ONLY_ONE_PLATE_NUMBER = "Must only one plate number in image";
         public const string NOT_A_PLATE_NUMBER = "This Image not contain any plate number";
         public const string FILE_EXTENSION_NOT_SUPPORT = "File extension not support";
+        public const string CANNOT_READ_TEXT_FROM_IMAGE = "Cannot read text from image";
+
     }
 
     public class MinioErrorServerDefineEnum

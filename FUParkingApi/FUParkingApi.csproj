@@ -22,4 +22,10 @@
     <ProjectReference Include="..\FUParkingService\FUParkingService.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="tessdata\vie.traineddata">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

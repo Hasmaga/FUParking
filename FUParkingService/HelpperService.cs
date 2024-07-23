@@ -73,7 +73,5 @@ namespace FUParkingService
             passwordSalt = hmac.Key;
             return Task.FromResult(Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass))));
         }
-
-
     }
 }

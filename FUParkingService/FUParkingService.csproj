@@ -12,12 +12,18 @@
     <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="3.0.1" />
     <PackageReference Include="Microsoft.ML.TorchSharp" Version="0.21.1" />
     <PackageReference Include="Minio" Version="6.0.2" />
-    <PackageReference Include="SkiaSharp" Version="2.88.8" />    
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="TorchSharp-cuda-windows" Version="0.101.5" />
-	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
     <ProjectReference Include="..\FUParkingRepository\FUParkingRepository.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="C:\Users\BPAKhang\.nuget\packages\tesseract\5.2.0\build\\..\x64\leptonica-1.82.0.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="C:\Users\BPAKhang\.nuget\packages\tesseract\5.2.0\build\\..\x64\tesseract50.dll" />
   </ItemGroup>
 </Project>
