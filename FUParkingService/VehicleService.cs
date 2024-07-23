@@ -467,35 +467,31 @@ namespace FUParkingService
                 {
                     var bitmap = SKBitmap.Decode(imageStream);
                     var rect = new SKRect(boxe.Box.XTop, boxe.Box.YTop, boxe.Box.XBottom, boxe.Box.YBottom);
-                    using (var croppedBitmap = new SKBitmap((int)rect.Width, (int)rect.Height))
+                    using var croppedBitmap = new SKBitmap((int)rect.Width, (int)rect.Height);
+                    SKRect dest = new(0, 0, croppedBitmap.Width, croppedBitmap.Height);
+                    using (var canvas = new SKCanvas(croppedBitmap))
                     {
-                        SKRect dest = new SKRect(0, 0, croppedBitmap.Width, croppedBitmap.Height);
-                        using (var canvas = new SKCanvas(croppedBitmap))
-                        {
-                            canvas.DrawBitmap(bitmap, rect, dest);
-                        }
-                        using (var ms = new MemoryStream())
-                        {
-                            switch (fileExtensionPlateNumber)
-                            {
-                                case ".jpg":
-                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
-                                    break;
-                                case ".jpeg":
-                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
-                                    break;
-                                case ".png":
-                                    croppedBitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
-                                    break;
-                                default:
-                                    return new Return<GetInformationVehicleCreateResDto>
-                                    {
-                                        Message = ErrorEnumApplication.FILE_EXTENSION_NOT_SUPPORT
-                                    };
-                            }
-                            croppedImageData = ms.ToArray();
-                        }
+                        canvas.DrawBitmap(bitmap, rect, dest);
                     }
+                    using var ms = new MemoryStream();
+                    switch (fileExtensionPlateNumber)
+                    {
+                        case ".jpg":
+                            croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
+                            break;
+                        case ".jpeg":
+                            croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
+                            break;
+                        case ".png":
+                            croppedBitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
+                            break;
+                        default:
+                            return new Return<GetInformationVehicleCreateResDto>
+                            {
+                                Message = ErrorEnumApplication.FILE_EXTENSION_NOT_SUPPORT
+                            };
+                    }
+                    croppedImageData = ms.ToArray();
                 }
 
                 MLTextDetection.ModelInput textDetectionPlateNumber = new()

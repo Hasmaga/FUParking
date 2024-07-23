@@ -3,6 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
@@ -19,11 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
     <ProjectReference Include="..\FUParkingRepository\FUParkingRepository.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\BPAKhang\.nuget\packages\tesseract\5.2.0\build\\..\x64\leptonica-1.82.0.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\BPAKhang\.nuget\packages\tesseract\5.2.0\build\\..\x64\tesseract50.dll" />
-  </ItemGroup>
+  </ItemGroup>    
 </Project>

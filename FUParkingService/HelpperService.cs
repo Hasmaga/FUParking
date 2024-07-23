@@ -59,7 +59,7 @@ namespace FUParkingService
 
         public bool IsTokenValid()
         {
-            var token = _http.HttpContext?.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var token = _http.HttpContext?.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
             if (token == null || !CheckBearerTokenIsValidAndNotExpired(token))
             {
                 return false;

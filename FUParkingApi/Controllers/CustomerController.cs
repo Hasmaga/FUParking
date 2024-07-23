@@ -14,14 +14,12 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CustomerController : Controller
     {
-        private readonly ICustomerService _customerService;
-        private readonly IVehicleService _vehicleService;
+        private readonly ICustomerService _customerService;        
         private readonly ILogger<CustomerController> _logger;
 
-        public CustomerController(ICustomerService customerService, IVehicleService vehicleService, ILogger<CustomerController> logger)
+        public CustomerController(ICustomerService customerService, ILogger<CustomerController> logger)
         {
-            _customerService = customerService;
-            _vehicleService = vehicleService;
+            _customerService = customerService;           
             _logger = logger;
         }
 

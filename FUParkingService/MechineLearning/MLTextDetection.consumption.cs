@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Generic;
 namespace FUParkingService
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public partial class MLTextDetection
     {
         /// <summary>
@@ -63,14 +64,16 @@ namespace FUParkingService
 
         private static string MLNetModelPath = Path.GetFullPath("MLTextDetection.mlnet");
 
-        public static readonly Lazy<PredictionEngine<ModelInput, ModelOutput>> PredictEngine = new Lazy<PredictionEngine<ModelInput, ModelOutput>>(() => CreatePredictEngine(), true);
+        public static readonly Lazy<PredictionEngine<ModelInput, ModelOutput>> PredictEngine = new(() => CreatePredictEngine(), true);
 
 
         private static PredictionEngine<ModelInput, ModelOutput> CreatePredictEngine()
         {
-            var mlContext = new MLContext();
-            mlContext.GpuDeviceId = 0;
-            mlContext.FallbackToCpu = false;
+            var mlContext = new MLContext
+            {
+                GpuDeviceId = 0,
+                FallbackToCpu = false
+            };
             ITransformer mlModel = mlContext.Model.Load(MLNetModelPath, out var _);
             return mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(mlModel);
         }
@@ -98,4 +101,5 @@ namespace FUParkingService
             return output;
         }
     }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 }

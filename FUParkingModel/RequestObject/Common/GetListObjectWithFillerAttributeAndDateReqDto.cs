@@ -18,9 +18,16 @@ namespace FUParkingModel.RequestObject.Common
         public string? Attribute { get; set; }
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (!string.IsNullOrEmpty(SearchInput) && string.IsNullOrEmpty(Attribute))
+            if (validationContext is not null)
             {
-                yield return new ValidationResult("Attribute is required when SearchInput is present.", [nameof(Attribute)]);
+                if (!string.IsNullOrEmpty(SearchInput) && string.IsNullOrEmpty(Attribute))
+                {
+                    yield return new ValidationResult("Attribute is required when SearchInput is present.", [nameof(Attribute)]);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(validationContext));
             }
         }
     }

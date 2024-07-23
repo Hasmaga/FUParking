@@ -16,6 +16,9 @@ using System.Text.Json;
 
 namespace FUParkingService
 {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
     public partial class MLPlateDetecive
     {
         public const string RetrainFilePath = @"E:\ML\vott-json-export\PlateNumberDetection-export.json";
@@ -29,10 +32,12 @@ namespace FUParkingService
         /// <param name="inputDataFilePath">Path to the data file for training.</param>
         public static void Train(string outputModelPath, string inputDataFilePath = RetrainFilePath)
         {
-           var mlContext = new MLContext();
-           mlContext.GpuDeviceId = 0;
-           mlContext.FallbackToCpu = false;
-           var data = LoadIDataViewFromVOTTFile(mlContext, inputDataFilePath);
+            var mlContext = new MLContext
+            {
+                GpuDeviceId = 0,
+                FallbackToCpu = false
+            };
+            var data = LoadIDataViewFromVOTTFile(mlContext, inputDataFilePath);
            var model = RetrainModel(mlContext, data);
            SaveModel(mlContext, model, data, outputModelPath);
         }
@@ -47,10 +52,10 @@ namespace FUParkingService
            return mlContext.Data.LoadFromEnumerable(LoadFromVott(inputDataFilePath));
         }
 
-        private static IEnumerable<ModelInput> LoadFromVott(string inputDataFilePath)
+        private static List<ModelInput> LoadFromVott(string inputDataFilePath)
         {
             JsonNode jsonNode;
-            using (StreamReader r = new StreamReader(inputDataFilePath))
+            using (StreamReader r = new(inputDataFilePath))
             {
                 string json = r.ReadToEnd();
                 jsonNode = JsonSerializer.Deserialize<JsonNode>(json);
@@ -90,13 +95,12 @@ namespace FUParkingService
                 var modelInput = new ModelInput()
                 {
                     Image = mlImage,
-                    Labels = labelList.ToArray(),
-                    Box = boxList.ToArray(),
+                    Labels = [.. labelList],
+                    Box = [.. boxList],
                 };    
 
                 imageData.Add(modelInput);
             }
-
             return imageData;
         }
 
@@ -130,10 +134,8 @@ namespace FUParkingService
             // Pull the data schema from the IDataView used for training the model
             DataViewSchema dataViewSchema = data.Schema;
 
-            using (var fs = File.Create(modelSavePath))
-            {
-                mlContext.Model.Save(model, dataViewSchema, fs);
-            }
+            using var fs = File.Create(modelSavePath);
+            mlContext.Model.Save(model, dataViewSchema, fs);
         }
 
 
@@ -167,4 +169,7 @@ namespace FUParkingService
             return pipeline;
         }
     }
- }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+}
