@@ -1,7 +1,9 @@
+using Coravel;
 using FUParkingModel.DatabaseContext;
 using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService;
+using FUParkingService.BackgroundTask;
 using FUParkingService.Cloudflare;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -24,6 +26,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
+
+#region BackgroundTask
+builder.Services.AddScheduler();
+builder.Services.AddTransient<PriceBackgroudTask>();
+#endregion
 
 #region Database
 builder.Services.AddScoped<FUParkingDatabaseContext>();
@@ -142,6 +149,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FU_Parking"));
     AccessCloudflare.Access();
 }
+
+app.Services.UseScheduler(scheduler =>
+{
+    scheduler.Schedule<PriceBackgroudTask>().DailyAtHour(0);
+});
 
 app.UseHttpsRedirection();
 

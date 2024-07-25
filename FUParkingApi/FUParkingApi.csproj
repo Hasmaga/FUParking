@@ -5,9 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>f48f9e34-8e2b-4af6-a2cf-4a030a4ae39d</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <PlatformTarget>x64</PlatformTarget>
-    <Platforms>x64</Platforms>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>    
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +20,5 @@
     <ProjectReference Include="..\FUParkingModel\FUParkingModel.csproj" />
     <ProjectReference Include="..\FUParkingRepository\FUParkingRepository.csproj" />
     <ProjectReference Include="..\FUParkingService\FUParkingService.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
 </Project>

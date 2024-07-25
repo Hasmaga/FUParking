@@ -2,19 +2,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>x64</Platforms>
+    <Nullable>enable</Nullable>    
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Coravel" Version="5.0.4" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
-    <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="3.0.1" />
-    <PackageReference Include="Microsoft.ML.TorchSharp" Version="0.21.1" />
     <PackageReference Include="Minio" Version="6.0.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
-    <PackageReference Include="TorchSharp-cuda-windows" Version="0.101.5" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>

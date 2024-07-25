@@ -1,42 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Coravel.Invocable;
+using FUParkingRepository.Interface;
+using Microsoft.Extensions.Logging;
 
 namespace FUParkingService.BackgroundTask
 {
-    public class PriceBackgroudTask
+    public class PriceBackgroudTask : IInvocable
     {
-        //public async Task UpdatePriceItem()
-        //{
-        //    // TODO: Implement the logic to update the price item
+        // Create background task to minus all the money in waller extra if ExpiredDate <= DateTime.Now
+        private readonly IWalletRepository _walletRepository;
+        private readonly ILogger<PriceBackgroudTask> _logger;
 
-        //    // Simulate some delay
-        //    await Task.Delay(TimeSpan.FromSeconds(5));
+        public PriceBackgroudTask(IWalletRepository walletRepository, ILogger<PriceBackgroudTask> logger)
+        {
+            _walletRepository = walletRepository;
+            _logger = logger;
+        }        
 
-        //    // Update the price item
-
-        //    // Log the update
-
-        //    // Repeat the task after a certain interval
-        //    await Task.Delay(TimeSpan.FromMinutes(30));
-        //    await UpdatePriceItem();
-        //}
-
-        //public async Task RunBackgroundTask()
-        //{
-        //    // Get the current time
-        //    DateTime currentTime = DateTime.Now;
-
-        //    // Calculate the time until midnight
-        //    TimeSpan timeUntilMidnight = TimeSpan.FromDays(1) - currentTime.TimeOfDay;
-
-        //    // Delay until midnight
-        //    await Task.Delay(timeUntilMidnight);
-
-        //    // Run the background task at midnight
-        //    await UpdatePriceItem();
-        //}
+        public async Task Invoke()
+        {
+            try
+            {
+                var result = await _walletRepository.UpdateAllWalletExtraAndMinusBalanceBackgroundTaskAsync();
+                if (!result.IsSuccess)
+                {
+                    _logger.LogError("Update all wallet extra and minus balance failed: {ex}", result.InternalErrorMessage);
+                }
+                _logger.LogInformation("Update all wallet extra and minus balance successfully");               
+            } catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error when update all wallet extra and minus balance: {ex}", ex);
+            }
+        }
     }
 }

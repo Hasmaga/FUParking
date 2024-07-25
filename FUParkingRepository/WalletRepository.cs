@@ -132,5 +132,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<dynamic>> UpdateAllWalletExtraAndMinusBalanceBackgroundTaskAsync()
+        {
+            try
+            {
+                // Get all ExpiredDate of Wallet Extra, if ExpiredDate <= DateTime.Now, set Extra = 0
+                var wallets = await _db.Wallets.Where(w => w.WalletType == WalletType.EXTRA && w.EXPDate <= DateTime.Now).ToListAsync();
+                foreach (var wallet in wallets)
+                {
+                    wallet.Balance = 0;
+                    _db.Wallets.Update(wallet);
+                    await _db.SaveChangesAsync();
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            } catch (Exception e)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

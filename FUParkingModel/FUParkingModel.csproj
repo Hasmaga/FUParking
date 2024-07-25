@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>x64</Platforms>
+    <Nullable>enable</Nullable>    
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="RequestObject\VehicleType\**" />
+    <EmbeddedResource Remove="RequestObject\VehicleType\**" />
+    <None Remove="RequestObject\VehicleType\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
@@ -23,10 +28,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="RequestObject\VehicleType\" />
   </ItemGroup>
 
 </Project>
