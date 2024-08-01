@@ -131,7 +131,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Package>>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -153,7 +153,7 @@ namespace FUParkingRepository
                 res.Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY;
                 return res;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 res.InternalErrorMessage = e;
                 return res;

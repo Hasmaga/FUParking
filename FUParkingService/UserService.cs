@@ -26,49 +26,31 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
                 // Check the email is already registered
                 var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
+                if (!isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
+                        InternalErrorMessage = isUserRegistered.InternalErrorMessage,
                     };
                 }
                 var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
+                if (!roleStaff.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || roleStaff.Data is null)
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
                         InternalErrorMessage = roleStaff.InternalErrorMessage
                     };
                 }
@@ -77,22 +59,20 @@ namespace FUParkingService
                     Email = req.Email,
                     FullName = req.FullName,
                     Password = req.Password,
-                    RoleId = roleStaff.Data.Id
+                    RoleId = roleStaff.Data.Id,
+                    CreateById = checkAuth.Data.Id
                 };
-
                 var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         InternalErrorMessage = result.InternalErrorMessage
                     };
                 }
                 return new Return<bool>
                 {
-                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -101,8 +81,7 @@ namespace FUParkingService
             {
                 return new Return<bool>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -112,50 +91,31 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
-                    };
-                }
-                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
                 // Check the email is already registered
                 var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
+                if (!isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
+                        InternalErrorMessage = isUserRegistered.InternalErrorMessage
                     };
                 }
-                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
+                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.SUPERVISOR);
+                if (!roleStaff.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || roleStaff.Data is null)
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
                         InternalErrorMessage = roleStaff.InternalErrorMessage
                     };
                 }
@@ -164,22 +124,21 @@ namespace FUParkingService
                     Email = req.Email,
                     FullName = req.FullName,
                     Password = req.Password,
-                    RoleId = roleStaff.Data.Id
+                    RoleId = roleStaff.Data.Id,
+                    CreateById = checkAuth.Data.Id
                 };
 
                 var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         InternalErrorMessage = result.InternalErrorMessage
                     };
                 }
                 return new Return<bool>
                 {
-                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -188,8 +147,7 @@ namespace FUParkingService
             {
                 return new Return<bool>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -199,50 +157,31 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
-                    };
-                }
-                // Check logged in account is manager or supervisor
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (accountLogin.IsSuccess == false || accountLogin.Data == null)
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
-                        InternalErrorMessage = accountLogin.InternalErrorMessage
-                    };
-                }
-                if (!Auth.AuthManager.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
                 // Check the email is already registered
                 var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
-                if (isUserRegistered.IsSuccess == true && isUserRegistered.Data != null)
+                if (!isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.EMAIL_IS_EXIST,
-                        IsSuccess = false
+                        InternalErrorMessage = isUserRegistered.InternalErrorMessage
                     };
                 }
-                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.STAFF);
-                if (roleStaff.IsSuccess == false || roleStaff.Data == null)
+                var roleStaff = await _roleRepository.GetRoleByNameAsync(RoleEnum.MANAGER);
+                if (!roleStaff.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || roleStaff.Data is null)
                 {
                     return new Return<bool>
                     {
                         Message = ErrorEnumApplication.GET_OBJECT_ERROR,
-                        IsSuccess = false,
                         InternalErrorMessage = roleStaff.InternalErrorMessage
                     };
                 }
@@ -251,22 +190,20 @@ namespace FUParkingService
                     Email = req.Email,
                     FullName = req.FullName,
                     Password = req.Password,
-                    RoleId = roleStaff.Data.Id
+                    RoleId = roleStaff.Data.Id,
+                    CreateById = checkAuth.Data.Id
                 };
-
                 var result = await CreateUserAsync(user);
-                if (result.IsSuccess == false)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         InternalErrorMessage = result.InternalErrorMessage
                     };
                 }
                 return new Return<bool>
                 {
-                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -275,8 +212,7 @@ namespace FUParkingService
             {
                 return new Return<bool>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -294,21 +230,21 @@ namespace FUParkingService
                     RoleId = user.RoleId,
                     PasswordHash = CreatePassHashAndPassSalt(user.Password, out byte[] passwordSalt),
                     PasswordSalt = Convert.ToBase64String(passwordSalt),
-                    StatusUser = StatusUserEnum.ACTIVE
+                    StatusUser = StatusUserEnum.ACTIVE,
+                    CreatedById = user.CreateById,
+                    WrongPassword = 0
                 };
                 var result = await _userRepository.CreateUserAsync(newUser);
-                if (result.IsSuccess == false || result.Data == null)
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || result.Data == null)
                 {
                     return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                        IsSuccess = false,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
                         InternalErrorMessage = result.InternalErrorMessage
                     };
                 }
                 return new Return<bool>
                 {
-                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -317,8 +253,7 @@ namespace FUParkingService
             {
                 return new Return<bool>
                 {
-                    Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }

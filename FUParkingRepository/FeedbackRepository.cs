@@ -32,7 +32,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Feedback>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -48,6 +48,7 @@ namespace FUParkingRepository
             try
             {
                 var feedbacks = await _db.Feedbacks.Where(f => f.CustomerId.Equals(customerGuiId))
+                                                                .Include(t => t.ParkingArea)
                                                                 .Where(t => t.DeletedDate == null)
                                                                 .OrderByDescending(t => t.CreatedDate)
                                                                 .Skip((pageIndex - 1) * pageSize)
@@ -89,7 +90,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Feedback>>()
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };

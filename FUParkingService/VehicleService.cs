@@ -15,58 +15,58 @@ namespace FUParkingService
     {
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IUserRepository _userRepository;
-        private readonly ICustomerRepository _customerRepository;
-        private readonly IMinioService _minioService;
+        private readonly ISessionRepository _sessionRepository;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, IUserRepository userRepository, ICustomerRepository customerRepository, IMinioService minioService)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
-            _userRepository = userRepository;
-            _customerRepository = customerRepository;
-            _minioService = minioService;
+            _sessionRepository = sessionRepository;
         }
 
-        public async Task<Return<IEnumerable<VehicleType>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
+        public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
         {
             try
             {
-                // Validate token
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<VehicleType>>
+                    return new Return<IEnumerable<GetVehicleTypeByUserResDto>>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                var result = await _vehicleRepository.GetAllVehicleTypeAsync(req);
+                if (!result.IsSuccess)
                 {
-                    return new Return<IEnumerable<VehicleType>>
+                    return new Return<IEnumerable<GetVehicleTypeByUserResDto>>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
+                return new Return<IEnumerable<GetVehicleTypeByUserResDto>>
                 {
-                    return new Return<IEnumerable<VehicleType>>
+                    Data = result.Data?.Select(x => new GetVehicleTypeByUserResDto
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                return await _vehicleRepository.GetAllVehicleTypeAsync(req);
+                        Id = x.Id,
+                        Name = x.Name,
+                        CreateByEmail = x.CreateBy?.Email ?? "",
+                        CreateDatetime = x.CreatedDate,
+                        LastModifyByEmail = x.LastModifyBy?.Email ?? "",
+                        LastModifyDatetime = x.LastModifyDate
+                    }),
+                    TotalRecord = result.TotalRecord,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true
+                };
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return new Return<IEnumerable<VehicleType>>
+                return new Return<IEnumerable<GetVehicleTypeByUserResDto>>
                 {
-                    IsSuccess = false,
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -87,7 +87,7 @@ namespace FUParkingService
                 }
                 return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
                 {
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
                     Data = result.Data?.Select(x => new GetVehicleTypeByCustomerResDto
@@ -111,66 +111,52 @@ namespace FUParkingService
         {
             try
             {
-                // check token valid
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<bool>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-
-                // Check role = Manager, Supervisor
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-
-                if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-
                 var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name);
-
-                if (vehicleTypes.Data != null && vehicleTypes.IsSuccess)
+                if (!vehicleTypes.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
-                    if (vehicleTypes.Data.Name != null)
+                    return new Return<bool>
                     {
-                        return new Return<bool>
-                        {
-                            IsSuccess = false,
-                            Message = ErrorEnumApplication.OBJECT_EXISTED
-                        };
-                    }
+                        InternalErrorMessage = vehicleTypes.InternalErrorMessage,
+                        Message = ErrorEnumApplication.OBJECT_EXISTED
+                    };
                 }
 
                 var vehicleType = new VehicleType
                 {
                     Name = reqDto.Name,
-                    Description = reqDto.Description
+                    Description = reqDto.Description,
+                    CreatedById = checkAuth.Data.Id,
                 };
 
                 var result = await _vehicleRepository.CreateVehicleTypeAsync(vehicleType);
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
                 return new Return<bool>
                 {
-                    IsSuccess = result.IsSuccess,
-                    Data = result.IsSuccess,
-                    Message = result.IsSuccess ? SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY : ErrorEnumApplication.SERVER_ERROR
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return new Return<bool>
                 {
-                    IsSuccess = false,
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -180,83 +166,57 @@ namespace FUParkingService
         {
             try
             {
-                // check token valid
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<bool>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
-                }
-
-                // Check role = Manager, Supervisor
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-
-                if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<bool> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
                 // Check the vehicle type id exists
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(Id);
-                if (vehicleType.Data == null || vehicleType.IsSuccess == false)
+                if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
                 {
                     return new Return<bool>
                     {
-                        IsSuccess = false,
+                        InternalErrorMessage = vehicleType.InternalErrorMessage,
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
                 }
 
                 // Check for duplicate vehicle type name with other vehicle types (except the current vehicle type)
-                var vehicleTypes = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name ?? "");
-                if (vehicleTypes.Data != null)
+                var isNameValid = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name ?? "");
+                if (!isNameValid.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<bool>
                     {
-                        IsSuccess = false,
+                        InternalErrorMessage = isNameValid.InternalErrorMessage,
                         Message = ErrorEnumApplication.OBJECT_EXISTED
                     };
                 }
 
-                // Update from here
-                if (reqDto.Name != null && reqDto.Name != "")
-                {
-                    vehicleType.Data.Name = reqDto.Name;
-                }
-                if (reqDto.Description != null && reqDto.Description != "")
-                {
-                    vehicleType.Data.Description = reqDto.Description;
-                }
+                vehicleType.Data.Name = reqDto.Name ?? vehicleType.Data.Name;
+                vehicleType.Data.Description = reqDto.Description ?? vehicleType.Data.Description;
+                vehicleType.Data.LastModifyById = checkAuth.Data.Id;
+                vehicleType.Data.LastModifyDate = DateTime.Now;
 
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
-                if (result.IsSuccess)
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<bool>
                     {
-                        IsSuccess = true,
-                        Data = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                else
+                return new Return<bool>
                 {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.UPDATE_OBJECT_ERROR
-                    };
-                }
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
             }
             catch (Exception)
             {
@@ -267,38 +227,54 @@ namespace FUParkingService
                 };
             }
         }
-        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
+        public async Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync()
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<Vehicle>>
+                    return new Return<IEnumerable<GetVehicleForUserResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
-                }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
-                {
-                    return new Return<IEnumerable<Vehicle>>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<IEnumerable<Vehicle>> { IsSuccess = false, Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
 
-                return await _vehicleRepository.GetVehiclesAsync();
-            }
-            catch
-            {
-                return new Return<IEnumerable<Vehicle>>
+                var result = await _vehicleRepository.GetVehiclesAsync();
+                if (!result.IsSuccess)
                 {
+                    return new Return<IEnumerable<GetVehicleForUserResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetVehicleForUserResDto>>
+                {
+                    Data = result.Data?.Select(x => new GetVehicleForUserResDto
+                    {
+                        Id = x.Id,
+                        PlateNumber = x.PlateNumber,
+                        VehicleType = x.VehicleType?.Name ?? "",
+                        PlateImage = x.PlateImage,
+                        StatusVehicle = x.StatusVehicle,
+                        CreatedDate = x.CreatedDate,
+                        Email = x.Customer?.Email ?? "",
+                        LastModifyBy = x.LastModifyBy?.Email ?? "",
+                        LastModifyDate = x.LastModifyDate,
+                        StaffApproval = x.Staff?.Email ?? ""
+                    }),
+                    TotalRecord = result.TotalRecord,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<GetVehicleForUserResDto>>
+                {
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -312,25 +288,15 @@ namespace FUParkingService
             };
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
-                    return res;
-                }
-                Return<Customer> customerLogin = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogin.Data == null)
-                {
-                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
+                    res.InternalErrorMessage = checkAuth.InternalErrorMessage;
+                    res.Message = checkAuth.Message;
                     return res;
                 }
 
-                if (customerLogin.Data.StatusCustomer.ToLower().Equals(StatusCustomerEnum.INACTIVE.ToLower()))
-                {
-                    res.Message = ErrorEnumApplication.BANNED;
-                    return res;
-                }
-                var result = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerLogin.Data.Id);
+                var result = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(checkAuth.Data.Id);
                 if (!result.IsSuccess)
                 {
                     res.InternalErrorMessage = result.InternalErrorMessage;
@@ -347,7 +313,7 @@ namespace FUParkingService
                 });
                 res.TotalRecord = result.TotalRecord;
                 res.IsSuccess = true;
-                res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;
+                res.Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 return res;
             }
             catch (Exception ex)
@@ -361,21 +327,15 @@ namespace FUParkingService
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
-                var userLogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-
-                if (!userLogged.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = userLogged.InternalErrorMessage };
-
-                if (userLogged.Data == null || !userLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
-                if (!Auth.AuthSupervisor.Contains(userLogged.Data.Role?.Name ?? ""))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(id);
 
                 if (!vehicleType.IsSuccess)
@@ -405,23 +365,15 @@ namespace FUParkingService
         {
             try
             {
-                // Check token is valid
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<GetInformationVehicleCreateResDto>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userLogged.Data == null || !userLogged.IsSuccess)
-                {
-                    return new Return<GetInformationVehicleCreateResDto>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }                
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.VehicleTypeId);
                 if (vehicleType.Data == null || !vehicleType.IsSuccess)
                 {
@@ -431,7 +383,7 @@ namespace FUParkingService
                     };
                 }
                 var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-                var objNamePlateNumber = userLogged.Data.Id + "_" + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
+                var objNamePlateNumber = checkAuth.Data.Id + "_" + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
                 //// Check vehicle image using ML                
                 //MLPlateDetecive.ModelInput checkIsPlateNumber = new()
                 //{
@@ -446,7 +398,7 @@ namespace FUParkingService
                 //    };
                 //}
                 //var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-                
+
                 //var boxes = predictionResult.PredictedBoundingBoxes.Chunk(4)
                 //    .Select(x => new { XTop = x[0], YTop = x[1], XBottom = x[2], YBottom = x[3] })
                 //    .Zip(predictionResult.Score, (a, b) => new { Box = a, Score = b });
@@ -588,7 +540,7 @@ namespace FUParkingService
                 {
                     PlateNumber = "",
                     VehicleTypeId = reqDto.VehicleTypeId,
-                    CustomerId = userLogged.Data.Id,
+                    CustomerId = checkAuth.Data.Id,
                     PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + objNamePlateNumber,
                     StatusVehicle = StatusVehicleEnum.PENDING
                 };
@@ -609,7 +561,7 @@ namespace FUParkingService
                         VehicleId = result.Data.Id,
                         PlateNumber = result.Data.PlateNumber,
                         VehicleTypeName = vehicleType.Data.Name,
-                        ImagePlateNumber = result.Data.PlateImage                        
+                        ImagePlateNumber = result.Data.PlateImage
                     },
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -628,17 +580,15 @@ namespace FUParkingService
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
-                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!userLogged.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = userLogged.InternalErrorMessage };
-
-                if (userLogged.Data == null || !userLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 var vehicle = await _vehicleRepository.GetVehicleByIdAsync(req.VehicleId);
                 if (!vehicle.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
@@ -646,7 +596,7 @@ namespace FUParkingService
                 if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
 
-                if (vehicle.Data.CustomerId != userLogged.Data.Id)
+                if (vehicle.Data.CustomerId != checkAuth.Data.Id)
                     return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
 
                 if (!vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
@@ -677,17 +627,15 @@ namespace FUParkingService
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
-                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!userLogged.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = userLogged.InternalErrorMessage };
-
-                if (userLogged.Data == null || !userLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 var vehicle = await _vehicleRepository.GetVehicleByIdAsync(vehicleId);
                 if (!vehicle.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
@@ -695,12 +643,28 @@ namespace FUParkingService
                 if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
 
-                if (vehicle.Data.CustomerId != userLogged.Data.Id)
+                if (vehicle.Data.CustomerId != checkAuth.Data.Id)
                     return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
 
                 if (!vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
                     return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-
+                // Check vehicle is in any session 
+                var newestSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(vehicle.Data.PlateNumber);
+                if (!newestSession.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = newestSession.InternalErrorMessage
+                    };
+                }
+                if (newestSession.Data?.GateOut is not null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_IS_IN_SESSION
+                    };
+                }
                 vehicle.Data.DeletedDate = DateTime.Now;
 
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);

@@ -1,8 +1,8 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ResponseObject.Feedback;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +27,7 @@ namespace FUParkingApi.Controllers
         [HttpGet("customers")]
         public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            Return<IEnumerable<Feedback>> res = new()
+            Return<IEnumerable<GetFeedbackByCustomerResDto>> res = new()
             {
                 Message = ErrorEnumApplication.SERVER_ERROR
             };

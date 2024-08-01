@@ -12,64 +12,40 @@ namespace FUParkingService
     {
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IUserRepository _userRepository;
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService, IUserRepository userRepository)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
-            _userRepository = userRepository;
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
+                var isExist = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
+                if (!isExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-
-                // Check card number is exist
-                var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
-                if (card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {
+                        InternalErrorMessage = isExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_IS_EXIST
-                    };
-                }
-                if (card.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = card.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
                 Card newCard = new()
                 {
                     PlateNumber = req.PlateNumber,
                     CardNumber = req.CardNumber,
-                    CreatedById = accountLogin.Data.Id,
+                    CreatedById = checkAuth.Data.Id,
                 };
                 var res = await _cardRepository.CreateCardAsync(newCard);
                 if (!res.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
@@ -99,35 +75,14 @@ namespace FUParkingService
         public async Task<Return<IEnumerable<GetCardResDto>>> GetListCardAsync(GetCardsWithFillerReqDto req)
         {
             try
-            {                
-                if (!_helpperService.IsTokenValid())
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<IEnumerable<GetCardResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }                
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                {
-                    return new Return<IEnumerable<GetCardResDto>>
-                    {
-                        InternalErrorMessage = accountLogin.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                {
-                    return new Return<IEnumerable<GetCardResDto>>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<IEnumerable<GetCardResDto>>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
                 var res = await _cardRepository.GetAllCardsAsync(req);
@@ -138,7 +93,7 @@ namespace FUParkingService
                         InternalErrorMessage = res.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                }                
+                }
                 return new Return<IEnumerable<GetCardResDto>>
                 {
                     IsSuccess = true,
@@ -166,50 +121,30 @@ namespace FUParkingService
         public async Task<Return<dynamic>> DeleteCardByIdAsync(Guid id)
         {
             try
-            {                
-                if (!_helpperService.IsTokenValid())
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }                
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }                
                 var card = await _cardRepository.GetCardByIdAsync(id);
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                 {
-                    if (card.InternalErrorMessage != null)
-                    {
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = card.InternalErrorMessage,
-                            Message = ErrorEnumApplication.SERVER_ERROR
-                        };
-                    }
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = card.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_NOT_EXIST
                     };
                 }
                 card.Data.DeletedDate = DateTime.Now;
-                card.Data.LastModifyById = accountLogin.Data.Id;
+                card.Data.LastModifyById = checkAuth.Data.Id;
                 card.Data.LastModifyDate = DateTime.Now;
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
-                if (!res.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                if (!res.IsSuccess)
                 {
                     return new Return<dynamic>
                     {
@@ -236,50 +171,30 @@ namespace FUParkingService
         public async Task<Return<dynamic>> UpdatePlateNumberInCardAsync(string PlateNumber, Guid CardId)
         {
             try
-            {                
-                if (!_helpperService.IsTokenValid())
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }                
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                    };
-                }                
                 var card = await _cardRepository.GetCardByIdAsync(CardId);
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                 {
-                    if (card.InternalErrorMessage != null)
-                    {
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = card.InternalErrorMessage,
-                            Message = ErrorEnumApplication.SERVER_ERROR
-                        };
-                    }
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = card.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_NOT_EXIST
                     };
                 }
                 card.Data.PlateNumber = PlateNumber;
-                card.Data.LastModifyById = accountLogin.Data.Id;
+                card.Data.LastModifyById = checkAuth.Data.Id;
                 card.Data.LastModifyDate = DateTime.Now;
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
-                if (!res.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                if (!res.IsSuccess)
                 {
                     return new Return<dynamic>
                     {

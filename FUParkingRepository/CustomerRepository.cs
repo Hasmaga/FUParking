@@ -25,7 +25,7 @@ namespace FUParkingRepository
                 await _db.SaveChangesAsync();
                 return new Return<Customer>
                 {
-                    Data = customer,                    
+                    Data = customer,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
@@ -33,7 +33,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -58,7 +58,7 @@ namespace FUParkingRepository
             {
                 return new Return<IEnumerable<Customer>>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -80,7 +80,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -101,7 +101,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -124,7 +124,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -147,7 +147,7 @@ namespace FUParkingRepository
             {
                 return new Return<CustomerType>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -170,7 +170,7 @@ namespace FUParkingRepository
             {
                 return new Return<IEnumerable<CustomerType>>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -192,7 +192,7 @@ namespace FUParkingRepository
             {
                 return new Return<CustomerType>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -226,7 +226,7 @@ namespace FUParkingRepository
                         default:
                             break;
                     }
-                }                
+                }
                 var result = await query
                     .OrderByDescending(t => t.CreatedDate)
                     .Skip((req.PageIndex - 1) * req.PageSize)
@@ -266,7 +266,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }

@@ -36,7 +36,7 @@ namespace FUParkingApi.Controllers
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(403, new { message = ErrorEnumApplication.NOT_AUTHORITY });                        
+                            return StatusCode(403, new { message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
                             _logger.LogInformation("Error when get list transaction payment: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new { message = ErrorEnumApplication.SERVER_ERROR });
@@ -45,7 +45,7 @@ namespace FUParkingApi.Controllers
                 return Ok(result.Data);
             }
             catch (Exception ex)
-            {   
+            {
                 _logger.LogError("Error when get list transaction payment: {ex}", ex.Message);
                 return StatusCode(500, new { message = "Internal server error." });
             }

@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
-using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -14,12 +13,12 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class CustomerController : Controller
     {
-        private readonly ICustomerService _customerService;        
+        private readonly ICustomerService _customerService;
         private readonly ILogger<CustomerController> _logger;
 
         public CustomerController(ICustomerService customerService, ILogger<CustomerController> logger)
         {
-            _customerService = customerService;           
+            _customerService = customerService;
             _logger = logger;
         }
 
@@ -32,7 +31,7 @@ namespace FUParkingApi.Controllers
                 if (!ModelState.IsValid)
                 {
                     return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
-                }               
+                }
 
                 res = await _customerService.CreateCustomerAsync(req);
                 if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
@@ -64,7 +63,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetCustomerListAsync(GetCustomersWithFillerReqDto req)
-        {                        
+        {
             try
             {
                 if (!ModelState.IsValid)
@@ -95,7 +94,7 @@ namespace FUParkingApi.Controllers
                 _logger.LogError("Error at get list customer: {ex}", ex);
                 return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
             }
-        }        
+        }
 
         [Authorize]
         [HttpPut("status")]

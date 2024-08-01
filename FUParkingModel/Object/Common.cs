@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -11,10 +10,10 @@ namespace FUParkingModel.Object
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
-        [Column("CreatedDate")]        
+        [Column("CreatedDate")]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        [Column("DeletedDate")]        
+        [Column("DeletedDate")]
         public DateTime? DeletedDate { get; set; }
     }
 }

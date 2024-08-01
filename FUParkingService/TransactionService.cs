@@ -10,13 +10,11 @@ namespace FUParkingService
     public class TransactionService : ITransactionService
     {
         private readonly ITransactionRepository _transactionRepository;
-        private readonly IUserRepository _userRepository;
         private readonly IHelpperService _helpperService;
 
-        public TransactionService(ITransactionRepository transactionRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public TransactionService(ITransactionRepository transactionRepository, IHelpperService helpperService)
         {
             _transactionRepository = transactionRepository;
-            _userRepository = userRepository;
             _helpperService = helpperService;
         }
 
@@ -24,34 +22,13 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<IEnumerable<GetTransactionPaymentResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                {
-                    return new Return<IEnumerable<GetTransactionPaymentResDto>>
-                    {
-                        InternalErrorMessage = accountLogin.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data is null)
-                {
-                    return new Return<IEnumerable<GetTransactionPaymentResDto>>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthSupervisor.Contains(accountLogin.Data.Role?.Name ?? ""))
-                {
-                    return new Return<IEnumerable<GetTransactionPaymentResDto>>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
 
@@ -75,13 +52,13 @@ namespace FUParkingService
                         PaymentMethod = p.Payment?.PaymentMethod?.Name ?? "",
                         TransactionDescription = p.TransactionDescription,
                         TransactionStatus = p.TransactionStatus,
-                        WalletType = p.Wallet?.WalletType ?? "",                       
+                        WalletType = p.Wallet?.WalletType ?? "",
                     }),
                     TotalRecord = result.TotalRecord,
-                    IsSuccess = true,                   
+                    IsSuccess = true,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
-            } 
+            }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<GetTransactionPaymentResDto>>
@@ -90,6 +67,6 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }        
+        }
     }
 }

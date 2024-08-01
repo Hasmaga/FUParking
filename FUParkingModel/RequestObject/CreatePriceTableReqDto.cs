@@ -8,7 +8,7 @@ namespace FUParkingModel.RequestObject
         public Guid VehicleTypeId { get; set; }
 
         [Required(ErrorMessage = "Must have Priority")]
-        [Range(2,5, ErrorMessage = "Priority is from 2 to 5")]
+        [Range(2, 5, ErrorMessage = "Priority is from 2 to 5")]
         public int Priority { get; set; }
 
         [Required(ErrorMessage = "Must have Name")]

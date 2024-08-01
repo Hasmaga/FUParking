@@ -22,7 +22,7 @@ namespace FUParkingApi.Controllers
         public async Task<IActionResult> Get([FromQuery] ZaloCallback req)
         {
             try
-            {                
+            {
                 if (req.AppTransId == null || req.Status != 1)
                 {
                     return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });

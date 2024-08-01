@@ -1,11 +1,11 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Price;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FUParkingModel.RequestObject.Price;
 
 namespace FUParkingApi.Controllers
 {
@@ -233,7 +233,7 @@ namespace FUParkingApi.Controllers
             {
                 _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", ex.Message);
                 return StatusCode(500, new Return<object>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }

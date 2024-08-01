@@ -4,7 +4,6 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace FUParkingRepository
 {
@@ -120,7 +119,7 @@ namespace FUParkingRepository
                     .Include(x => x.Customer)
                     .Include(x => x.Customer.CustomerType)
                     .Include(x => x.CreateBy)
-                    .Include(x => x.LastModifyBy)                    
+                    .Include(x => x.LastModifyBy)
                     .Where(x => x.CardId == cardId && x.DeletedDate == null)
                     .OrderByDescending(x => x.CreatedDate)
                     .FirstOrDefaultAsync();

@@ -22,7 +22,7 @@ namespace FUParkingRepository
             try
             {
                 await _db.Cards.AddAsync(card);
-                await _db.SaveChangesAsync();                
+                await _db.SaveChangesAsync();
                 return new Return<Card>
                 {
                     Data = card,
@@ -33,7 +33,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -73,7 +73,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Card>>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -95,7 +95,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -117,7 +117,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -140,7 +140,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
-                {                    
+                {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };

@@ -1,10 +1,8 @@
-﻿using CommunityToolkit.HighPerformance;
-using FUParkingModel.RequestObject.Common;
+﻿using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ReturnCommon;
-using Microsoft.AspNetCore.Http;
 
 namespace FUParkingService.Interface
 {

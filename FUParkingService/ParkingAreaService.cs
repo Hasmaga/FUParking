@@ -4,7 +4,6 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Microsoft.AspNetCore.Builder;
 
 namespace FUParkingService
 {
@@ -12,71 +11,59 @@ namespace FUParkingService
     {
         private readonly IParkingAreaRepository _parkingAreaRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IUserRepository _userRepository;
 
-        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService, IUserRepository userRepository)
+        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService)
         {
             _parkingAreaRepository = parkingAreaRepository;
             _helpperService = helpperService;
-            _userRepository = userRepository;
         }
 
         public async Task<Return<dynamic>> DeleteParkingArea(Guid id)
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-
                 // Check if ParkingAreaId exists
                 var existedParking = await _parkingAreaRepository.GetParkingAreaByIdAsync(id);
-                if (existedParking.Data == null || existedParking.IsSuccess == false)
+                if (existedParking.Data == null || existedParking.IsSuccess is not true)
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
+                        InternalErrorMessage = existedParking.InternalErrorMessage,
                         Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST
                     };
-                }                
+                }
                 existedParking.Data.DeletedDate = DateTime.Now;
+                existedParking.Data.LastModifyById = checkAuth.Data.Id;
+                existedParking.Data.LastModifyDate = DateTime.Now;
 
                 var result = await _parkingAreaRepository.UpdateParkingAreaAsync(existedParking.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
                 return new Return<dynamic>
                 {
-                    IsSuccess = true,                    
+                    IsSuccess = true,
                     Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
                 };
-                
             }
             catch (Exception ex)
             {
                 return new Return<dynamic>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
@@ -87,112 +74,107 @@ namespace FUParkingService
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
-                {
-                    return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-
-                // Check for duplicate parking area name
-                var isDuplicateName = await _parkingAreaRepository.GetParkingAreaByNameAsync(req.Name);
-                if (isDuplicateName.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isDuplicateName.Data != null)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                // Check for duplicate parking area name
+                var isDuplicateName = await _parkingAreaRepository.GetParkingAreaByNameAsync(req.Name);
+                if (!isDuplicateName.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isDuplicateName.Data != null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isDuplicateName.InternalErrorMessage,
                         Message = ErrorEnumApplication.OBJECT_EXISTED
                     };
                 }
 
+                string? mode;
+                switch (req.Mode)
+                {
+                    case 1:
+                        mode = ModeEnum.MODE1;
+                        break;
+                    case 2:
+                        mode = ModeEnum.MODE2;
+                        break;
+                    case 3:
+                        mode = ModeEnum.MODE3;
+                        break;
+                    case 4:
+                        mode = ModeEnum.MODE4;
+                        break;
+                    default:
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.INVALID_INPUT
+                        };
+                }
                 var parkingArea = new ParkingArea
                 {
-                    Mode = ModeEnum.MODE1,
+                    Mode = mode ?? ModeEnum.MODE1,
                     StatusParkingArea = StatusParkingEnum.ACTIVE,
                     Name = req.Name,
                     Description = req.Description,
                     MaxCapacity = req.MaxCapacity,
                     Block = req.Block,
-                    CreatedById = userlogged.Data.Id,
+                    CreatedById = checkAuth.Data.Id,
                 };
-
                 var result = await _parkingAreaRepository.CreateParkingAreaAsync(parkingArea);
                 if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
                 return new Return<dynamic>
                 {
-                    IsSuccess = true,                    
+                    IsSuccess = true,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
             {
                 return new Return<dynamic>
-                {                    
+                {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-
         }
 
         public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync(int pageIndex, int pageSize)
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<IEnumerable<ParkingArea>>
                     {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
-                }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<IEnumerable<ParkingArea>>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthSupervisor.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<IEnumerable<ParkingArea>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 var result = await _parkingAreaRepository.GetAllParkingAreasAsync(pageIndex, pageSize);
                 if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<IEnumerable<ParkingArea>>
                     {
+                        InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.GET_OBJECT_ERROR
                     };
                 }
                 return new Return<IEnumerable<ParkingArea>>
                 {
-                    IsSuccess = true,                    
+                    IsSuccess = true,
                     TotalRecord = result.TotalRecord,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
                 };
@@ -211,46 +193,32 @@ namespace FUParkingService
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-
                 // Check ParkingArea
                 var existingParkingArea = await _parkingAreaRepository.GetParkingAreaByIdAsync(req.ParkingAreaId);
                 if (existingParkingArea.Data == null || !existingParkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                 }
 
                 if (req.Name?.Trim() is not null)
                 {
                     var isNameParkingExist = await _parkingAreaRepository.GetParkingAreaByNameAsync(req.Name);
-                    if (isNameParkingExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    if (!isNameParkingExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                     {
-                        return new Return<dynamic> { Message = ErrorEnumApplication.OBJECT_EXISTED };
+                        return new Return<dynamic> { Message = ErrorEnumApplication.OBJECT_EXISTED, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                     }
                     existingParkingArea.Data.Name = req.Name;
                 }
-                
+
                 if (!string.IsNullOrEmpty(req.Description))
                 {
                     existingParkingArea.Data.Description = req.Description;
@@ -263,15 +231,30 @@ namespace FUParkingService
                 {
                     existingParkingArea.Data.Block = req.Block.Value;
                 }
-                if (!string.IsNullOrEmpty(req.Mode))
+                if (req.Mode is not null)
                 {
-                    existingParkingArea.Data.Mode = req.Mode;
+                    switch (req.Mode)
+                    {
+                        case 1:
+                            existingParkingArea.Data.Mode = ModeEnum.MODE1;
+                            break;
+                        case 2:
+                            existingParkingArea.Data.Mode = ModeEnum.MODE2;
+                            break;
+                        case 3:
+                            existingParkingArea.Data.Mode = ModeEnum.MODE3;
+                            break;
+                        case 4:
+                            existingParkingArea.Data.Mode = ModeEnum.MODE4;
+                            break;
+                        default:
+                            return new Return<dynamic> { Message = ErrorEnumApplication.INVALID_INPUT };
+                    }
                 }
-
                 var updateResult = await _parkingAreaRepository.UpdateParkingAreaAsync(existingParkingArea.Data);
                 if (!updateResult.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                 }
                 return new Return<dynamic> { Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY, IsSuccess = true };
             }

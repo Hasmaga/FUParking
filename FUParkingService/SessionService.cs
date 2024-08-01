@@ -17,7 +17,6 @@ namespace FUParkingService
     {
         private readonly ISessionRepository _sessionRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IUserRepository _userRepository;
         private readonly ICardRepository _cardRepository;
         private readonly IGateRepository _gateRepository;
         private readonly IMinioService _minioService;
@@ -29,11 +28,10 @@ namespace FUParkingService
         private readonly IPriceRepository _priceRepository;
         private readonly IVehicleRepository _vehicleRepository;
 
-        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, IUserRepository userRepository, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository)
+        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository)
         {
             _sessionRepository = sessionRepository;
             _helpperService = helpperService;
-            _userRepository = userRepository;
             _cardRepository = cardRepository;
             _gateRepository = gateRepository;
             _minioService = minioService;
@@ -50,18 +48,15 @@ namespace FUParkingService
         {
             try
             {
-                // Check token
-                if (!_helpperService.IsTokenValid())
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                // Check role
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                if (!accountLogin.Data.StatusUser.Equals(StatusUserEnum.ACTIVE))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                // Check CardId
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
                 if (!card.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
@@ -75,7 +70,7 @@ namespace FUParkingService
                 {
                     // Close this session
                     isSessionClosed.Data.Status = SessionEnum.CANCELLED;
-                    isSessionClosed.Data.LastModifyById = accountLogin.Data.Id;
+                    isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
                     isSessionClosed.Data.LastModifyDate = DateTime.Now;
                 }
                 // Check this plate number is in another session
@@ -152,7 +147,7 @@ namespace FUParkingService
                     TimeIn = DateTime.Now,
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
-                    CreatedById = accountLogin.Data.Id,
+                    CreatedById = checkAuth.Data.Id,
                     CustomerId = customer.Data.Id,
                     VehicleTypeId = vehicle.Data.VehicleTypeId,
                 };
@@ -172,15 +167,15 @@ namespace FUParkingService
         {
             try
             {
-                // Check token
-                if (!_helpperService.IsTokenValid())
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                // Check role
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 // Check CardId
                 var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
                 if (!card.IsSuccess)
@@ -195,7 +190,7 @@ namespace FUParkingService
                 {
                     // Close this session
                     isSessionClosed.Data.Status = SessionEnum.CANCELLED;
-                    isSessionClosed.Data.LastModifyById = accountLogin.Data.Id;
+                    isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
                     isSessionClosed.Data.LastModifyDate = DateTime.Now;
                 }
                 // Check this plate number is in another session
@@ -245,7 +240,7 @@ namespace FUParkingService
                     TimeIn = DateTime.Now,
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
-                    CreatedById = accountLogin.Data.Id,
+                    CreatedById = checkAuth.Data.Id,
                     VehicleTypeId = vehicleType.Data.Id,
                 };
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
@@ -264,14 +259,15 @@ namespace FUParkingService
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                if (!_helpperService.IsTokenValid())
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                // Check role
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<CheckOutResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 // Check CardId
                 var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
                 if (!card.IsSuccess)
@@ -305,7 +301,7 @@ namespace FUParkingService
                     sessionCard.Data.GateOutId = gateOut.Data.Id;
                     sessionCard.Data.ImageOutUrl = imageOutNonePaidUrl.Data.ObjUrl;
                     sessionCard.Data.TimeOut = req.TimeOut;
-                    sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                    sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = DateTime.Now;
                     sessionCard.Data.Status = SessionEnum.CLOSED;
                     var updateNonePaidSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
@@ -629,7 +625,7 @@ namespace FUParkingService
                         sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                         sessionCard.Data.GateOutId = req.GateOutId;
                         sessionCard.Data.TimeOut = req.TimeOut;
-                        sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                        sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                         sessionCard.Data.LastModifyDate = DateTime.Now;
                         sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                         var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
@@ -663,7 +659,7 @@ namespace FUParkingService
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.Status = SessionEnum.CLOSED;
-                    sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                    sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = DateTime.Now;
                     sessionCard.Data.PaymentMethodId = paymentMethodWallet.Data.Id;
                     var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
@@ -684,7 +680,7 @@ namespace FUParkingService
                             PlateNumber = sessionCard.Data.PlateNumber,
                         }
                     };
-                } 
+                }
                 // For guest 
                 else
                 {
@@ -697,7 +693,7 @@ namespace FUParkingService
                     sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
-                    sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                    sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = DateTime.Now;
                     sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                     var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
@@ -719,7 +715,7 @@ namespace FUParkingService
                             PlateNumber = sessionCard.Data.PlateNumber,
                         }
                     };
-                }                
+                }
             }
             catch (Exception ex)
             {
@@ -732,14 +728,15 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                // Check role
-                var accountLogin = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!accountLogin.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = accountLogin.InternalErrorMessage };
-                if (!accountLogin.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogin.Data == null)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
                 // Check CardId
                 var card = await _cardRepository.GetCardByCardNumberAsync(CardNumber);
                 if (!card.IsSuccess)
@@ -755,7 +752,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 // Update session to close
                 sessionCard.Data.Status = SessionEnum.CLOSED;
-                sessionCard.Data.LastModifyById = accountLogin.Data.Id;
+                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                 sessionCard.Data.LastModifyDate = DateTime.Now;
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                 if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -772,14 +769,16 @@ namespace FUParkingService
         {
             try
             {
-                if (!_helpperService.IsTokenValid())
-                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogged.IsSuccess)
-                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
-                if (customerLogged.Data == null || !customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                var listSession = await _sessionRepository.GetListSessionByCustomerIdAsync(customerLogged.Data.Id, req.StartDate, req.EndDate, req.PageSize, req.PageIndex);
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetHistorySessionResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var listSession = await _sessionRepository.GetListSessionByCustomerIdAsync(checkAuth.Data.Id, req.StartDate, req.EndDate, req.PageSize, req.PageIndex);
                 if (!listSession.IsSuccess)
                     return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listSession.InternalErrorMessage };
                 if (listSession.Data == null || !listSession.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))

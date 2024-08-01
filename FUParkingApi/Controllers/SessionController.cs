@@ -118,7 +118,7 @@ namespace FUParkingApi.Controllers
                     switch (result.Message)
                     {
                         case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });                        
+                            return StatusCode(401, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY });
                         default:
                             _logger.LogError("Error at Get List Session By Customer: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });

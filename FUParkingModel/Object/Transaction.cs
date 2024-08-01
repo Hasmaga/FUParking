@@ -1,20 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
     [Table("Transaction", Schema = "dbo")]
     public class Transaction : Common
     {
-        [Column("WalletId")]       
-        public Guid? WalletId { get; set; }        
+        [Column("WalletId")]
+        public Guid? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
 
-        [Column("PaymentId")]        
-        public Guid? PaymentId { get; set; }        
+        [Column("PaymentId")]
+        public Guid? PaymentId { get; set; }
         public Payment? Payment { get; set; }
 
-        [Column("DepositId")]        
+        [Column("DepositId")]
         public Guid? DepositId { get; set; }
         public Deposit? Deposit { get; set; }
 

@@ -19,7 +19,7 @@ namespace FUParkingRepository
         public async Task<Return<ParkingArea>> CreateParkingAreaAsync(ParkingArea parkingArea)
         {
             try
-            {                
+            {
                 await _db.ParkingAreas.AddAsync(parkingArea);
                 await _db.SaveChangesAsync();
                 return new Return<ParkingArea>
@@ -32,7 +32,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -47,7 +47,7 @@ namespace FUParkingRepository
             };
             try
             {
-                var result = await _db.ParkingAreas.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(parkingId));                
+                var result = await _db.ParkingAreas.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(parkingId));
                 res.Data = result;
                 res.Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT;
                 res.IsSuccess = true;
@@ -75,7 +75,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {                    
+                {
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     InternalErrorMessage = e
                 };
@@ -98,7 +98,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<ParkingArea>>
-                {                   
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -121,7 +121,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<ParkingArea>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -149,7 +149,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<ParkingArea>>
-                {                    
+                {
                     Message = ErrorEnumApplication.GET_OBJECT_ERROR,
                     InternalErrorMessage = e
                 };

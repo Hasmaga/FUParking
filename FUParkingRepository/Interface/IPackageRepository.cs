@@ -11,6 +11,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<Package>>> GetAllPackagesAsync();
         Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex);
         Task<Return<Package>> UpdateCoinPackage(Package package);
-        Task<Return<Package>> GetPackageByNameAsync(string PacketName);        
+        Task<Return<Package>> GetPackageByNameAsync(string PacketName);
     }
 }

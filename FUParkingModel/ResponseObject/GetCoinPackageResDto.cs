@@ -2,6 +2,7 @@
 {
     public class CustomerGetCoinPackageResDto
     {
+        public Guid Id { get; set; }
         public required string Name { get; set; }
         public required string CoinAmount { get; set; }
         public required decimal Price { get; set; }

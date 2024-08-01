@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
     [Table("Customer", Schema = "dbo")]
     public class Customer : Common
     {
-        [Column("CustomerTypeId")]        
+        [Column("CustomerTypeId")]
         public Guid CustomerTypeId { get; set; }
         public CustomerType? CustomerType { get; set; }
 

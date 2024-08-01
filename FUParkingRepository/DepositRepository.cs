@@ -50,7 +50,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<Deposit>
                 {

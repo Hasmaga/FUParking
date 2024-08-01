@@ -5,7 +5,7 @@ namespace FUParkingModel.Object
     [Table("Session", Schema = "dbo")]
     public class Session : Common
     {
-        [Column("CardId")]        
+        [Column("CardId")]
         public Guid CardId { get; set; }
         public Card? Card { get; set; }
 
@@ -64,7 +64,7 @@ namespace FUParkingModel.Object
         [Column("LastModifyDate")]
         public DateTime? LastModifyDate { get; set; }
 
-        public ICollection<Payment>? Payments { get; set; }        
+        public ICollection<Payment>? Payments { get; set; }
         public ICollection<Feedback>? Feedbacks { get; set; }
     }
 }

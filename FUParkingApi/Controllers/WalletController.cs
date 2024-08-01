@@ -20,7 +20,7 @@ namespace FUParkingApi.Controllers
         {
             _walletService = walletService;
             _logger = logger;
-        }        
+        }
 
         [HttpGet("transaction/main")]
         public async Task<IActionResult> GetTransactionWalletMain([FromQuery] GetListObjectWithFillerDateReqDto req)

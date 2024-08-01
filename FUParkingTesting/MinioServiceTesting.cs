@@ -43,7 +43,7 @@ namespace FUParkingTesting
                 BucketName = bucketName
             };
             var result = await _minioService.GetObjectUrlByObjectNameAsync(req);
-            Assert.AreEqual(ErrorEnumApplication.SERVER_ERROR, result.Message);            
+            Assert.AreEqual(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
     }
 }

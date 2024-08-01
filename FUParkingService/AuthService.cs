@@ -51,7 +51,7 @@ namespace FUParkingService
                 // Check if the user is already registered
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(login.Email);
                 // If the user is not registered, create a new user
-                if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data != null)
+                if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
                 {
                     return new Return<LoginResDto>
                     {
@@ -130,16 +130,34 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isUserRegistered.Data == null)
+                if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isUserRegistered.Data is null)
                 {
                     return new Return<LoginResDto>
                     {
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
-                }                
+                }
+                if (isUserRegistered.Data.WrongPassword >= 5)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.ACCOUNT_IS_BANNED
+                    };
+                }
                 // Check the password is correct
                 if (!VerifyPasswordHash(req.Password, Convert.FromBase64String(isUserRegistered.Data.PasswordSalt ?? ""), isUserRegistered.Data.PasswordHash ?? ""))
                 {
+                    // Update the wrong password count
+                    isUserRegistered.Data.WrongPassword++;
+                    var result = await _userRepository.UpdateUserAsync(isUserRegistered.Data);
+                    if (!result.IsSuccess)
+                    {
+                        return new Return<LoginResDto>
+                        {
+                            InternalErrorMessage = result.InternalErrorMessage,
+                            Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
+                        };
+                    }
                     return new Return<LoginResDto>
                     {
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
@@ -178,37 +196,24 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        Message = ErrorEnumApplication.NOT_AUTHENTICATION
                     };
                 }
-                var id = _helpperService.GetAccIdFromLogged();
-                if (id == Guid.Empty)
+                var user = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!user.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || user.Data is null)
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY,
-                        IsSuccess = false
+                        InternalErrorMessage = user.InternalErrorMessage,
+                        Message = ErrorEnumApplication.USER_NOT_EXIST
                     };
                 }
-                var user = await _userRepository.GetUserByIdAsync(id);
-                if (!user.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || user.Data == null)
+                if (user.Data.WrongPassword >= 5)
                 {
-                    if (user.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    return new Return<LoginResDto>
                     {
-                        return new Return<LoginResDto>
-                        {
-                            Message = ErrorEnumApplication.USER_NOT_EXIST
-                        };
-                    }
-                    else
-                    {
-                        return new Return<LoginResDto>
-                        {
-                            Message = ErrorEnumApplication.SERVER_ERROR,
-                            InternalErrorMessage = user.InternalErrorMessage
-                        };
-                    }
+                        Message = ErrorEnumApplication.ACCOUNT_IS_BANNED
+                    };
                 }
                 return new Return<LoginResDto>
                 {
@@ -225,7 +230,6 @@ namespace FUParkingService
                 return new Return<LoginResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
-                    IsSuccess = false,
                     InternalErrorMessage = ex
                 };
             }

@@ -32,7 +32,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Transaction>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -54,7 +54,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Transaction>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -87,7 +87,7 @@ namespace FUParkingRepository
         {
             try
             {
-                DateTime endDateValue = endDate ?? DateTime.Now;        
+                DateTime endDateValue = endDate ?? DateTime.Now;
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
                 var res = await _db.Transactions.Include(t => t.Payment)
@@ -97,7 +97,7 @@ namespace FUParkingRepository
 
                 var result = res
                     .Skip((pageIndex - 1) * pageSize)
-                    .Take(pageSize);                    
+                    .Take(pageSize);
 
                 return new Return<IEnumerable<Transaction>>
                 {
@@ -132,7 +132,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Transaction>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -141,9 +141,9 @@ namespace FUParkingRepository
 
         public async Task<Return<IEnumerable<Transaction>>> GetListTransactionPaymentAsync(int pageSize, int pageIndex, DateTime? startDate, DateTime? endDate, string? searchInput = null, string? Attribute = null)
         {
-            try 
+            try
             {
-                DateTime endDateValue = endDate ?? DateTime.Now;        
+                DateTime endDateValue = endDate ?? DateTime.Now;
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -170,7 +170,7 @@ namespace FUParkingRepository
                             break;
                         case "TRANSACTIONSTATUS":
                             res = res.Where(t => t.TransactionStatus.Equals(searchInput));
-                            break;                        
+                            break;
                         case "PAYMENTMETHOD":
                             res = res.Where(t => t.Payment.PaymentMethod.Equals(searchInput));
                             break;
@@ -187,7 +187,7 @@ namespace FUParkingRepository
 
                 var result = filter
                     .Skip((pageIndex - 1) * pageSize)
-                    .Take(pageSize);                                 
+                    .Take(pageSize);
 
                 return new Return<IEnumerable<Transaction>>
                 {

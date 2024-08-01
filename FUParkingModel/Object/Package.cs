@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -34,7 +33,7 @@ namespace FUParkingModel.Object
 
         [Column("LastModifyDate")]
         public DateTime? LastModifyDate { get; set; }
-        
+
         public ICollection<Deposit>? Deposits { get; set; }
     }
 }

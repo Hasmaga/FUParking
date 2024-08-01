@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace FUParkingModel.Enum
+﻿namespace FUParkingModel.Enum
 {
     public class StatusCustomerEnum
     {
@@ -11,7 +9,7 @@ namespace FUParkingModel.Enum
     public class StatusVehicleEnum
     {
         public const string PENDING = "PENDING";
-        public const string ACTIVE = "ACTIVE";        
+        public const string ACTIVE = "ACTIVE";
         public const string INACTIVE = "INACTIVE";
     }
 
@@ -128,6 +126,6 @@ namespace FUParkingModel.Enum
     public class TransactionTypeEnum
     {
         public const string IN = "IN";
-        public const string OUT = "OUT";        
+        public const string OUT = "OUT";
     }
 }

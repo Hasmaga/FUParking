@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -9,16 +8,16 @@ namespace FUParkingModel.Object
         [Column("PlateNumber")]
         public required string PlateNumber { get; set; }
 
-        [Column("CustomerId")]        
-        public Guid CustomerId { get; set; }        
+        [Column("CustomerId")]
+        public Guid CustomerId { get; set; }
         public Customer? Customer { get; set; }
 
-        [Column("VehicleTypeId")]        
+        [Column("VehicleTypeId")]
         public Guid VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
         [Column("PlateImage")]
-        public required string PlateImage { get; set; }        
+        public required string PlateImage { get; set; }
 
         [Column("StatusVehicle")]
         public required string StatusVehicle { get; set; }

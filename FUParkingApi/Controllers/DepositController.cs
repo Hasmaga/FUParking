@@ -1,11 +1,8 @@
-﻿using FUParkingApi.HelperClass;
-using FUParkingModel.Enum;
-using FUParkingModel.RequestObject;
+﻿using FUParkingModel.Enum;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace FUParkingApi.Controllers
 {
@@ -22,7 +19,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("{packetId}")]
-        public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute]Guid packetId)
+        public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute] Guid packetId)
         {
             try
             {
@@ -39,8 +36,9 @@ namespace FUParkingApi.Controllers
                         ErrorEnumApplication.PACKAGE_NOT_EXIST => StatusCode(404, new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST }),
                         _ => StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR }),
                     };
-                }                
-            } catch (Exception ex)
+                }
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

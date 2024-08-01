@@ -32,7 +32,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Payment>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -55,7 +55,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -78,7 +78,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<PaymentMethod>>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -100,7 +100,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
@@ -147,7 +147,7 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<PaymentMethod>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };

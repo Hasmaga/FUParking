@@ -316,7 +316,7 @@ namespace FUParkingModel.DatabaseContext
                 .WithMany(e => e.VehicleTypeLastModifyBy)
                 .HasForeignKey(e => e.LastModifyById)
                 .OnDelete(DeleteBehavior.NoAction);
-            
+
             modelBuilder.Entity<Session>()
                 .HasMany(e => e.Feedbacks)
                 .WithOne(e => e.Session)

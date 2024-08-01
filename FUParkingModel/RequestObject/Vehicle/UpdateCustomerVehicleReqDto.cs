@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FUParkingModel.RequestObject.Vehicle
 {
-    public class UpdateCustomerVehicleReqDto 
+    public class UpdateCustomerVehicleReqDto
     {
         [Required]
         public Guid VehicleId { get; set; }

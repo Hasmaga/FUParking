@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace FUParkingModel.Object
 {
@@ -7,8 +6,8 @@ namespace FUParkingModel.Object
     public class Gate : Common
     {
         [Column("ParkingAreaId")]
-        public Guid ParkingAreaId { get; set; }        
-        public ParkingArea? ParkingArea { get; set; }        
+        public Guid ParkingAreaId { get; set; }
+        public ParkingArea? ParkingArea { get; set; }
 
         [Column("Name")]
         public required string Name { get; set; }
@@ -17,7 +16,7 @@ namespace FUParkingModel.Object
         public string? Description { get; set; }
 
         [Column("GateTypeId")]
-        public Guid GateTypeId { get; set; }        
+        public Guid GateTypeId { get; set; }
         public GateType? GateType { get; set; }
 
         [Column("StatusGate")]
@@ -33,9 +32,9 @@ namespace FUParkingModel.Object
 
         [Column("LastModifyDate")]
         public DateTime? LastModifyDate { get; set; }
-        
+
         public ICollection<Session>? SessionGateIns { get; set; }
-        
+
         public ICollection<Session>? SessionGateOuts { get; set; }
     }
 }

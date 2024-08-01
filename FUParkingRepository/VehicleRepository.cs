@@ -185,7 +185,12 @@ namespace FUParkingRepository
         {
             try
             {
-                var vehicles = await _db.Vehicles.Include(v => v.Customer).ToListAsync();
+                var vehicles = await _db.Vehicles
+                    .Include(v => v.Customer)
+                    .Include(v => v.VehicleType)
+                    .Include(v => v.Staff)
+                    .Include(v => v.LastModifyBy)
+                    .ToListAsync();
                 return new Return<IEnumerable<Vehicle>>()
                 {
                     Data = vehicles,

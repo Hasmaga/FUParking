@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace FUParkingModel.Enum
+﻿namespace FUParkingModel.Enum
 {
     public class ErrorEnumApplication
     {
@@ -50,7 +48,10 @@ namespace FUParkingModel.Enum
         public const string NOT_A_PLATE_NUMBER = "This Image not contain any plate number";
         public const string FILE_EXTENSION_NOT_SUPPORT = "File extension not support";
         public const string CANNOT_READ_TEXT_FROM_IMAGE = "Cannot read text from image";
-
+        public const string ACCOUNT_IS_BANNED = "Account is banned";
+        public const string NOT_AUTHENTICATION = "Not authentication";
+        public const string ACCOUNT_IS_LOCK = "Account is lock";
+        public const string VEHICLE_IS_IN_SESSION = "Vehicle is in anthor session";
     }
 
     public class MinioErrorServerDefineEnum

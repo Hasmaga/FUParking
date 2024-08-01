@@ -14,7 +14,7 @@ namespace FUParkingService.BackgroundTask
         {
             _walletRepository = walletRepository;
             _logger = logger;
-        }        
+        }
 
         public async Task Invoke()
         {
@@ -25,8 +25,9 @@ namespace FUParkingService.BackgroundTask
                 {
                     _logger.LogError("Update all wallet extra and minus balance failed: {ex}", result.InternalErrorMessage);
                 }
-                _logger.LogInformation("Update all wallet extra and minus balance successfully");               
-            } catch (Exception ex)
+                _logger.LogInformation("Update all wallet extra and minus balance successfully");
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error when update all wallet extra and minus balance: {ex}", ex);
             }

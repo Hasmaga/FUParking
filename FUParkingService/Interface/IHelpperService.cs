@@ -1,5 +1,5 @@
-﻿using FUParkingModel.ReturnCommon;
-using Microsoft.AspNetCore.Http;
+﻿using FUParkingModel.Object;
+using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
 {
@@ -8,6 +8,8 @@ namespace FUParkingService.Interface
         bool CheckBearerTokenIsValidAndNotExpired(string token);
         Guid GetAccIdFromLogged();
         bool IsTokenValid();
-        Task<string> CreatePassHashAndPassSaltAsync(string pass, out byte[] passwordSalt);        
+        Task<string> CreatePassHashAndPassSaltAsync(string pass, out byte[] passwordSalt);
+        Task<Return<Customer>> ValidateCustomerAsync();
+        Task<Return<User>> ValidateUserAsync(string actor);
     }
 }

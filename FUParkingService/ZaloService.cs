@@ -13,7 +13,6 @@ namespace FUParkingService
 {
     public class ZaloService : IZaloService
     {
-        private readonly ICustomerRepository _customerRepository;
         private readonly IHelpperService _helperService;
         private readonly IPackageRepository _packageRepository;
         private readonly IConfiguration _configuration;
@@ -23,9 +22,8 @@ namespace FUParkingService
         private readonly IHttpClientFactory _httpClient;
         private readonly IWalletRepository _walletRepository;
 
-        public ZaloService(ICustomerRepository customerRepository, IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
+        public ZaloService(IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
         {
-            _customerRepository = customerRepository;
             _helperService = helperService;
             _packageRepository = packageRepository;
             _configuration = configuration;
@@ -41,14 +39,14 @@ namespace FUParkingService
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                if (!_helperService.IsTokenValid())
+                var checkAuth = await _helperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-                var userLogged = await _customerRepository.GetCustomerByIdAsync(_helperService.GetAccIdFromLogged());
-                if (userLogged.IsSuccess == false || userLogged.Data == null)
-                {
-                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<ZaloResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
                 }
                 var package = await _packageRepository.GetPackageByPackageIdAsync(packageId);
                 if (package.IsSuccess == false || package.Data == null)
@@ -69,7 +67,7 @@ namespace FUParkingService
                 var embed_data = new
                 {
                     redirecturl = redirectUrl,
-                    accountId = userLogged.Data.Id.ToString()
+                    accountId = checkAuth.Data.Id.ToString()
                 };
                 var items = new[]
                 {
@@ -133,7 +131,7 @@ namespace FUParkingService
                 {
                     PaymentMethodId = paymentMethod.Id,
                     PackageId = package.Data.Id,
-                    CustomerId = userLogged.Data.Id,
+                    CustomerId = checkAuth.Data.Id,
                     Amount = package.Data.Price,
                     AppTranId = tran
                 };
@@ -147,7 +145,7 @@ namespace FUParkingService
                 FUParkingModel.Object.Transaction newTransaction = new()
                 {
                     Amount = package.Data.Price,
-                    TransactionDescription = "UserId: " + userLogged.Data.Id + " buy " + package.Data.Name,
+                    TransactionDescription = "UserId: " + checkAuth.Data.Id + " buy " + package.Data.Name,
                     TransactionStatus = StatusTransactionEnum.PENDING,
                     DepositId = deposit.Data.Id
                 };

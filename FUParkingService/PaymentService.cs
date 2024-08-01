@@ -38,7 +38,7 @@ namespace FUParkingService
                 if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -53,7 +53,7 @@ namespace FUParkingService
                 if (isPaymentMethodExist.Data == null || !isPaymentMethodExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
@@ -77,7 +77,7 @@ namespace FUParkingService
                         {
                             return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
-                        return new Return<dynamic> { Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, IsSuccess = true};
+                        return new Return<dynamic> { Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, IsSuccess = true };
                     }
                 }
                 else
@@ -106,7 +106,7 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic>
-                {                    
+                {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
@@ -121,7 +121,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -130,7 +130,7 @@ namespace FUParkingService
                 if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<dynamic>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -150,12 +150,12 @@ namespace FUParkingService
                 {
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
-                return new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY , IsSuccess = true };
+                return new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, IsSuccess = true };
             }
             catch (Exception)
             {
                 return new Return<dynamic>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
@@ -169,7 +169,7 @@ namespace FUParkingService
                 if (!isValidToken)
                 {
                     return new Return<IEnumerable<PaymentMethod>>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
@@ -178,21 +178,21 @@ namespace FUParkingService
                 if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<IEnumerable<PaymentMethod>>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
                 if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
                 {
                     return new Return<IEnumerable<PaymentMethod>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }                
+                }
                 return await _paymentRepository.GetAllPaymentMethodAsync();
             }
             catch (Exception ex)
             {
                 return new Return<IEnumerable<PaymentMethod>>
                 {
-                    InternalErrorMessage = ex,                    
+                    InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

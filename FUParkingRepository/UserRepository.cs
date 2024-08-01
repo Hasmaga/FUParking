@@ -33,7 +33,7 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -56,7 +56,7 @@ namespace FUParkingRepository
             {
                 return new Return<IEnumerable<User>>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -78,7 +78,7 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }
@@ -100,7 +100,7 @@ namespace FUParkingRepository
             {
                 return new Return<User>
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR,                    
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
                 };
             }

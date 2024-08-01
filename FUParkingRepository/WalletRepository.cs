@@ -41,7 +41,7 @@ namespace FUParkingRepository
                 res.InternalErrorMessage = ex;
                 return res;
             }
-        }       
+        }
 
         public async Task<Return<Wallet>> CreateWalletAsync(Wallet wallet)
         {
@@ -150,7 +150,8 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return new Return<dynamic>
                 {

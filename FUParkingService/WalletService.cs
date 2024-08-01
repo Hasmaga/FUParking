@@ -1,5 +1,4 @@
 ﻿using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ResponseObject.Wallet;
@@ -12,14 +11,12 @@ namespace FUParkingService
     public class WalletService : IWalletService
     {
         private readonly IWalletRepository _walletRepository;
-        private readonly ICustomerRepository _customerRepository;
         private readonly IHelpperService _helpperService;
         private readonly ITransactionRepository _transactionRepository;
 
-        public WalletService(IWalletRepository walletRepository, ICustomerRepository customerRepository, IHelpperService helpperService, ITransactionRepository transactionRepository)
+        public WalletService(IWalletRepository walletRepository, IHelpperService helpperService, ITransactionRepository transactionRepository)
         {
             _walletRepository = walletRepository;
-            _customerRepository = customerRepository;
             _helpperService = helpperService;
             _transactionRepository = transactionRepository;
         }
@@ -28,21 +25,16 @@ namespace FUParkingService
         {
             try
             {
-                var isTokenValid = _helpperService.IsTokenValid();
-                if (!isTokenValid)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<IEnumerable<GetInfoWalletTransResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
                 }
-                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogged.IsSuccess)
-                {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
-                }
-                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data is null)
-                {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-                var wallet = await _walletRepository.GetExtraWalletByCustomerId(customerLogged.Data.Id);
+                var wallet = await _walletRepository.GetExtraWalletByCustomerId(checkAuth.Data.Id);
                 if (!wallet.IsSuccess)
                 {
                     return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = wallet.InternalErrorMessage };
@@ -88,21 +80,16 @@ namespace FUParkingService
         {
             try
             {
-                var isTokenValid = _helpperService.IsTokenValid();
-                if (!isTokenValid)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<IEnumerable<GetInfoWalletTransResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
                 }
-                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogged.IsSuccess)
-                {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
-                }
-                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data is null)
-                {
-                    return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-                var wallet = await _walletRepository.GetMainWalletByCustomerId(customerLogged.Data.Id);
+                var wallet = await _walletRepository.GetMainWalletByCustomerId(checkAuth.Data.Id);
                 if (!wallet.IsSuccess)
                 {
                     return new Return<IEnumerable<GetInfoWalletTransResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = wallet.InternalErrorMessage };
@@ -148,21 +135,16 @@ namespace FUParkingService
         {
             try
             {
-                var isTokenValid = _helpperService.IsTokenValid();
-                if (!isTokenValid)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<int> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<int>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
                 }
-                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogged.IsSuccess)
-                {
-                    return new Return<int> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
-                }
-                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data is null)
-                {
-                    return new Return<int> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-                var wallet = await _walletRepository.GetMainWalletByCustomerId(customerLogged.Data.Id);
+                var wallet = await _walletRepository.GetMainWalletByCustomerId(checkAuth.Data.Id);
                 if (!wallet.IsSuccess)
                 {
                     return new Return<int> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = wallet.InternalErrorMessage };
@@ -192,21 +174,16 @@ namespace FUParkingService
         {
             try
             {
-                var isTokenValid = _helpperService.IsTokenValid();
-                if (!isTokenValid)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<GetWalletExtraResDto> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+                    return new Return<GetWalletExtraResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
                 }
-                var customerLogged = await _customerRepository.GetCustomerByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!customerLogged.IsSuccess)
-                {
-                    return new Return<GetWalletExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customerLogged.InternalErrorMessage };
-                }
-                if (!customerLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customerLogged.Data is null)
-                {
-                    return new Return<GetWalletExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-                var wallet = await _walletRepository.GetExtraWalletByCustomerId(customerLogged.Data.Id);
+                var wallet = await _walletRepository.GetExtraWalletByCustomerId(checkAuth.Data.Id);
                 if (!wallet.IsSuccess)
                 {
                     return new Return<GetWalletExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = wallet.InternalErrorMessage };

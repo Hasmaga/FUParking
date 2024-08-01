@@ -13,7 +13,7 @@ namespace FUParkingModel.RequestObject.Session
         [FromForm]
         [Required(ErrorMessage = "Must have CardId")]
         public string CardNumber { get; set; } = null!;
-        
+
         [FromForm]
         [Required(ErrorMessage = "Must have GateInId")]
         public Guid GateInId { get; set; }

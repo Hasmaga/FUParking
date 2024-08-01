@@ -35,6 +35,9 @@ namespace FUParkingModel.Object
         [Column("LastModifyDate")]
         public DateTime? LastModifyDate { get; set; }
 
+        [Column("WrongPassword")]
+        public int WrongPassword { get; set; }
+
         public ICollection<Card>? CardsCreateBy { get; set; }
         public ICollection<Card>? CardsLastModifyBy { get; set; }
         public ICollection<Customer>? CustomersCreateBy { get; set; }

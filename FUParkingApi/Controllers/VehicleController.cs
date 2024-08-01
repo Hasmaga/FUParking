@@ -24,7 +24,7 @@ namespace FUParkingApi.Controllers
             _logger = logger;
         }
 
-        [HttpGet("types")]        
+        [HttpGet("types")]
         public async Task<IActionResult> GetVehicleTypesAsync(GetListObjectWithFiller req)
         {
             try
@@ -56,7 +56,7 @@ namespace FUParkingApi.Controllers
                 if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
                 {
                     switch (result.Message)
-                    {                        
+                    {
                         case ErrorEnumApplication.SERVER_ERROR:
                             _logger.LogError("Error at get vehicle types by customer: {ex}", result.Message);
                             return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
@@ -70,13 +70,13 @@ namespace FUParkingApi.Controllers
             {
                 _logger.LogError("Error at get vehicle types by customer: {ex}", ex.Message);
                 return StatusCode(500, new Return<dynamic>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
         }
 
-        [HttpPost("types")]        
+        [HttpPost("types")]
         public async Task<IActionResult> CreateVehicleType([FromBody] CreateVehicleTypeReqDto reqDto)
         {
             try
@@ -197,11 +197,11 @@ namespace FUParkingApi.Controllers
                 {
                     switch (result.Message)
                     {
-                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                        case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:                            
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
                             return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST });
-                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:                            
+                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:
                             return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST });
                         default:
                             _logger.LogError("Error at create customer vehicle: {ex}", result.InternalErrorMessage);
@@ -235,13 +235,13 @@ namespace FUParkingApi.Controllers
                 {
                     switch (result.Message)
                     {
-                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                        case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:                            
+                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:
                             return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST });
-                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:                            
+                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
                             return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST });
-                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:                            
+                        case ErrorEnumApplication.PLATE_NUMBER_IS_EXIST:
                             return StatusCode(400, new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST });
                         default:
                             _logger.LogError("Error at update customer vehicle: {ex}", result.InternalErrorMessage);
@@ -271,9 +271,9 @@ namespace FUParkingApi.Controllers
                 {
                     switch (result.Message)
                     {
-                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                        case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        case ErrorEnumApplication.BANNED:                            
+                        case ErrorEnumApplication.BANNED:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.BANNED });
                         default:
                             _logger.LogError("Error at get customer vehicle by customer: {ex}", result.Message);
@@ -302,9 +302,9 @@ namespace FUParkingApi.Controllers
                 {
                     switch (result.Message)
                     {
-                        case ErrorEnumApplication.NOT_AUTHORITY:                            
+                        case ErrorEnumApplication.NOT_AUTHORITY:
                             return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:                            
+                        case ErrorEnumApplication.VEHICLE_NOT_EXIST:
                             return StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST });
                         default:
                             _logger.LogError("Error at delete customer vehicle: {ex}", result.InternalErrorMessage);

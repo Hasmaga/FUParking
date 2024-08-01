@@ -76,7 +76,7 @@ namespace FUParkingApi.Controllers
             {
                 _logger.LogError("Error when delete card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }
@@ -167,7 +167,7 @@ namespace FUParkingApi.Controllers
             {
                 _logger.LogError("Error when create new card: {ex}", ex.Message);
                 return StatusCode(500, new Return<bool>
-                {                    
+                {
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
             }

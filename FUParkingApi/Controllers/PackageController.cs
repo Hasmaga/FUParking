@@ -1,6 +1,5 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
-using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -19,7 +18,7 @@ namespace FUParkingApi.Controllers
         public PackageController(IPackageService packageService)
         {
             _packageService = packageService;
-        }        
+        }
 
         [HttpGet("")]
         public async Task<IActionResult> GetCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)

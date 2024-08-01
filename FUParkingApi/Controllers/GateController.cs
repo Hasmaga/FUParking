@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -22,11 +23,11 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpGet("/api/gates")]
-        public async Task<IActionResult> GetListGate()
+        public async Task<IActionResult> GetListGate(GetListObjectWithFiller req)
         {
             try
             {
-                var result = await _gateService.GetAllGateAsync();
+                var result = await _gateService.GetAllGateAsync(req);
                 if (result.IsSuccess == false)
                 {
                     return BadRequest(result);
