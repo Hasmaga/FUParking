@@ -11,14 +11,12 @@ namespace FUParkingService
 {
     public class CustomerService : ICustomerService
     {
-        private readonly ICustomerRepository _customerRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly ICustomerRepository _customerRepository;        
         private readonly IHelpperService _helpperService;
 
-        public CustomerService(ICustomerRepository customerRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService)
         {
             _customerRepository = customerRepository;
-            _userRepository = userRepository;
             _helpperService = helpperService;
         }
 

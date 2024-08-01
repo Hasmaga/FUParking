@@ -13,17 +13,13 @@ namespace FUParkingService
     {
         private readonly IFeedbackRepository _feedbackRepository;
         private readonly IHelpperService _helpperService;
-        private readonly ICustomerRepository _customerRepository;
-        private readonly IParkingAreaRepository _parkingAreaRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IParkingAreaRepository _parkingAreaRepository;        
         private readonly ISessionRepository _sessionRepository;
 
-        public FeedbackService(IFeedbackRepository feedbackRepository, ICustomerRepository customerRepository, IParkingAreaRepository parkingAreaRepository, IUserRepository userRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
+        public FeedbackService(IFeedbackRepository feedbackRepository, IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _feedbackRepository = feedbackRepository;
-            _customerRepository = customerRepository;
             _parkingAreaRepository = parkingAreaRepository;
-            _userRepository = userRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
         }

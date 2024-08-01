@@ -10,15 +10,13 @@ using FUParkingService.Interface;
 namespace FUParkingService
 {
     public class GateService : IGateService
-    {
-        private readonly IUserRepository _userRepository;
+    {        
         private readonly IHelpperService _helpperService;
         private readonly IGateRepository _gateRepository;
         private readonly IParkingAreaRepository _parkingAreaRepository;
 
-        public GateService(IUserRepository userRepository, IHelpperService helpperService, IGateRepository gateRepository, IParkingAreaRepository parkingAreaRepository)
-        {
-            _userRepository = userRepository;
+        public GateService(IHelpperService helpperService, IGateRepository gateRepository, IParkingAreaRepository parkingAreaRepository)
+        {            
             _helpperService = helpperService;
             _gateRepository = gateRepository;
             _parkingAreaRepository = parkingAreaRepository;
