@@ -819,6 +819,7 @@ namespace FUParkingService
                         GateIn = item.GateIn?.Name ?? "",
                         GateOut = item.GateOut?.Name,
                         PaymentMethod = item.PaymentMethod?.Name,
+                        ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
                     });
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>

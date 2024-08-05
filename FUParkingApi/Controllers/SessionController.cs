@@ -49,6 +49,8 @@ namespace FUParkingApi.Controllers
                             return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.GATE_NOT_EXIST });
                         case ErrorEnumApplication.PARKING_AREA_NOT_EXIST:
                             return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST });
+                        case ErrorEnumApplication.CUSTOMER_NOT_EXIST:
+                            return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST });
                         default:
                             _logger.LogError("Error at Check In: {ex}", result.InternalErrorMessage);
                             return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });

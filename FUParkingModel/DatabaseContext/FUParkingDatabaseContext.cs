@@ -22,7 +22,7 @@ namespace FUParkingModel.DatabaseContext
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return config.GetConnectionString("DefaultConnection") ?? "Data Source=127.0.0.1,9210;Initial Catalog=FUParking;User ID=sa;Password=pWV083Z7kb;TrustServerCertificate=True";
+            return config.GetConnectionString("DockerConnection") ?? "Data Source=127.0.0.1,9210;Initial Catalog=FUParking;User ID=sa;Password=pWV083Z7kb;TrustServerCertificate=True";
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
