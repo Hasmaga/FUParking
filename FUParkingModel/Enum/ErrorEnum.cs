@@ -52,6 +52,9 @@
         public const string NOT_AUTHENTICATION = "Not authentication";
         public const string ACCOUNT_IS_LOCK = "Account is lock";
         public const string VEHICLE_IS_IN_SESSION = "Vehicle is in anthor session";
+        public const string PARKING_AREA_IS_USING = "Parking area is using";
+        public const string DEFAULT_PRICE_ITEM_NOT_EXIST = "Default price item is not exist";
+        public const string VEHICLE_TYPE_IS_IN_USE = "Vehicle Type is in use";
     }
 
     public class MinioErrorServerDefineEnum

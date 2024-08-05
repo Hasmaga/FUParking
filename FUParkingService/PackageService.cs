@@ -48,7 +48,7 @@ namespace FUParkingService
                             EXPPackage = package.EXPPackage
                         }),
                         TotalRecord = activePackagesResult.TotalRecord,
-                        Message = activePackagesResult.IsSuccess ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.SERVER_ERROR
+                        Message = activePackagesResult.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                     };
                 }
 

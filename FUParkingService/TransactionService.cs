@@ -45,8 +45,9 @@ namespace FUParkingService
                 {
                     Data = result.Data?.Select(p => new GetTransactionPaymentResDto
                     {
+                        Id = p.Id,
                         Amount = p.Amount,
-                        CreateDateTime = p.CreatedDate,
+                        CreatedDate = p.CreatedDate,
                         Email = p.Wallet?.Customer?.Email ?? "",
                         PackageName = p.Deposit?.Package?.Name ?? "",
                         PaymentMethod = p.Payment?.PaymentMethod?.Name ?? "",

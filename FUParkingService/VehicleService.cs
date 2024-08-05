@@ -8,6 +8,7 @@ using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -16,12 +17,14 @@ namespace FUParkingService
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IHelpperService _helpperService;
         private readonly ISessionRepository _sessionRepository;
+        private readonly IMinioService _minioService;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
+            _minioService = minioService;
         }
 
         public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
@@ -76,7 +79,7 @@ namespace FUParkingService
         {
             try
             {
-                var result = await _vehicleRepository.GetAllVehicleTypeAsync();
+                var result = await _vehicleRepository.GetAllVehicleTypeByCustomer();
                 if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
@@ -87,7 +90,7 @@ namespace FUParkingService
                 }
                 return new Return<IEnumerable<GetVehicleTypeByCustomerResDto>>
                 {
-                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Message = result.Message,
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
                     Data = result.Data?.Select(x => new GetVehicleTypeByCustomerResDto
@@ -135,6 +138,7 @@ namespace FUParkingService
                     Name = reqDto.Name,
                     Description = reqDto.Description,
                     CreatedById = checkAuth.Data.Id,
+                    StatusVehicleType = StatusVehicleType.ACTIVE
                 };
 
                 var result = await _vehicleRepository.CreateVehicleTypeAsync(vehicleType);
@@ -227,6 +231,7 @@ namespace FUParkingService
                 };
             }
         }
+
         public async Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync()
         {
             try
@@ -323,6 +328,45 @@ namespace FUParkingService
             }
         }
 
+        public async Task<Return<dynamic>> DisableVehicleTypeAsync(Guid id)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(id);
+
+                if (!vehicleType.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+
+                if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST };
+
+                vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
+                vehicleType.Data.LastModifyById = checkAuth.Data.Id;
+                vehicleType.Data.LastModifyDate = DateTime.Now;
+                var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
         public async Task<Return<dynamic>> DeleteVehicleTypeAsync(Guid id)
         {
             try
@@ -344,8 +388,20 @@ namespace FUParkingService
                 if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST };
 
-                vehicleType.Data.DeletedDate = DateTime.Now;
+                // Check vehicle type is in any vehicle
+                var vehicles = await _vehicleRepository.GetNewestVehicleByVehicleTypeId(id);
+                if (!vehicles.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_IS_IN_USE,
+                        InternalErrorMessage = vehicles.InternalErrorMessage
+                    };
+                }
 
+                vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
+                vehicleType.Data.LastModifyById = checkAuth.Data.Id;
+                vehicleType.Data.LastModifyDate = DateTime.Now;
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -363,11 +419,13 @@ namespace FUParkingService
 
         public async Task<Return<GetInformationVehicleCreateResDto>> CreateCustomerVehicleAsync(CreateCustomerVehicleReqDto reqDto)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateCustomerAsync();
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
+                    scope.Dispose();
                     return new Return<GetInformationVehicleCreateResDto>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
@@ -377,6 +435,7 @@ namespace FUParkingService
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.VehicleTypeId);
                 if (vehicleType.Data == null || !vehicleType.IsSuccess)
                 {
+                    scope.Dispose();
                     return new Return<GetInformationVehicleCreateResDto>
                     {
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
@@ -384,161 +443,25 @@ namespace FUParkingService
                 }
                 var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
                 var objNamePlateNumber = checkAuth.Data.Id + "_" + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
-                //// Check vehicle image using ML                
-                //MLPlateDetecive.ModelInput checkIsPlateNumber = new()
-                //{
-                //    Image = MLImage.CreateFromStream(reqDto.PlateImage.OpenReadStream()),
-                //};
-                //var predictionResult = MLPlateDetecive.Predict(checkIsPlateNumber);
-                //if (predictionResult.PredictedBoundingBoxes == null)
-                //{
-                //    return new Return<GetInformationVehicleCreateResDto>
-                //    {
-                //        Message = ErrorEnumApplication.MUST_HAVE_ONLY_ONE_PLATE_NUMBER
-                //    };
-                //}
-                //var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-
-                //var boxes = predictionResult.PredictedBoundingBoxes.Chunk(4)
-                //    .Select(x => new { XTop = x[0], YTop = x[1], XBottom = x[2], YBottom = x[3] })
-                //    .Zip(predictionResult.Score, (a, b) => new { Box = a, Score = b });
-                //if (boxes.Count() > 1)
-                //{
-                //    return new Return<GetInformationVehicleCreateResDto>
-                //    {
-                //        Message = ErrorEnumApplication.MUST_HAVE_ONLY_ONE_PLATE_NUMBER
-                //    };
-                //}
-                //var boxe = boxes.First();
-                //// Cut image to plate number
-                //FormFile imagePlateNumber;
-                //byte[] croppedImageData;
-                //string contentType = reqDto.PlateImage.ContentType;
-                //using (var imageStream = reqDto.PlateImage.OpenReadStream())
-                //{
-                //    var bitmap = SKBitmap.Decode(imageStream);
-                //    var rect = new SKRect(boxe.Box.XTop, boxe.Box.YTop, boxe.Box.XBottom, boxe.Box.YBottom);
-                //    using var croppedBitmap = new SKBitmap((int)rect.Width, (int)rect.Height);
-                //    SKRect dest = new(0, 0, croppedBitmap.Width, croppedBitmap.Height);
-                //    using (var canvas = new SKCanvas(croppedBitmap))
-                //    {
-                //        canvas.DrawBitmap(bitmap, rect, dest);
-                //    }
-                //    using var ms = new MemoryStream();
-                //    switch (fileExtensionPlateNumber)
-                //    {
-                //        case ".jpg":
-                //            croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
-                //            break;
-                //        case ".jpeg":
-                //            croppedBitmap.Encode(ms, SKEncodedImageFormat.Jpeg, 100);
-                //            break;
-                //        case ".png":
-                //            croppedBitmap.Encode(ms, SKEncodedImageFormat.Png, 100);
-                //            break;
-                //        default:
-                //            return new Return<GetInformationVehicleCreateResDto>
-                //            {
-                //                Message = ErrorEnumApplication.FILE_EXTENSION_NOT_SUPPORT
-                //            };
-                //    }
-                //    croppedImageData = ms.ToArray();
-                //}
-
-                //MLTextDetection.ModelInput textDetectionPlateNumber = new()
-                //{
-                //    Image = MLImage.CreateFromStream(new MemoryStream(croppedImageData)),
-                //};
-                //var textDetectionResult = MLTextDetection.Predict(textDetectionPlateNumber);
-                //if (textDetectionResult.PredictedBoundingBoxes == null)
-                //{
-                //    return new Return<GetInformationVehicleCreateResDto>
-                //    {
-                //        Message = ErrorEnumApplication.CANNOT_READ_TEXT_FROM_IMAGE
-                //    };
-                //}
-                //// Get all object detected in image and sort from top to bottom and top left to top right and bottom left to bottom right
-                //const float yTolerance = 10.0f;
-                //var detectedObjects = textDetectionResult.PredictedBoundingBoxes
-                //    .Chunk(4)
-                //    .Select(x => new { XTop = x[0], YTop = x[1], XBottom = x[2], YBottom = x[3] })
-                //    .Zip(textDetectionResult.Score, (a, b) => new { a.XTop, a.YTop, a.XBottom, a.YBottom, Score = b })
-                //    .Zip(textDetectionResult.PredictedLabel, (a, b) => new { a.XTop,  a.YTop, a.XBottom, a.YBottom, a.Score, Label = b })
-                //    .Select(
-                //        x => new
-                //        {
-                //            x.XTop,
-                //            x.YTop,
-                //            x.XBottom,
-                //            x.YBottom,
-                //            x.Score,
-                //            x.Label
-                //        }
-                //    )
-                //    .GroupBy(obj => Math.Floor(obj.YTop / yTolerance))
-                //    .OrderBy(group => group.Min(obj => obj.YTop))
-                //    .SelectMany(group => group.OrderBy(obj => obj.XTop))
-                //    .Where(x => x.Score > 0.5)
-                //    .ToList();
-
-                //if (detectedObjects.Count == 0)
-                //{
-                //    return new Return<GetInformationVehicleCreateResDto>
-                //    {
-                //        Message = ErrorEnumApplication.CANNOT_READ_TEXT_FROM_IMAGE
-                //    };
-                //}
-                //var plateNumber = detectedObjects.Select(x => x.Label).Aggregate((a, b) => a + b);
-                //// Check plate number is existed
-                ////var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(plateNumber);
-                ////if (!vehicle.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
-                ////{
-                ////    if (vehicle.Message.Equals(ErrorEnumApplication.SERVER_ERROR))
-                ////    {
-                ////        return new Return<dynamic>
-                ////        {
-                ////            InternalErrorMessage = vehicle.InternalErrorMessage,
-                ////            Message = ErrorEnumApplication.SERVER_ERROR
-                ////        };
-                ////    }
-                ////    return new Return<dynamic>
-                ////    {
-                ////        Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
-                ////    };
-                ////}
-                //using (var memoryStream = new MemoryStream(croppedImageData))
-                //{
-                //    memoryStream.Position = 0; // Reset the position to the beginning after copying
-
-                //    // Create a new FormFile using the MemoryStream
-                //    imagePlateNumber = new FormFile(memoryStream, 0, memoryStream.Length, reqDto.PlateImage.Name, reqDto.PlateImage.FileName)
-                //    {
-                //        Headers = reqDto.PlateImage.Headers,
-                //        ContentType = reqDto.PlateImage.ContentType,
-                //        ContentDisposition = reqDto.PlateImage.ContentDisposition,
-                //    };
-                //    // Prepare the UploadObjectReqDto with the new FormFile
-                //    UploadObjectReqDto imageUpload = new()
-                //    {
-                //        ObjFile = imagePlateNumber,
-                //        ObjName = objNamePlateNumber,
-                //        BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                //    };
-
-                //    // Now, memoryStream will remain open for the duration of this upload operation
-                //    var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imageUpload);
-                //    if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
-                //    {
-                //        return new Return<GetInformationVehicleCreateResDto>
-                //        {
-                //            InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
-                //            Message = ErrorEnumApplication.SERVER_ERROR,
-                //        };
-                //    }
-                //}
+                UploadObjectReqDto imageUpload = new()
+                {
+                    ObjFile = reqDto.PlateImage,
+                    ObjName = objNamePlateNumber,
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
+                };                
+                var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imageUpload);
+                if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
+                {
+                    scope.Dispose();
+                    return new Return<GetInformationVehicleCreateResDto>
+                    {
+                        InternalErrorMessage = resultUploadImagePlateNumber.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                    };
+                }
                 var newVehicle = new Vehicle
                 {
-                    PlateNumber = "",
+                    PlateNumber = reqDto.PlateNumber,
                     VehicleTypeId = reqDto.VehicleTypeId,
                     CustomerId = checkAuth.Data.Id,
                     PlateImage = "https://miniofile.khangbpa.com/" + BucketMinioEnum.BUCKET_IMAGE_VEHICLE + "/" + objNamePlateNumber,
@@ -547,12 +470,14 @@ namespace FUParkingService
                 var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);
                 if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || result.Data == null)
                 {
+                    scope.Dispose();
                     return new Return<GetInformationVehicleCreateResDto>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                scope.Complete();
                 return new Return<GetInformationVehicleCreateResDto>
                 {
                     IsSuccess = true,
@@ -560,7 +485,7 @@ namespace FUParkingService
                     {
                         VehicleId = result.Data.Id,
                         PlateNumber = result.Data.PlateNumber,
-                        VehicleTypeName = vehicleType.Data.Name,
+                        VehicleTypeName = result.Data.VehicleType?.Name ?? "",
                         ImagePlateNumber = result.Data.PlateImage
                     },
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY

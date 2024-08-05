@@ -85,6 +85,22 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<IEnumerable<VehicleType>>> GetAllVehicleTypeByCustomer()
+        {
+            try
+            {
+                var result = await _db.VehicleTypes
+                    .Where(e => e.DeletedDate == null)
+                    .Where(e => e.StatusVehicleType.Equals(StatusVehicleType.ACTIVE))
+                    .ToListAsync();
+                return new Return<IEnumerable<VehicleType>>() { Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT, Data = result, IsSuccess = true, TotalRecord = result.Count };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<VehicleType>>() { InternalErrorMessage = e, Message = ErrorEnumApplication.SERVER_ERROR };
+            }
+        }
+
         public async Task<Return<IEnumerable<VehicleType>>> GetAllVehicleTypeAsync(GetListObjectWithFiller? req = null)
         {
             try
@@ -322,6 +338,22 @@ namespace FUParkingRepository
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
+            }
+        }
+
+        public async Task<Return<Vehicle>> GetNewestVehicleByVehicleTypeId(Guid vehicleTypeId)
+        {
+            try
+            {
+                var result = await _db.Vehicles
+                    .Where(v => v.VehicleTypeId == vehicleTypeId)
+                    .OrderByDescending(v => v.CreatedDate)
+                    .FirstOrDefaultAsync();
+                return new Return<Vehicle>() { Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT, Data = result, IsSuccess = true };
+            }
+            catch (Exception e)
+            {
+                return new Return<Vehicle>() { InternalErrorMessage = e, Message = ErrorEnumApplication.SERVER_ERROR };
             }
         }
     }

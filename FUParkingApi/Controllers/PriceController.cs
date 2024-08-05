@@ -57,27 +57,27 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpDelete("/api/price/item/{id}")]
-        public async Task<IActionResult> DeletePriceItemAsync(Guid id)
-        {
-            try
-            {
-                var result = await _priceService.DeletePriceItemAsync(id);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<string>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
-        }
+        //[HttpDelete("/api/price/item/{id}")]
+        //public async Task<IActionResult> DeletePriceItemAsync(Guid id)
+        //{
+        //    try
+        //    {
+        //        var result = await _priceService.DeletePriceItemAsync(id);
+        //        if (result.IsSuccess)
+        //        {
+        //            return Ok(result);
+        //        }
+        //        return BadRequest(result);
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return StatusCode(500, new Return<string>
+        //        {
+        //            IsSuccess = false,
+        //            Message = ErrorEnumApplication.SERVER_ERROR
+        //        });
+        //    }
+        //}
 
         [HttpGet("/api/price/{id}/items")]
         public async Task<IActionResult> GetAllPriceItemAsync(Guid id)
@@ -202,79 +202,79 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("/api/price/vehicle/default")]
-        public async Task<IActionResult> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var result = await _priceService.CreateDefaultPriceTableAsync(req);
-                if (!result.IsSuccess)
-                {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(403, result);
-                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
-                            return StatusCode(404, result);
-                        case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_EXIST:
-                            return StatusCode(400, result);
-                        default:
-                            _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, result);
-                    }
-                }
-                return StatusCode(200, result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", ex.Message);
-                return StatusCode(500, new Return<object>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
-        }
+        //[HttpPost("/api/price/vehicle/default")]
+        //public async Task<IActionResult> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return StatusCode(422, Helper.GetValidationErrors(ModelState));
+        //        }
+        //        var result = await _priceService.CreateDefaultPriceTableAsync(req);
+        //        if (!result.IsSuccess)
+        //        {
+        //            switch (result.Message)
+        //            {
+        //                case ErrorEnumApplication.NOT_AUTHORITY:
+        //                    return StatusCode(403, result);
+        //                case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
+        //                    return StatusCode(404, result);
+        //                case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_EXIST:
+        //                    return StatusCode(400, result);
+        //                default:
+        //                    _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
+        //                    return StatusCode(500, result);
+        //            }
+        //        }
+        //        return StatusCode(200, result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error at CreateDefaultPriceTableAsync: {ex}", ex.Message);
+        //        return StatusCode(500, new Return<object>
+        //        {
+        //            Message = ErrorEnumApplication.SERVER_ERROR
+        //        });
+        //    }
+        //}
 
-        [HttpPost("/api/price/vehicle/item/default")]
-        public async Task<IActionResult> CreateDefaultPriceItemForDefaultPriceTableAsync(CreateDefaultItemPriceReqDto req)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var result = await _priceService.CreateDefaultPriceItemForDefaultPriceTableAsync(req);
-                if (!result.IsSuccess)
-                {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(403, result);
-                        case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
-                            return StatusCode(404, result);
-                        case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_NOT_EXIST:
-                            return StatusCode(404, result);
-                        default:
-                            _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, result);
-                    }
-                }
-                return StatusCode(200, result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", ex);
-                return StatusCode(500, new Return<object>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
-        }
+        //[HttpPost("/api/price/vehicle/item/default")]
+        //public async Task<IActionResult> CreateDefaultPriceItemForDefaultPriceTableAsync(CreateDefaultItemPriceReqDto req)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return StatusCode(422, Helper.GetValidationErrors(ModelState));
+        //        }
+        //        var result = await _priceService.CreateDefaultPriceItemForDefaultPriceTableAsync(req);
+        //        if (!result.IsSuccess)
+        //        {
+        //            switch (result.Message)
+        //            {
+        //                case ErrorEnumApplication.NOT_AUTHORITY:
+        //                    return StatusCode(403, result);
+        //                case ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST:
+        //                    return StatusCode(404, result);
+        //                case ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_NOT_EXIST:
+        //                    return StatusCode(404, result);
+        //                default:
+        //                    _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", result.InternalErrorMessage);
+        //                    return StatusCode(500, result);
+        //            }
+        //        }
+        //        return StatusCode(200, result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error at CreateDefaultPriceItemForDefaultPriceTableAsync: {ex}", ex);
+        //        return StatusCode(500, new Return<object>
+        //        {
+        //            Message = ErrorEnumApplication.SERVER_ERROR
+        //        });
+        //    }
+        //}
 
         [HttpPost("/api/price/vehicle/item")]
         public async Task<IActionResult> CreateListPriceItemAsync(CreateListPriceItemReqDto req)

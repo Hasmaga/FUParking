@@ -128,4 +128,10 @@
         public const string IN = "IN";
         public const string OUT = "OUT";
     }
+
+    public class StatusVehicleType
+    {
+        public const string ACTIVE = "ACTIVE";
+        public const string INACTIVE = "INACTIVE";
+    }
 }

@@ -12,11 +12,13 @@ namespace FUParkingService
     {
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
+        private readonly ISessionRepository _sessionRepository;
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
+            _sessionRepository = sessionRepository;
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
@@ -140,6 +142,17 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.CARD_NOT_EXIST
                     };
                 }
+                // Check card is in use
+                var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(id);
+                if (isCardInUse.Data?.GateOutId is not null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isCardInUse.InternalErrorMessage,
+                        Message = ErrorEnumApplication.CARD_IN_USE
+                    };
+                }
+
                 card.Data.DeletedDate = DateTime.Now;
                 card.Data.LastModifyById = checkAuth.Data.Id;
                 card.Data.LastModifyDate = DateTime.Now;

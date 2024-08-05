@@ -21,7 +21,7 @@ namespace FUParkingApi.Controllers
             _logger = logger;
         }
 
-        [HttpGet("deposit")]
+        [HttpGet]
         public async Task<IActionResult> GetListTransactionPaymentAsync([FromQuery] GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
@@ -42,7 +42,7 @@ namespace FUParkingApi.Controllers
                             return StatusCode(500, new { message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
-                return Ok(result.Data);
+                return Ok(result);
             }
             catch (Exception ex)
             {

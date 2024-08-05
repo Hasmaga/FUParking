@@ -18,5 +18,14 @@ namespace FUParkingModel.RequestObject
 
         [Compare("ApplyFromDate", ErrorMessage = "Apply To Date must be greater than Apply From Date")]
         public DateTime? ApplyToDate { get; set; }
+
+        [Required(ErrorMessage = "Must have price per block default")]
+        public int PricePerBlock { get; set; }
+
+        [Required(ErrorMessage = "Must have max price default")]
+        public int MaxPrice { get; set; }
+
+        [Required(ErrorMessage = "Must have min price default")]
+        public int MinPrice { get; set; }
     }
 }

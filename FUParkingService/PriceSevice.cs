@@ -252,59 +252,7 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }
-
-        public async Task<Return<bool>> DeletePriceItemAsync(Guid id)
-        {
-            try
-            {
-                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
-                if (!checkAuth.IsSuccess || checkAuth.Data is null)
-                {
-                    return new Return<bool>
-                    {
-                        InternalErrorMessage = checkAuth.InternalErrorMessage,
-                        Message = checkAuth.Message
-                    };
-                }
-                var isPriceItemExist = await _priceRepository.GetPriceItemByIdAsync(id);
-                if (isPriceItemExist.Data == null || isPriceItemExist.IsSuccess == false)
-                {
-                    return new Return<bool>
-                    {
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.PRICE_ITEM_NOT_EXIST
-                    };
-                }
-                else
-                {
-                    var result = await _priceRepository.DeletePriceItemAsync(isPriceItemExist.Data);
-                    if (result.IsSuccess)
-                    {
-                        return new Return<bool>
-                        {
-                            IsSuccess = true,
-                            Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
-                        };
-                    }
-                    else
-                    {
-                        return new Return<bool>
-                        {
-                            Message = ErrorEnumApplication.SERVER_ERROR
-                        };
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                return new Return<bool>
-                {
-                    InternalErrorMessage = e,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                };
-            }
-        }
+        }        
 
         public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
         {
@@ -359,173 +307,284 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<dynamic>> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
+        public async Task<Return<bool>> UpdatePriceItemAsync(CreateListPriceItemReqDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                // Check token 
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<dynamic>
+                    return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
+                // Check PriceTableId is exist
+                var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(req.PriceTableId);
+                if (isPriceTableExist.Data is null || !isPriceTableExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<dynamic>
+                    scope.Dispose();
+                    return new Return<bool>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = isPriceTableExist.InternalErrorMessage,
+                        Message = ErrorEnumApplication.PRICE_TABLE_NOT_EXIST
                     };
                 }
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+                // Check have default price item
+                var isDefaultPriceTableExist = await _priceRepository.GetDefaultPriceItemByPriceTableIdAsync(isPriceTableExist.Data.VehicleTypeId);
+                if (isDefaultPriceTableExist.Data is null || !isDefaultPriceTableExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-                // Check VehicleType is exist
-                var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
-                if (!isVehicleTypeExist.IsSuccess)
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = isVehicleTypeExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                if (!isVehicleTypeExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
-                    };
-                }
-                // Check this VehicleType is exist default PriceTable
-                var isDefaultPriceTableExist = await _priceRepository.GetDefaultPriceTableByVehicleTypeAsync(req.VehicleTypeId);
-                if (!isDefaultPriceTableExist.IsSuccess)
-                {
-                    return new Return<dynamic>
+                    scope.Dispose();
+                    return new Return<bool>
                     {
                         InternalErrorMessage = isDefaultPriceTableExist.InternalErrorMessage,
+                        Message = ErrorEnumApplication.DEFAULT_PRICE_ITEM_NOT_EXIST
+                    };
+                }
+                // Delete all price item
+                var isDeleteAllPriceItem = await _priceRepository.DeleteAllPriceItemByPriceTableIdAsync(req.PriceTableId);
+                if (!isDeleteAllPriceItem.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = isDeleteAllPriceItem.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (isDefaultPriceTableExist.Data != null)
+                // Create new price item
+                var listTime = new List<CreatePriceItemReqDto>(req.PriceItems);
+                // Order list based on From
+                listTime = [.. listTime.OrderBy(x => x.From)];
+                // Check time from 0 => first time from have in list
+                if (listTime[0].From > 0)
                 {
-                    return new Return<dynamic>
+                    listTime.Insert(0, new CreatePriceItemReqDto
                     {
-                        Message = ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_EXIST
-                    };
+                        From = 0,
+                        To = listTime[0].From,
+                        MaxPrice = isDefaultPriceTableExist.Data.MaxPrice,
+                        MinPrice = isDefaultPriceTableExist.Data.MinPrice,
+                        BlockPricing = isDefaultPriceTableExist.Data.BlockPricing,
+                    });
                 }
-                // Create Default PriceTable
-                var priceTable = new PriceTable
+                // To avoid modifying the collection while iterating, we'll collect required changes first
+                var inserts = new List<(int index, CreatePriceItemReqDto item)>();
+                for (int i = 1; i < listTime.Count; i++)
                 {
-                    VehicleTypeId = req.VehicleTypeId,
-                    Priority = 1,
-                    Name = "Default Price Table",
-                    ApplyFromDate = null,
-                    ApplyToDate = null,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE,
-                    CreatedById = userlogged.Data.Id
-                };
-                var result = await _priceRepository.CreatePriceTableAsync(priceTable);
-                if (!result.IsSuccess)
-                {
-                    return new Return<dynamic>
+                    if (listTime[i].From > listTime[i - 1].To)
                     {
-                        InternalErrorMessage = result.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
+                        var newItem = new CreatePriceItemReqDto
+                        {
+                            From = listTime[i - 1].To,
+                            To = listTime[i].From,
+                            MaxPrice = isDefaultPriceTableExist.Data.MaxPrice,
+                            MinPrice = isDefaultPriceTableExist.Data.MinPrice,
+                            BlockPricing = isDefaultPriceTableExist.Data.BlockPricing,
+                        };
+                        inserts.Add((i, newItem));
+                    }
                 }
-                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                // Apply the collected changes
+                foreach (var (index, item) in inserts.OrderByDescending(x => x.index))
                 {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
+                    listTime.Insert(index, item);
                 }
-                return new Return<dynamic>
+                // Check time from last time to 24
+                if (listTime[^1].To < 24)
+                {
+                    listTime.Add(new CreatePriceItemReqDto
+                    {
+                        From = listTime[^1].To,
+                        To = 24,
+                        MaxPrice = isDefaultPriceTableExist.Data.MaxPrice,
+                        MinPrice = isDefaultPriceTableExist.Data.MinPrice,
+                        BlockPricing = isDefaultPriceTableExist.Data.BlockPricing,
+                    });
+                }
+                // Create PriceItem
+                foreach (var item in listTime)
+                {
+                    var priceItem = new PriceItem
+                    {
+                        PriceTableId = req.PriceTableId,
+                        ApplyFromHour = item.From,
+                        ApplyToHour = item.To,
+                        MaxPrice = item.MaxPrice,
+                        MinPrice = item.MinPrice,
+                        CreatedById = checkAuth.Data.Id,
+                        BlockPricing = item.BlockPricing,
+                    };
+                    var result = await _priceRepository.CreatePriceItemAsync(priceItem);
+                    if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<bool>
+                        {
+                            InternalErrorMessage = result.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
+                scope.Complete();
+                return new Return<bool>
                 {
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return new Return<dynamic>
+                return new Return<bool>
                 {
-                    InternalErrorMessage = e,
-                    Message = ErrorEnumApplication.SERVER_ERROR
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }
 
+        //public async Task<Return<dynamic>> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
+        //{
+        //    try
+        //    {
+        //        // Check token 
+        //        var isValidToken = _helpperService.IsTokenValid();
+        //        if (!isValidToken)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                Message = ErrorEnumApplication.NOT_AUTHORITY
+        //            };
+        //        }
+        //        // Check role 
+        //        var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+        //        if (userlogged.Data == null || userlogged.IsSuccess == false)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                Message = ErrorEnumApplication.NOT_AUTHORITY
+        //            };
+        //        }
+        //        if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
+        //        {
+        //            return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
+        //        }
+        //        // Check VehicleType is exist
+        //        var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
+        //        if (!isVehicleTypeExist.IsSuccess)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                InternalErrorMessage = isVehicleTypeExist.InternalErrorMessage,
+        //                Message = ErrorEnumApplication.SERVER_ERROR
+        //            };
+        //        }
+        //        if (!isVehicleTypeExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+        //            };
+        //        }
+        //        // Check this VehicleType is exist default PriceTable
+        //        var isDefaultPriceTableExist = await _priceRepository.GetDefaultPriceTableByVehicleTypeAsync(req.VehicleTypeId);
+        //        if (!isDefaultPriceTableExist.IsSuccess)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                InternalErrorMessage = isDefaultPriceTableExist.InternalErrorMessage,
+        //                Message = ErrorEnumApplication.SERVER_ERROR
+        //            };
+        //        }
+        //        if (isDefaultPriceTableExist.Data != null)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                Message = ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_EXIST
+        //            };
+        //        }
+        //        // Create Default PriceTable
+        //        var priceTable = new PriceTable
+        //        {
+        //            VehicleTypeId = req.VehicleTypeId,
+        //            Priority = 1,
+        //            Name = "Default Price Table",
+        //            ApplyFromDate = null,
+        //            ApplyToDate = null,
+        //            StatusPriceTable = StatusPriceTableEnum.ACTIVE,
+        //            CreatedById = userlogged.Data.Id
+        //        };
+        //        var result = await _priceRepository.CreatePriceTableAsync(priceTable);
+        //        if (!result.IsSuccess)
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                InternalErrorMessage = result.InternalErrorMessage,
+        //                Message = ErrorEnumApplication.SERVER_ERROR
+        //            };
+        //        }
+        //        if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+        //        {
+        //            return new Return<dynamic>
+        //            {
+        //                Message = ErrorEnumApplication.SERVER_ERROR
+        //            };
+        //        }
+        //        return new Return<dynamic>
+        //        {
+        //            IsSuccess = true,
+        //            Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+        //        };
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return new Return<dynamic>
+        //        {
+        //            InternalErrorMessage = e,
+        //            Message = ErrorEnumApplication.SERVER_ERROR
+        //        };
+        //    }
+        //}
+
         public async Task<Return<dynamic>> CreatePriceTableAsync(CreatePriceTableReqDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                // Check token 
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
-                }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || userlogged.IsSuccess == false)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 }
                 // Check VehicleType is exist
                 var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId);
-                if (isVehicleTypeExist.Data == null || isVehicleTypeExist.IsSuccess == false)
+                if (isVehicleTypeExist.Data == null || !isVehicleTypeExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = isVehicleTypeExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
                     };
-                }
-                // Check the default price table is exist
-                var isDefaultPriceTableExist = await _priceRepository.GetDefaultPriceTableByVehicleTypeAsync(req.VehicleTypeId);
-                if (!isDefaultPriceTableExist.IsSuccess)
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = isDefaultPriceTableExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                if (isDefaultPriceTableExist.Data == null)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_NOT_EXIST
-                    };
-                }
+                }               
                 // Check priority is exist
                 var isPriorityExist = await _priceRepository.GetPriceTableByPriorityAndVehicleTypeAsync(req.Priority, isVehicleTypeExist.Data.Id);
-                if (!isPriorityExist.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isPriorityExist.InternalErrorMessage };
-                if (isPriorityExist.Data != null && isPriorityExist.IsSuccess == true)
+                if (!isPriorityExist.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT)) 
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
+                        InternalErrorMessage = isPriorityExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.PRIORITY_IS_EXIST
                     };
                 }
-                // Check 
                 var priceTable = new PriceTable
                 {
                     VehicleTypeId = req.VehicleTypeId,
@@ -533,12 +592,37 @@ namespace FUParkingService
                     Name = req.Name,
                     ApplyFromDate = req.ApplyFromDate,
                     ApplyToDate = req.ApplyToDate,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                    StatusPriceTable = StatusPriceTableEnum.ACTIVE,
+                    CreatedById = checkAuth.Data.Id
                 };
                 var result = await _priceRepository.CreatePriceTableAsync(priceTable);
-                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || result.Data is null)
                 {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                    scope.Dispose();
+                    return new Return<dynamic> 
+                    { 
+                        Message = ErrorEnumApplication.SERVER_ERROR, 
+                        InternalErrorMessage = result.InternalErrorMessage 
+                    };
+                }
+                // Create default price item for this price table
+                var priceItem = new PriceItem
+                {
+                    PriceTableId = result.Data.Id,
+                    MaxPrice = req.MaxPrice,
+                    MinPrice = req.MinPrice,
+                    BlockPricing = req.PricePerBlock,
+                    CreatedById = checkAuth.Data.Id
+                };
+                var resultPriceItem = await _priceRepository.CreatePriceItemAsync(priceItem);
+                if (!resultPriceItem.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                {
+                    scope.Dispose();
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = resultPriceItem.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
                 }
                 return new Return<dynamic>
                 {
@@ -738,5 +822,7 @@ namespace FUParkingService
                 };
             }
         }
+
+        //public async Task<Return<bool>> UpdatePriceItemByPriceTable()
     }
 }

@@ -194,7 +194,12 @@ namespace FUParkingRepository
             try
             {
                 var query = _db.Sessions
-                    .Where(x => x.CustomerId == customerId && (x.Status == SessionEnum.CLOSED || x.Status == SessionEnum.PARKED));
+                    .Where(x => x.CustomerId == customerId && (x.Status == SessionEnum.CLOSED || x.Status == SessionEnum.PARKED))
+                    .Include(x => x.GateIn)
+                    .Include(x => x.GateOut)
+                    .Include(x => x.VehicleType)
+                    .Include(x => x.PaymentMethod)
+                    .AsQueryable();
 
                 // Date filtering
                 if (startDate.HasValue)
@@ -231,5 +236,30 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<IEnumerable<Session>>> GetListSessionActiveByParkingIdAsync(Guid parkingId)
+        {
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var result = await _db.Sessions
+                    .Where(p => p.GateIn.ParkingAreaId == parkingId && p.Status == SessionEnum.PARKED)
+                    .ToListAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                return new Return<IEnumerable<Session>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Session>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

@@ -86,8 +86,7 @@ namespace FUParkingService
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
                 if (gateIn.Data.GateType == null || gateIn.Data.GateType.Name.Equals(GateTypeEnum.OUT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                // Check 
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };                
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
                 if (!parkingArea.IsSuccess)
@@ -769,7 +768,7 @@ namespace FUParkingService
         {
             try
             {
-                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<IEnumerable<GetHistorySessionResDto>>
@@ -780,48 +779,54 @@ namespace FUParkingService
                 }
                 var listSession = await _sessionRepository.GetListSessionByCustomerIdAsync(checkAuth.Data.Id, req.StartDate, req.EndDate, req.PageSize, req.PageIndex);
                 if (!listSession.IsSuccess)
-                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listSession.InternalErrorMessage };
-                if (listSession.Data == null || !listSession.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT, Data = [], IsSuccess = true };
-
+                {
+                    return new Return<IEnumerable<GetHistorySessionResDto>>
+                    {
+                        InternalErrorMessage = listSession.InternalErrorMessage,
+                        Message = listSession.Message
+                    };
+                }
                 var listSessionData = new List<GetHistorySessionResDto>();
+                if (listSession.Data == null)
+                {
+                    return new Return<IEnumerable<GetHistorySessionResDto>>
+                    {
+                        IsSuccess = true,
+                        Message = ErrorEnumApplication.NOT_FOUND_OBJECT,
+                        Data = listSessionData,
+                        TotalRecord = 0
+                    };
+                }
                 foreach (var item in listSession.Data)
                 {
-                    string? GateOutName = null;
                     var payment = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
                     if (!payment.IsSuccess)
-                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = payment.InternalErrorMessage };
-                    var GateIn = await _gateRepository.GetGateByIdAsync(item.GateInId);
-                    if (!GateIn.IsSuccess)
-                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = GateIn.InternalErrorMessage };
-                    if (!GateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || GateIn.Data == null)
-                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    if (item.GateOutId is not null)
                     {
-                        var GateOut = await _gateRepository.GetGateByIdAsync(item.GateOutId.Value);
-                        if (!GateOut.IsSuccess)
-                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = GateOut.InternalErrorMessage };
-                        if (!GateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || GateOut.Data == null)
-                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                        GateOutName = GateOut.Data.Name;
+                        return new Return<IEnumerable<GetHistorySessionResDto>>
+                        {
+                            InternalErrorMessage = payment.InternalErrorMessage,
+                            Message = payment.Message
+                        };
                     }
                     listSessionData.Add(new GetHistorySessionResDto
                     {
-                        PlateNumber = item.PlateNumber,
+                        Id = item.Id,
+                        Amount = payment.Data?.TotalPrice,
                         TimeIn = item.TimeIn,
                         TimeOut = item.TimeOut,
+                        PlateNumber = item.PlateNumber,                        
                         Status = item.Status,
-                        Amount = payment.Data?.TotalPrice,
-                        GateIn = GateIn.Data.Name,
-                        GateOut = GateOutName,
-                        PaymentMethod = payment.Data?.PaymentMethod?.Name,
+                        GateIn = item.GateIn?.Name ?? "",
+                        GateOut = item.GateOut?.Name,
+                        PaymentMethod = item.PaymentMethod?.Name,
                     });
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>
                 {
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = listSessionData
+                    Data = listSessionData,
+                    TotalRecord = listSession.TotalRecord
                 };
             }
             catch (Exception ex)

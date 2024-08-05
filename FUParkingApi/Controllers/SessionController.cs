@@ -124,7 +124,7 @@ namespace FUParkingApi.Controllers
                             return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
                     }
                 }
-                return StatusCode(200, new Return<IEnumerable<GetHistorySessionResDto>> { IsSuccess = true, Data = result.Data, Message = SuccessfullyEnumServer.SUCCESSFULLY });
+                return StatusCode(200, result);
             }
             catch (Exception ex)
             {

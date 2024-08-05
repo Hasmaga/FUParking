@@ -341,5 +341,31 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<dynamic>> DeleteAllPriceItemByPriceTableIdAsync(Guid priceTableId)
+        {
+            try
+            {
+                var priceItems = await _db.PriceItems.Where(r => r.PriceTableId.Equals(priceTableId)).ToListAsync();
+                foreach (var item in priceItems)
+                {
+                    _db.PriceItems.Remove(item);
+                }
+                await _db.SaveChangesAsync();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

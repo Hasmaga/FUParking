@@ -11,11 +11,13 @@ namespace FUParkingService
     {
         private readonly IParkingAreaRepository _parkingAreaRepository;
         private readonly IHelpperService _helpperService;
+        private readonly ISessionRepository _sessionRepository;
 
-        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService)
+        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _parkingAreaRepository = parkingAreaRepository;
             _helpperService = helpperService;
+            _sessionRepository = sessionRepository;
         }
 
         public async Task<Return<dynamic>> DeleteParkingArea(Guid id)
@@ -30,7 +32,7 @@ namespace FUParkingService
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
-                }
+                }                
                 // Check if ParkingAreaId exists
                 var existedParking = await _parkingAreaRepository.GetParkingAreaByIdAsync(id);
                 if (existedParking.Data == null || existedParking.IsSuccess is not true)
@@ -39,6 +41,16 @@ namespace FUParkingService
                     {
                         InternalErrorMessage = existedParking.InternalErrorMessage,
                         Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST
+                    };
+                }
+                // Check any session is using this parking area
+                var isUsingParkingArea = await _sessionRepository.GetListSessionActiveByParkingIdAsync(id);
+                if (!isUsingParkingArea.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isUsingParkingArea.InternalErrorMessage,
+                        Message = ErrorEnumApplication.PARKING_AREA_IS_USING
                     };
                 }
                 existedParking.Data.DeletedDate = DateTime.Now;
