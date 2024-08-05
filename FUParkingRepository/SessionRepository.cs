@@ -193,13 +193,16 @@ namespace FUParkingRepository
         {
             try
             {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var query = _db.Sessions
                     .Where(x => x.CustomerId == customerId && (x.Status == SessionEnum.CLOSED || x.Status == SessionEnum.PARKED))
                     .Include(x => x.GateIn)
                     .Include(x => x.GateOut)
                     .Include(x => x.VehicleType)
                     .Include(x => x.PaymentMethod)
+                    .Include(x => x.GateIn.ParkingArea)
                     .AsQueryable();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
                 // Date filtering
                 if (startDate.HasValue)
