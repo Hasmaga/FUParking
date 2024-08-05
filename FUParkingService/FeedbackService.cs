@@ -63,7 +63,7 @@ namespace FUParkingService
                     Title = request.Title.Trim()
                 };
                 var createFeedbackRes = await _feedbackRepository.CreateFeedbackAsync(newFeedback);
-                if (createFeedbackRes.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                if (!createFeedbackRes.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     res.InternalErrorMessage = createFeedbackRes.InternalErrorMessage;
                     res.Message = ErrorEnumApplication.SERVER_ERROR;
