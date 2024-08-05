@@ -232,7 +232,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync()
+        public async Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
             {
@@ -246,7 +246,7 @@ namespace FUParkingService
                     };
                 }
 
-                var result = await _vehicleRepository.GetVehiclesAsync();
+                var result = await _vehicleRepository.GetVehiclesAsync(req);
                 if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetVehicleForUserResDto>>

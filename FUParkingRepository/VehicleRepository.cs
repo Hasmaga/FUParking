@@ -197,22 +197,50 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync()
+        public async Task<Return<IEnumerable<Vehicle>>> GetVehiclesAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
             {
-                var vehicles = await _db.Vehicles
+                var vehicles = _db.Vehicles
                     .Include(v => v.Customer)
                     .Include(v => v.VehicleType)
                     .Include(v => v.Staff)
                     .Include(v => v.LastModifyBy)
+                    .AsQueryable();
+
+                if (req.SearchInput is not null && req.Attribute is not null)
+                {
+                    switch (req.Attribute.ToUpper())
+                    {
+                        case "PLATENUMBER":
+                            vehicles = vehicles.Where(v => v.PlateNumber.Contains(req.SearchInput));
+                            break;
+                        case "EMAIL":
+                            vehicles = vehicles.Where(v => v.Customer.Email.Contains(req.SearchInput));
+                            break;
+                        case "VEHICLETYPE":
+                            vehicles = vehicles.Where(v => v.VehicleType.Name.Contains(req.SearchInput));
+                            break;
+                    }
+                }
+                if (req.StartDate is not null){
+                        vehicles = vehicles.Where(v => v.CreatedDate >= req.StartDate);
+                }
+                if (req.EndDate is not null){
+                        vehicles = vehicles.Where(v => v.CreatedDate <= req.EndDate);
+                }
+                var result = await vehicles
+                    .OrderByDescending(v => v.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
                     .ToListAsync();
+
                 return new Return<IEnumerable<Vehicle>>()
                 {
-                    Data = vehicles,
+                    Data = result,
                     IsSuccess = true,
-                    TotalRecord = vehicles.Count,
-                    Message = vehicles.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)

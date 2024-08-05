@@ -103,7 +103,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("history")]
+        [HttpGet("history")]
         public async Task<IActionResult> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req)
         {
             try

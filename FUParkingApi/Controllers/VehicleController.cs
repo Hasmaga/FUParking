@@ -139,11 +139,11 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetVehiclesAsync()
+        public async Task<IActionResult> GetVehiclesAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
             {
-                var result = await _vehicleService.GetVehiclesAsync();
+                var result = await _vehicleService.GetVehiclesAsync(req);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
