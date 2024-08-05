@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
-using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -135,7 +134,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("/guest/checkin")]
+        [HttpPost("guest/checkin")]
         public async Task<IActionResult> GuestCheckInAsync(CheckInForGuestReqDto req)
         {
             try
@@ -175,7 +174,7 @@ namespace FUParkingApi.Controllers
             }
         }
 
-        [HttpPost("/payment")]
+        [HttpPost("payment")]
         public async Task<IActionResult> PaymentAsync(string CardNumber)
         {
             try
