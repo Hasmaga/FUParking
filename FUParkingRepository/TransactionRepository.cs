@@ -43,7 +43,7 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Transactions.Include(t => t.Payment).FirstOrDefaultAsync(t => t.Id.Equals(transactionId));
+                var result = await _db.Transactions.Include(t => t.Payment).FirstOrDefaultAsync(t => t.DepositId.Equals(transactionId));
                 return new Return<Transaction>
                 {
                     Data = result,
@@ -87,7 +87,7 @@ namespace FUParkingRepository
         {
             try
             {
-                DateTime endDateValue = endDate ?? DateTime.Now;
+                DateTime endDateValue = endDate ?? TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
                 var res = await _db.Transactions.Include(t => t.Payment)
@@ -143,7 +143,7 @@ namespace FUParkingRepository
         {
             try
             {
-                DateTime endDateValue = endDate ?? DateTime.Now;
+                DateTime endDateValue = endDate ?? TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.

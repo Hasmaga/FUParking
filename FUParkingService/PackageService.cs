@@ -203,7 +203,7 @@ namespace FUParkingService
                     }
                 }
                 package.Data.LastModifyById = checkAuth.Data.Id;
-                package.Data.LastModifyDate = DateTime.Now;
+                package.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var updateResponse = await _packageRepository.UpdateCoinPackage(package.Data);
                 if (!updateResponse.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
@@ -252,9 +252,9 @@ namespace FUParkingService
                     };
                 }
 
-                packageResponse.Data.DeletedDate = DateTime.Now;
+                packageResponse.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 packageResponse.Data.LastModifyById = checkAuth.Data.Id;
-                packageResponse.Data.LastModifyDate = DateTime.Now;
+                packageResponse.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var isUpdate = await _packageRepository.UpdateCoinPackage(packageResponse.Data);
                 if (!isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {

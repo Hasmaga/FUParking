@@ -55,7 +55,7 @@ namespace FUParkingService
                     TransactionDescription = x.TransactionDescription,
                     TransactionStatus = x.TransactionStatus,
                     Date = x.CreatedDate,
-                    TransactionType = x.DepositId.HasValue ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
+                    TransactionType = x.DepositId is null ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
                 });
 
                 return new Return<IEnumerable<GetInfoWalletTransResDto>>()
@@ -110,7 +110,7 @@ namespace FUParkingService
                     TransactionDescription = x.TransactionDescription,
                     TransactionStatus = x.TransactionStatus,
                     Date = x.CreatedDate,
-                    TransactionType = x.DepositId.HasValue ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
+                    TransactionType = x.DepositId is null ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
                 });
 
                 return new Return<IEnumerable<GetInfoWalletTransResDto>>()

@@ -366,7 +366,7 @@ namespace FUParkingService
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(7),
                 SigningCredentials = creds
             };
             var tokenHandler = new JwtSecurityTokenHandler();

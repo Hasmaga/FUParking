@@ -86,7 +86,7 @@ namespace FUParkingService
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
                 if (gateIn.Data.GateType == null || gateIn.Data.GateType.Name.Equals(GateTypeEnum.OUT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };                
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
                 if (!parkingArea.IsSuccess)
@@ -123,7 +123,7 @@ namespace FUParkingService
                         }
                     };
                 // Object name = PlateNumber + TimeIn + extension file
-                var objName = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
                 // Create new UploadObjectReqDto                
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
@@ -143,7 +143,7 @@ namespace FUParkingService
                     PlateNumber = req.PlateNumber,
                     GateInId = req.GateInId,
                     ImageInUrl = imageInUrl.Data.ObjUrl,
-                    TimeIn = DateTime.Now,
+                    TimeIn = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")),
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
                     CreatedById = checkAuth.Data.Id,
@@ -190,7 +190,7 @@ namespace FUParkingService
                     // Close this session
                     isSessionClosed.Data.Status = SessionEnum.CANCELLED;
                     isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
-                    isSessionClosed.Data.LastModifyDate = DateTime.Now;
+                    isSessionClosed.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 }
                 // Check this plate number is in another session
                 var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
@@ -217,7 +217,7 @@ namespace FUParkingService
                 if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
                 // Create new UploadObjectReqDto
-                var objName = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
                     BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -236,7 +236,7 @@ namespace FUParkingService
                     PlateNumber = req.PlateNumber,
                     GateInId = gateIn.Data.Id,
                     ImageInUrl = imageInUrl.Data.ObjUrl,
-                    TimeIn = DateTime.Now,
+                    TimeIn = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")),
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
                     CreatedById = checkAuth.Data.Id,
@@ -287,7 +287,7 @@ namespace FUParkingService
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
                 if ((sessionCard.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.FREE))
                 {
-                    var objNameNonePaid = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
+                    var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
                     var uploadObjectNonePaidReqDto = new UploadObjectReqDto
                     {
                         BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -301,7 +301,7 @@ namespace FUParkingService
                     sessionCard.Data.ImageOutUrl = imageOutNonePaidUrl.Data.ObjUrl;
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                    sessionCard.Data.LastModifyDate = DateTime.Now;
+                    sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                     sessionCard.Data.Status = SessionEnum.CLOSED;
                     var updateNonePaidSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                     if (!updateNonePaidSession.IsSuccess)
@@ -469,7 +469,7 @@ namespace FUParkingService
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 // Upload image out
-                var objName = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
                 var uploadObjectReqDto = new UploadObjectReqDto
                 {
                     BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -625,7 +625,7 @@ namespace FUParkingService
                         sessionCard.Data.GateOutId = req.GateOutId;
                         sessionCard.Data.TimeOut = req.TimeOut;
                         sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                        sessionCard.Data.LastModifyDate = DateTime.Now;
+                        sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                         sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                         var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                         if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -659,7 +659,7 @@ namespace FUParkingService
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.Status = SessionEnum.CLOSED;
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                    sessionCard.Data.LastModifyDate = DateTime.Now;
+                    sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                     sessionCard.Data.PaymentMethodId = paymentMethodWallet.Data.Id;
                     var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                     if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -693,7 +693,7 @@ namespace FUParkingService
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                    sessionCard.Data.LastModifyDate = DateTime.Now;
+                    sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                     sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
                     var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                     if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -752,7 +752,7 @@ namespace FUParkingService
                 // Update session to close
                 sessionCard.Data.Status = SessionEnum.CLOSED;
                 sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                sessionCard.Data.LastModifyDate = DateTime.Now;
+                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                 if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -797,6 +797,7 @@ namespace FUParkingService
                         TotalRecord = 0
                     };
                 }
+                listSession.Data = listSession.Data.OrderByDescending(x => x.CreatedDate).ToList();
                 foreach (var item in listSession.Data)
                 {
                     var payment = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
@@ -814,7 +815,7 @@ namespace FUParkingService
                         Amount = payment.Data?.TotalPrice,
                         TimeIn = item.TimeIn,
                         TimeOut = item.TimeOut,
-                        PlateNumber = item.PlateNumber,                        
+                        PlateNumber = item.PlateNumber,
                         Status = item.Status,
                         GateIn = item.GateIn?.Name ?? "",
                         GateOut = item.GateOut?.Name,
@@ -822,6 +823,8 @@ namespace FUParkingService
                         ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
                     });
                 }
+                
+
                 return new Return<IEnumerable<GetHistorySessionResDto>>
                 {
                     IsSuccess = true,

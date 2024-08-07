@@ -92,7 +92,7 @@ namespace FUParkingService
                     }
                     else
                     {
-                        isPaymentMethodExist.Data.DeletedDate = DateTime.Now;
+                        isPaymentMethodExist.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                         // Update status Account
                         var isUpdate = await _paymentRepository.UpdatePaymentMethodAsync(isPaymentMethodExist.Data);
                         if (!isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))

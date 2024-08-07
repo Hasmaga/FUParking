@@ -53,9 +53,9 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.PARKING_AREA_IS_USING
                     };
                 }
-                existedParking.Data.DeletedDate = DateTime.Now;
+                existedParking.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedParking.Data.LastModifyById = checkAuth.Data.Id;
-                existedParking.Data.LastModifyDate = DateTime.Now;
+                existedParking.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
                 var result = await _parkingAreaRepository.UpdateParkingAreaAsync(existedParking.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))

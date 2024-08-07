@@ -11,7 +11,7 @@ namespace FUParkingModel.Object
         public Guid Id { get; set; }
 
         [Column("CreatedDate")]
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
         [Column("DeletedDate")]
         public DateTime? DeletedDate { get; set; }

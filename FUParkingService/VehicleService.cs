@@ -205,7 +205,7 @@ namespace FUParkingService
                 vehicleType.Data.Name = reqDto.Name ?? vehicleType.Data.Name;
                 vehicleType.Data.Description = reqDto.Description ?? vehicleType.Data.Description;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
-                vehicleType.Data.LastModifyDate = DateTime.Now;
+                vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -351,7 +351,7 @@ namespace FUParkingService
 
                 vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
-                vehicleType.Data.LastModifyDate = DateTime.Now;
+                vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -401,7 +401,7 @@ namespace FUParkingService
 
                 vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
-                vehicleType.Data.LastModifyDate = DateTime.Now;
+                vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -442,7 +442,7 @@ namespace FUParkingService
                     };
                 }
                 var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-                var objNamePlateNumber = checkAuth.Data.Id + "_" + "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
+                var objNamePlateNumber = checkAuth.Data.Id + "_" + "_" + TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
                 UploadObjectReqDto imageUpload = new()
                 {
                     ObjFile = reqDto.PlateImage,
@@ -590,7 +590,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.VEHICLE_IS_IN_SESSION
                     };
                 }
-                vehicle.Data.DeletedDate = DateTime.Now;
+                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))

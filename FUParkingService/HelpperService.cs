@@ -44,7 +44,7 @@ namespace FUParkingService
                     ValidateAudience = false,
                 }, out SecurityToken validatedToken);
                 // Check Token Is Expired
-                if (validatedToken.ValidTo < DateTime.Now)
+                if (validatedToken.ValidTo < TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")))
                 {
                     return false;
                 }

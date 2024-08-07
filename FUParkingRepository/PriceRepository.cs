@@ -207,8 +207,8 @@ namespace FUParkingRepository
                         t.VehicleTypeId.Equals(vehicleTypeId) &&
                         (
                             (t.ApplyFromDate == null && t.ApplyToDate == null) || // Active forever
-                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= DateTime.Now) || // Check ApplyFromDate
-                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= DateTime.Now) // Check ApplyToDate
+                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))) || // Check ApplyFromDate
+                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))) // Check ApplyToDate
                         )
                     ).ToListAsync();
                 return new Return<IEnumerable<PriceTable>>

@@ -137,8 +137,8 @@ namespace FUParkingRepository
         {
             try
             {
-                // Get all ExpiredDate of Wallet Extra, if ExpiredDate <= DateTime.Now, set Extra = 0
-                var wallets = await _db.Wallets.Where(w => w.WalletType == WalletType.EXTRA && w.EXPDate <= DateTime.Now).ToListAsync();
+                // Get all ExpiredDate of Wallet Extra, if ExpiredDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")), set Extra = 0
+                var wallets = await _db.Wallets.Where(w => w.WalletType == WalletType.EXTRA && w.EXPDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))).ToListAsync();
                 foreach (var wallet in wallets)
                 {
                     wallet.Balance = 0;

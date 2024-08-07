@@ -267,7 +267,7 @@ namespace FUParkingApi.Controllers
             try
             {
                 var result = await _vehicleService.GetCustomerVehicleByCustomerIdAsync();
-                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+                if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     switch (result.Message)
                     {

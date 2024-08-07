@@ -153,9 +153,9 @@ namespace FUParkingService
                     };
                 }
 
-                card.Data.DeletedDate = DateTime.Now;
+                card.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 card.Data.LastModifyById = checkAuth.Data.Id;
-                card.Data.LastModifyDate = DateTime.Now;
+                card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
                 if (!res.IsSuccess)
                 {
@@ -205,7 +205,7 @@ namespace FUParkingService
                 }
                 card.Data.PlateNumber = PlateNumber;
                 card.Data.LastModifyById = checkAuth.Data.Id;
-                card.Data.LastModifyDate = DateTime.Now;
+                card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
                 if (!res.IsSuccess)
                 {

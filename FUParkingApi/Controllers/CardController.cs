@@ -49,7 +49,7 @@ namespace FUParkingApi.Controllers
                     }
                     return result.Message switch
                     {
-                        ErrorEnumApplication.NOT_AUTHENTICATION => StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
+                        ErrorEnumApplication.NOT_AUTHENTICATION => StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHENTICATION }),
                         ErrorEnumApplication.NOT_AUTHORITY => StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
                         ErrorEnumApplication.ACCOUNT_IS_LOCK => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_LOCK }),
                         ErrorEnumApplication.ACCOUNT_IS_BANNED => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED }),

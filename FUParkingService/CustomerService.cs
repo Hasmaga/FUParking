@@ -56,7 +56,7 @@ namespace FUParkingService
                     {
                         isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.ACTIVE;
                         isCustomerExist.Data.LastModifyById = checkAuth.Data.Id;
-                        isCustomerExist.Data.LastModifyDate = DateTime.Now;
+                        isCustomerExist.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
                         if (isUpdate.Data == null || !isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -82,7 +82,7 @@ namespace FUParkingService
                     else
                     {
                         isCustomerExist.Data.CreatedById = checkAuth.Data.Id;
-                        isCustomerExist.Data.CreatedDate = DateTime.Now;
+                        isCustomerExist.Data.CreatedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                         isCustomerExist.Data.StatusCustomer = StatusCustomerEnum.INACTIVE;
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
@@ -180,7 +180,7 @@ namespace FUParkingService
                     CustomerType = customer.Data?.CustomerType?.Name ?? "",
                     Email = customer.Data?.Email ?? "",
                     FullName = customer.Data?.FullName ?? "",
-                    CreateDate = DateOnly.FromDateTime(customer.Data?.CreatedDate ?? DateTime.Now),
+                    CreateDate = DateOnly.FromDateTime(customer.Data?.CreatedDate ?? TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))),
                     CustomerId = customer.Data?.Id ?? Guid.Empty,
                 };
                 res.Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY;

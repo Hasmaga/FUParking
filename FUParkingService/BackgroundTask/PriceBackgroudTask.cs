@@ -6,7 +6,7 @@ namespace FUParkingService.BackgroundTask
 {
     public class PriceBackgroudTask : IInvocable
     {
-        // Create background task to minus all the money in waller extra if ExpiredDate <= DateTime.Now
+        // Create background task to minus all the money in waller extra if ExpiredDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))
         private readonly IWalletRepository _walletRepository;
         private readonly ILogger<PriceBackgroudTask> _logger;
 

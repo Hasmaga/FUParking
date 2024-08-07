@@ -181,7 +181,7 @@ namespace FUParkingService
                 existingGate.Data.GateTypeId = req.GateTypeId ?? existingGate.Data.GateTypeId;
                 existingGate.Data.ParkingAreaId = req.ParkingAreaId ?? existingGate.Data.ParkingAreaId;
                 existingGate.Data.LastModifyById = checkAuth.Data.Id;
-                existingGate.Data.LastModifyDate = DateTime.Now;
+                existingGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var updateResult = await _gateRepository.UpdateGateAsync(existingGate.Data);
                 if (!updateResult.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
@@ -229,9 +229,9 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
                 }
-                existedGate.Data.DeletedDate = DateTime.Now;
+                existedGate.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedGate.Data.LastModifyById = checkAuth.Data.Id;
-                existedGate.Data.LastModifyDate = DateTime.Now;
+                existedGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _gateRepository.UpdateGateAsync(existedGate.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {

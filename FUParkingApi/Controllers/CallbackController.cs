@@ -3,6 +3,7 @@ using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace FUParkingApi.Controllers
 {
@@ -42,6 +43,19 @@ namespace FUParkingApi.Controllers
                 _logger.LogError("Error at Callback Zalo: {ex}", ex);
                 return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] dynamic cbdata)
+        {            
+            var result = new Dictionary<string, object>();            
+            var dataStr = cbdata.GetProperty("data").GetString();
+            var dataJson = JsonConvert.DeserializeObject<Dictionary<string, object>>(dataStr);
+            var appTransId = dataJson["app_trans_id"];
+            var result1 = await _zaloService.CallbackZaloPayAsync(appTransId);
+            result["return_code"] = 1;
+            result["return_message"] = "success";
+            return Ok(result);
         }
     }
 }

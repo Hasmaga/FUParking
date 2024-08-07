@@ -84,7 +84,7 @@ namespace FUParkingService
                 bool isTranExist;
                 do
                 {
-                    tran = DateTime.Now.ToString("yyMMdd") + "_" + rnd.Next(1000000);
+                    tran = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyMMdd") + "_" + rnd.Next(1000000);
                     // Check if tran exists in the database
                     var depositExist = await _depositRepository.GetDepositByAppTransIdAsync(tran);
                     if (depositExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
@@ -108,6 +108,7 @@ namespace FUParkingService
                     { "item", JsonConvert.SerializeObject(items) },
                     { "description", "Mua gói dịch vụ " + package.Data.Name + " Bai Parking FPT" },
                     { "bank_code", bankCode },
+                    { "callback_url", "https://backend.khangbpa.com/callback"},
                     { "email", "khangbpak2001@gmail.com" }
                 };
                 var data = appid + "|" + param["app_trans_id"] + "|" + param["app_user"] + "|" + param["amount"] + "|" + param["app_time"] + "|" + param["embed_data"] + "|" + param["item"];
@@ -176,6 +177,12 @@ namespace FUParkingService
                 {
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
+                var package = await _packageRepository.GetPackageByPackageIdAsync(deposit.Data.PackageId);
+                if (!package.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || package.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
 
                 var transaction = await _transactionRepository.GetTransactionByDepositIdAsync(deposit.Data.Id);
                 if (!transaction.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || transaction.Data == null)
@@ -185,19 +192,32 @@ namespace FUParkingService
 
                 transaction.Data.TransactionStatus = StatusTransactionEnum.SUCCEED;
                 var updateTransaction = await _transactionRepository.UpdateTransactionAsync(transaction.Data);
-                if (!updateTransaction.Message.Equals(SuccessfullyEnumServer.SUCCESSFULLY))
+                if (!updateTransaction.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
+                }                
                 var walletMain = await _walletRepository.GetMainWalletByCustomerId(deposit.Data.CustomerId);
                 if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data == null)
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
-                walletMain.Data.Balance += deposit.Data.Amount;
+                walletMain.Data.Balance += package.Data.CoinAmount;
+                // Create transaction for wallet main
+                FUParkingModel.Object.Transaction newTransactionMain = new()
+                {
+                    Amount = package.Data.CoinAmount,
+                    TransactionDescription = "Buy " + package.Data.Name,
+                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                    WalletId = walletMain.Data.Id
+                };
+                var transactionMain = await _transactionRepository.CreateTransactionAsync(newTransactionMain);
+                if (transactionMain.IsSuccess == false || transactionMain.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
                 var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
                 if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
@@ -211,14 +231,31 @@ namespace FUParkingService
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
-                walletExtra.Data.Balance += deposit.Data.Amount;
+                walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
+                walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
+                // Create transaction for wallet extra
+                if (package.Data.ExtraCoin is not null)
+                {
+                    FUParkingModel.Object.Transaction newTransactionExtra = new()
+                    {
+                        Amount = package.Data.ExtraCoin ?? 0,
+                        TransactionDescription = "Buy " + package.Data.Name,
+                        TransactionStatus = StatusTransactionEnum.SUCCEED,
+                        WalletId = walletExtra.Data.Id
+                    };
+                    var transactionExtra = await _transactionRepository.CreateTransactionAsync(newTransactionExtra);
+                    if (transactionExtra.IsSuccess == false || transactionExtra.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    }
+                }                
                 var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
                 if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
-
                 scope.Complete();
                 return new Return<bool> { Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
             }
@@ -236,7 +273,7 @@ namespace FUParkingService
 
         private static long GetTimeStamp()
         {
-            return GetTimeStamp(DateTime.Now);
+            return GetTimeStamp(TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")));
         }
 
         private enum ZaloPayHMAC
