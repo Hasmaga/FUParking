@@ -71,7 +71,7 @@ namespace FUParkingService
                     // Close this session
                     isSessionClosed.Data.Status = SessionEnum.CANCELLED;
                     isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
-                    isSessionClosed.Data.LastModifyDate = DateTime.Now;
+                    isSessionClosed.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 }
                 // Check this plate number is in another session
                 var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
