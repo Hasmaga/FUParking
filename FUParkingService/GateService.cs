@@ -229,6 +229,14 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
                 }
+                // Check if gate is virtual
+                if (existedGate.Data.GateType?.Name.Equals(GateTypeEnum.VIRUTAL) ?? false)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_GATE
+                    };
+                }
                 existedGate.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedGate.Data.LastModifyById = checkAuth.Data.Id;
                 existedGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));

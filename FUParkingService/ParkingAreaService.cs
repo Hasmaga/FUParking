@@ -55,6 +55,14 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.PARKING_AREA_IS_USING
                     };
                 }
+                // check if parking area is virtual
+                if (existedParking.Data.Name == GateTypeEnum.VIRUTAL)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_PARKING_AREA
+                    };
+                }                
                 existedParking.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedParking.Data.LastModifyById = checkAuth.Data.Id;
                 existedParking.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));

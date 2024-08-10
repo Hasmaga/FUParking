@@ -58,6 +58,8 @@
         public const string ACCOUNT_IS_INACTIVE = "Account is inactive";
         public const string CAN_NOT_DELETE_DEFAULT_PRICE_TABLE = "Can not delete default price table";
         public const string CAN_NOT_UPDATE_STATUS_DEFAULT_PRICE_TABLE = "Can not update status default price table";
+        public const string CANNOT_DELETE_VIRTUAL_GATE = "Can not delete virual gate";
+        public const string CANNOT_DELETE_VIRTUAL_PARKING_AREA = "Can not delete virtual parking area";
     }
 
     public class MinioErrorServerDefineEnum

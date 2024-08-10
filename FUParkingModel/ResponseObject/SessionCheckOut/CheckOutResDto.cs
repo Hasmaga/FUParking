@@ -6,5 +6,7 @@
         public int? Amount { get; set; }
         public string ImageIn { get; set; } = null!;
         public string PlateNumber { get; set; } = null!;
+        public DateTime TimeIn { get; set; }
+        public string TypeOfCustomer { get; set; } = null!;
     }
 }

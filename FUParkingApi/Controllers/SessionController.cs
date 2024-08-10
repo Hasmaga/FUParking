@@ -114,5 +114,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        //[HttpPost("user/checkout")]
+        //public async Task<IActionResult> CheckOutSessionByPlateNumberAsync(string PlateNumber)
+        //{
+        //    var result = await _sessionService.CheckOutSessionByPlateNumberAsync(PlateNumber);
+        //    if (!result.IsSuccess)
+        //    {
+        //        if (result.InternalErrorMessage is not null)
+        //        {
+        //            _logger.LogError("Error at Check Out: {ex}", result.InternalErrorMessage);
+        //        }
+        //        return Helper.GetErrorResponse(result.Message);
+        //    }
+        //    return StatusCode(200, result);
+        //}
     }
 }

@@ -202,6 +202,7 @@ namespace FUParkingRepository
                     .Include(x => x.VehicleType)
                     .Include(x => x.PaymentMethod)
                     .Include(x => x.GateIn.ParkingArea)
+                    .Include(x => x.Feedbacks)
                     .AsQueryable();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 

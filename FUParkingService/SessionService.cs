@@ -645,6 +645,7 @@ namespace FUParkingService
                                 Message = "Need to pay",
                                 ImageIn = sessionCard.Data.ImageInUrl,
                                 PlateNumber = sessionCard.Data.PlateNumber,
+                                TimeIn = sessionCard.Data.TimeIn,
                             }
                         };
                     }
@@ -678,6 +679,9 @@ namespace FUParkingService
                             ImageIn = sessionCard.Data.ImageInUrl,
                             Message = "Check out successfully",
                             PlateNumber = sessionCard.Data.PlateNumber,
+                            Amount = price,
+                            TimeIn = sessionCard.Data.TimeIn,
+                            TypeOfCustomer = sessionCard.Data.Customer?.CustomerType?.Name ?? "",
                         }
                     };
                 }
@@ -713,6 +717,7 @@ namespace FUParkingService
                             Message = "Need to pay",
                             ImageIn = sessionCard.Data.ImageInUrl,
                             PlateNumber = sessionCard.Data.PlateNumber,
+                            TypeOfCustomer = CustomerTypeEnum.FREE,
                         }
                     };
                 }
@@ -809,6 +814,7 @@ namespace FUParkingService
                             Message = payment.Message
                         };
                     }
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     listSessionData.Add(new GetHistorySessionResDto
                     {
                         Id = item.Id,
@@ -821,7 +827,9 @@ namespace FUParkingService
                         GateOut = item.GateOut?.Name,
                         PaymentMethod = item.PaymentMethod?.Name,
                         ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
+                        IsFeedback = item.Feedbacks.Count > 0 ? true : false
                     });
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
                 
 
@@ -868,5 +876,10 @@ namespace FUParkingService
                 return new Return<IEnumerable<StatisticSessionAppResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
+
+        //public async Task<CheckOutAsyncReqDto> CheckOutSessionByPlateNumberAsync(string PlateNumber)
+        //{
+
+        //}
     }
 }

@@ -73,6 +73,7 @@
     {
         public const string IN = "IN";
         public const string OUT = "OUT";
+        public const string VIRUTAL = "VIRTUAL";
     }
 
     public class VehicleTypeEnum

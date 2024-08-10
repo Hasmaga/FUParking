@@ -11,6 +11,7 @@
         public string GateIn { get; set; } = null!;
         public string? GateOut { get; set; }
         public string? PaymentMethod { get; set; }
-        public string ParkingArea { get; set; }
+        public string ParkingArea { get; set; } = null!;
+        public bool IsFeedback { get; set; }
     }
 }
