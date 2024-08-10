@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -12,5 +13,7 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<PaymentMethod>>> GetAllPaymentMethodAsync();
         Task<Return<PaymentMethod>> GetPaymentMethodByNameAsync(string name);
         Task<Return<Payment>> GetPaymentBySessionIdAsync(Guid sessionId);
+        Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync(Guid customerId);
+        Task<Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>> StatisticSessionPaymentMethodByCustomerAsync(Guid customerId);
     }
 }

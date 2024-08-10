@@ -195,6 +195,7 @@ namespace FUParkingService
                         CreateBy = p.CreateBy?.Email ?? "",
                         CreateDate = p.CreatedDate,
                         Description = p.Description ?? "",
+                        Mode = p.Mode,
                         LastModifyBy = p.LastModifyBy?.Email,
                         LastModifyDate = p.LastModifyDate,
                         MaxCapacity = p.MaxCapacity,

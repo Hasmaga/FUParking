@@ -1,6 +1,5 @@
 ﻿using FUParkingModel.Enum;
-using FUParkingModel.Object;
-using FUParkingModel.RequestObject;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -11,47 +10,78 @@ namespace FUParkingService
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IUserRepository _userRepository;
+        
 
-        public PaymentService(IPaymentRepository paymentRepository, IHelpperService helpperService, IUserRepository userRepository)
+        public PaymentService(IPaymentRepository paymentRepository, IHelpperService helpperService)
         {
             _paymentRepository = paymentRepository;
-            _helpperService = helpperService;
-            _userRepository = userRepository;
-        }
-        
-        public async Task<Return<IEnumerable<PaymentMethod>>> GetAllPaymentMethodAsync()
+            _helpperService = helpperService;            
+        }   
+
+        public async Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync()
         {
             try
             {
-                var isValidToken = _helpperService.IsTokenValid();
-                if (!isValidToken)
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<PaymentMethod>>
+                    return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
                     };
                 }
-                // Check role 
-                var userlogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (userlogged.Data == null || !userlogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+
+                var result = await _paymentRepository.StatisticPaymentByCustomerAsync(checkAuth.Data.Id);
+                if (!result.IsSuccess)
                 {
-                    return new Return<IEnumerable<PaymentMethod>>
+                    return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
                     {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
                     };
                 }
-                if (!Auth.AuthManager.Contains(userlogged.Data.Role?.Name ?? ""))
-                {
-                    return new Return<IEnumerable<PaymentMethod>> { Message = ErrorEnumApplication.NOT_AUTHORITY };
-                }
-                return await _paymentRepository.GetAllPaymentMethodAsync();
+                return result;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return new Return<IEnumerable<PaymentMethod>>
+                return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
                 {
-                    InternalErrorMessage = ex,
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>> StatisticSessionPaymentMethodByCustomerAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _paymentRepository.StatisticSessionPaymentMethodByCustomerAsync(checkAuth.Data.Id);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return result;
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>
+                {
+                    InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }

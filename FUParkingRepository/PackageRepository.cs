@@ -28,7 +28,7 @@ namespace FUParkingRepository
                 var query = _db.Packages
                     .Where(t => t.DeletedDate == null)
                     .Include(t => t.CreateBy)
-                    .Include(t => t.LastModifyById)
+                    .Include(t => t.LastModifyBy)
                     .OrderByDescending(t => t.CreatedDate)
                     .AsQueryable();
 
