@@ -19,6 +19,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<GetVehicleTypeByCustomerResDto>>> GetListVehicleTypeByCustomer();
         Task<Return<dynamic>> DeleteVehicleByCustomerAsync(Guid vehicleId);
         Task<Return<dynamic>> UpdateVehicleInformationAsync(UpdateCustomerVehicleReqDto req);
-        Task<Return<dynamic>> DisableVehicleTypeAsync(Guid id);
+        Task<Return<dynamic>> ChangeStatusVehicleTypeAsync(Guid id, bool isActive);
     }
 }

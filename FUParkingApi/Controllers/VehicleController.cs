@@ -211,5 +211,20 @@ namespace FUParkingApi.Controllers
             return Ok(result);
 
         }
+
+        [HttpPut("types/{id}/status")]
+        public async Task<IActionResult> ChangeStatusVehicleType([FromRoute] Guid id, [FromBody] bool isActive)
+        {
+            var result = await _vehicleService.ChangeStatusVehicleTypeAsync(id, isActive);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at change status vehicle type: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }

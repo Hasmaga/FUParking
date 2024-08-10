@@ -328,7 +328,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<dynamic>> DisableVehicleTypeAsync(Guid id)
+        public async Task<Return<dynamic>> ChangeStatusVehicleTypeAsync(Guid id, bool isActive)
         {
             try
             {
@@ -342,20 +342,43 @@ namespace FUParkingService
                     };
                 }
                 var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(id);
-
-                if (!vehicleType.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
-
-                if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST };
-
-                vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
+                if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = vehicleType.InternalErrorMessage,
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                    };
+                }
+                if (isActive)
+                {
+                    // Check vehicle type status is already active
+                    if (vehicleType.Data.StatusVehicleType.Equals(StatusVehicleType.ACTIVE))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    vehicleType.Data.StatusVehicleType = StatusVehicleType.ACTIVE;
+                }
+                else if (!isActive)
+                {
+                    if (vehicleType.Data.StatusVehicleType.Equals(StatusVehicleType.INACTIVE))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
+                }
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
                 vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleTypeAsync(vehicleType.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
-                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
             {

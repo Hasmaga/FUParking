@@ -1,8 +1,6 @@
 ﻿using FUParkingApi.HelperClass;
-using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
