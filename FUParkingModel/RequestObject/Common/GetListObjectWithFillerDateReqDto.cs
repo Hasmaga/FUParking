@@ -7,15 +7,19 @@ namespace FUParkingModel.RequestObject.Common
     public class GetListObjectWithFillerDateReqDto : IValidatableObject
     {
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageSize { get; set; } = Pagination.PAGE_SIZE;
 
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageIndex { get; set; } = Pagination.PAGE_INDEX;
 
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public DateTime? StartDate { get; set; }
 
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public DateTime? EndDate { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

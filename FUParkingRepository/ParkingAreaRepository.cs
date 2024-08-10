@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -128,15 +129,18 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(int pageIndex, int pageSize)
+        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(GetListObjectWithPageReqDto req)
         {
             try
             {
                 var result = await _db.ParkingAreas
-                                    .OrderByDescending(t => t.CreatedDate)
-                                    .Skip((pageIndex - 1) * pageSize)
-                                    .Take(pageSize)
-                                    .ToListAsync();
+                    .Include(t => t.CreateBy)
+                    .Include(t => t.LastModifyBy)
+                    .Where(t => t.DeletedDate == null)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
 
                 return new Return<IEnumerable<ParkingArea>>
                 {

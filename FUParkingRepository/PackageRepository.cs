@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,7 @@ namespace FUParkingRepository
             _db = db;
         }
 
-        public async Task<Return<IEnumerable<Package>>> GetAllPackagesAsync()
+        public async Task<Return<IEnumerable<Package>>> GetAllPackagesAsync(GetListObjectWithFiller req)
         {
             Return<IEnumerable<Package>> res = new()
             {
@@ -24,7 +25,33 @@ namespace FUParkingRepository
             };
             try
             {
-                var result = await _db.Packages.Where(t => t.DeletedDate == null).OrderByDescending(t => t.CreatedDate).ToListAsync();
+                var query = _db.Packages
+                    .Where(t => t.DeletedDate == null)
+                    .Include(t => t.CreateBy)
+                    .Include(t => t.LastModifyById)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
+                {
+                    switch (req.Attribute.ToUpper())
+                    {
+                        case "NAME":
+                            query = query.Where(r => r.Name.Contains(req.SearchInput));
+                            break;
+                        case "STATUS":
+                            query = query.Where(r => r.PackageStatus.Contains(req.SearchInput));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
+
                 res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
                 res.TotalRecord = result.Count;
@@ -35,6 +62,38 @@ namespace FUParkingRepository
             {
                 res.InternalErrorMessage = e;
                 return res;
+            }
+        }
+
+        public async Task<Return<IEnumerable<Package>>> GetPackageForCustomerAsync(GetListObjectWithPageReqDto req)
+        {
+            try
+            {
+                var query = _db.Packages
+                    .Where(p => p.DeletedDate == null && p.PackageStatus.Equals(StatusPackageEnum.ACTIVE))
+                    .AsQueryable();
+
+                var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<Package>>
+                {
+                    Data = result,
+                    TotalRecord = query.Count(),
+                    Message = query.Count() > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Package>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
             }
         }
 
@@ -104,39 +163,7 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }
-
-        public async Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
-        {
-            try
-            {
-                var query = _db.Packages.Where(p => p.DeletedDate == null).AsQueryable();
-                if (!string.IsNullOrEmpty(status))
-                {
-                    query = query.Where(p => p.PackageStatus == status);
-                }
-                var result = await query
-                                .OrderByDescending(t => t.CreatedDate)
-                                .Skip((pageIndex - 1) * pageSize)
-                                .Take(pageSize)
-                                .ToListAsync();
-                return new Return<IEnumerable<Package>>
-                {
-                    Data = result,
-                    IsSuccess = true,
-                    TotalRecord = result.Count,
-                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
-                };
-            }
-            catch (Exception e)
-            {
-                return new Return<IEnumerable<Package>>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = e
-                };
-            }
-        }
+        }        
 
         public async Task<Return<Package>> UpdateCoinPackage(Package package)
         {
@@ -164,7 +191,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Packages.Where(p => p.DeletedDate == null).FirstOrDefaultAsync(p => p.Name.ToUpper().Equals(PacketName.ToUpper()));
+                var result = await _db.Packages
+                    .Where(p => p.DeletedDate == null)
+                    .FirstOrDefaultAsync(p => p.Name.ToUpper().Equals(PacketName.ToUpper()));
                 return new Return<Package>
                 {
                     Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
@@ -180,6 +209,6 @@ namespace FUParkingRepository
                     InternalErrorMessage = ex
                 };
             }
-        }
+        }       
     }
 }

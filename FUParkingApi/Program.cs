@@ -50,7 +50,6 @@ builder.Services.AddScoped<IPackageService, PackageService>();
 builder.Services.AddScoped<IParkingAreaService, ParkingAreaService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPriceService, PriceSevice>();
-builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IUserService, UserService>();

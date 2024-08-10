@@ -1,6 +1,8 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -162,38 +164,38 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync(int pageIndex, int pageSize)
+        public async Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
         {
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<ParkingArea>>
+                    return new Return<IEnumerable<GetParkingAreaReqDto>>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _parkingAreaRepository.GetAllParkingAreasAsync(pageIndex, pageSize);
+                var result = await _parkingAreaRepository.GetAllParkingAreasAsync(req);
                 if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<IEnumerable<ParkingArea>>
+                    return new Return<IEnumerable<GetParkingAreaReqDto>>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                return new Return<IEnumerable<ParkingArea>>
+                return new Return<IEnumerable<GetParkingAreaReqDto>>
                 {
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception ex)
             {
-                return new Return<IEnumerable<ParkingArea>>
+                return new Return<IEnumerable<GetParkingAreaReqDto>>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
@@ -218,7 +220,7 @@ namespace FUParkingService
                 var existingParkingArea = await _parkingAreaRepository.GetParkingAreaByIdAsync(req.ParkingAreaId);
                 if (existingParkingArea.Data == null || !existingParkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                 }
 
                 if (req.Name?.Trim() is not null)

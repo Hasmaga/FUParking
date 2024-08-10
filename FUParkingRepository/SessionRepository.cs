@@ -216,7 +216,7 @@ namespace FUParkingRepository
 
                 // Pagination
                 var paginatedResult = await query
-                    .OrderBy(x => x.CreatedDate)
+                    .OrderByDescending(x => x.CreatedDate)
                     .Skip(pageSize * (pageIndex - 1))
                     .Take(pageSize)
                     .ToListAsync();

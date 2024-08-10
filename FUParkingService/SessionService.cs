@@ -796,10 +796,9 @@ namespace FUParkingService
                         Data = listSessionData,
                         TotalRecord = 0
                     };
-                }
-                listSession.Data = listSession.Data.OrderByDescending(x => x.CreatedDate).ToList();
+                }                
                 foreach (var item in listSession.Data)
-                {
+                {                   
                     var payment = await _paymentRepository.GetPaymentBySessionIdAsync(item.Id);
                     if (!payment.IsSuccess)
                     {

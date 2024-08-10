@@ -216,10 +216,14 @@ namespace FUParkingRepository
                             vehicles = vehicles.Where(v => v.PlateNumber.Contains(req.SearchInput));
                             break;
                         case "EMAIL":
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             vehicles = vehicles.Where(v => v.Customer.Email.Contains(req.SearchInput));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                             break;
                         case "VEHICLETYPE":
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             vehicles = vehicles.Where(v => v.VehicleType.Name.Contains(req.SearchInput));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                             break;
                     }
                 }

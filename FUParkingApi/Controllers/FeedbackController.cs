@@ -15,126 +15,72 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class FeedbackController : Controller
     {
-        private readonly IFeedbackService _feedbackService;
-        private readonly IHelpperService _helpperService;
+        private readonly IFeedbackService _feedbackService;        
+        private readonly ILogger<FeedbackController> _logger;
 
-        public FeedbackController(IFeedbackService feedbackService, IHelpperService helpperService)
+        public FeedbackController(IFeedbackService feedbackService, ILogger<FeedbackController> logger)
         {
-            _feedbackService = feedbackService;
-            _helpperService = helpperService;
+            _feedbackService = feedbackService;            
+            _logger = logger;
         }
 
         [HttpGet("customers")]
         public async Task<IActionResult> CustomerViewFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            Return<IEnumerable<GetFeedbackByCustomerResDto>> res = new()
+            var result = await _feedbackService.GetFeedbacksByCustomerIdAsync(pageSize, pageIndex);
+            if (!result.IsSuccess)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
-            try
-            {
-                Guid customerGuid = _helpperService.GetAccIdFromLogged();
-                if (customerGuid == Guid.Empty)
+                if (result.InternalErrorMessage is not null)
                 {
-                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
-                    return Unauthorized(res);
-                };
-
-                if (!ModelState.IsValid)
-                {
-                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
+                    _logger.LogError("Error when get feedbacks by customer id: {ex}", result.InternalErrorMessage);
                 }
-
-                res = await _feedbackService.GetFeedbacksByCustomerIdAsync(pageSize, pageIndex);
-
-                if ((res.Message ?? "").Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(502, res);
-            }
+            return Ok(result);
         }
 
         [HttpPost("customers")]
         public async Task<IActionResult> CustomerCreateFeedbackAsync([FromBody] FeedbackReqDto request)
         {
-            Return<dynamic> res = new()
+            var result = await _feedbackService.CreateFeedbackAsync(request);
+            if (!result.IsSuccess)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
-            try
-            {
-                Guid customerGuid = _helpperService.GetAccIdFromLogged();
-                if (customerGuid == Guid.Empty)
+                if (result.InternalErrorMessage is not null)
                 {
-                    res.Message = ErrorEnumApplication.NOT_AUTHORITY;
-                    return Unauthorized(res);
+                    _logger.LogError("Error when create feedback: {ex}", result.InternalErrorMessage);
+                }
+                return result.Message switch
+                {
+                    ErrorEnumApplication.NOT_AUTHENTICATION => StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHENTICATION }),
+                    ErrorEnumApplication.NOT_AUTHORITY => StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
+                    ErrorEnumApplication.ACCOUNT_IS_BANNED => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED }),
+                    ErrorEnumApplication.NOT_FOUND_OBJECT => StatusCode(404, new Return<dynamic> { Message = ErrorEnumApplication.NOT_FOUND_OBJECT }),
+                    _ => StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR }),
                 };
-
-                if (!ModelState.IsValid)
-                {
-                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
-                }
-
-                Return<dynamic> createFeedbackRes = await _feedbackService.CreateFeedbackAsync(request);
-                res.Message = createFeedbackRes.Message;
-                if (!createFeedbackRes.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(createFeedbackRes);
             }
-            catch (Exception)
-            {
-                return StatusCode(502, res);
-            }
+            return Ok(result);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            Return<IEnumerable<GetListFeedbacksResDto>> res = new()
+            var result = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex);
+            if (!result.IsSuccess)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR
-            };
-            try
-            {
-                Guid userGuid = _helpperService.GetAccIdFromLogged();
-                if (userGuid == Guid.Empty)
+                if (result.InternalErrorMessage is not null)
                 {
-                    return Unauthorized();
+                    _logger.LogError("Error when get feedbacks: {ex}", result.InternalErrorMessage);
                 }
-
-                res = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex);
-
-                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
+                return result.Message switch
                 {
-                    return Unauthorized(res);
-                }
-
-                if (res.Message.Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
-
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
+                    ErrorEnumApplication.NOT_AUTHENTICATION => StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHENTICATION }),
+                    ErrorEnumApplication.NOT_AUTHORITY => StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
+                    ErrorEnumApplication.ACCOUNT_IS_LOCK => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_LOCK }),
+                    ErrorEnumApplication.ACCOUNT_IS_BANNED => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED }),
+                    _ => StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR }),
+                };
             }
-            catch
-            {
-                return StatusCode(502, res);
-            }
+            return Ok(result);
         }
     }
 }

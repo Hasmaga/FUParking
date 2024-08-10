@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -14,133 +15,104 @@ namespace FUParkingApi.Controllers
     public class PackageController : Controller
     {
         private readonly IPackageService _packageService;
+        private readonly ILogger<PackageController> _logger;
 
-        public PackageController(IPackageService packageService)
+        public PackageController(IPackageService packageService, ILogger<PackageController> logger)
         {
             _packageService = packageService;
+            _logger = logger;
         }
 
-        [HttpGet("")]
-        public async Task<IActionResult> GetCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
+        [HttpGet]
+        public async Task<IActionResult> GetCoinPackages(GetListObjectWithFiller req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                int effectivePageIndex = pageIndex ?? Pagination.PAGE_INDEX;
-                int effectivePageSize = pageSize ?? Pagination.PAGE_SIZE;
-
-                var result = await _packageService.GetCoinPackages(null, effectivePageSize, effectivePageIndex);
-                if (result.IsSuccess)
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _packageService.GetPackageForUserAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
                 {
-                    return Ok(result);
+                    _logger.LogError("Error when get coin packages: {ex}", result.InternalErrorMessage);
                 }
-                return BadRequest(result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<string>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
 
-        [HttpGet("active")]
+        [HttpGet("customer")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetActiveCoinPackages([FromQuery] int? pageIndex, [FromQuery] int? pageSize)
+        public async Task<IActionResult> GetActiveCoinPackages(GetListObjectWithPageReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                int effectivePageIndex = pageIndex ?? Pagination.PAGE_INDEX;
-                int effectivePageSize = pageSize ?? Pagination.PAGE_SIZE;
-
-                var result = await _packageService.GetCoinPackages(StatusPackageEnum.ACTIVE, effectivePageSize, effectivePageIndex);
-                if (result.IsSuccess)
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _packageService.GetPackagesByCustomerAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
                 {
-                    return Ok(result);
+                    _logger.LogError("Error when get coin packages: {ex}", result.InternalErrorMessage);
                 }
-                return BadRequest(result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<string>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateCoinPackage(CreateCoinPackageReqDto reqDto)
         {
-            Return<dynamic> res = new()
+            if (!ModelState.IsValid)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                if (!ModelState.IsValid)
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _packageService.CreateCoinPackage(reqDto);
+            if (!result.IsSuccess) {
+                if (result.InternalErrorMessage is not null)
                 {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                    _logger.LogError("Error when create coin package: {ex}", result.InternalErrorMessage);
                 }
-
-                res = await _packageService.CreateCoinPackage(reqDto);
-                if (!res.IsSuccess)
-                    return BadRequest(res);
-                return Ok(res);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch
-            {
-                return StatusCode(500, res);
-            }
+            return StatusCode(200, result);
         }
 
         [HttpPut("{packageId}")]
         public async Task<IActionResult> UpdateCoinPackage([FromRoute] Guid packageId, [FromBody] UpdateCoinPackageReqDto updateCoinPackageReqDto)
         {
-            Return<dynamic> res = new()
+            if (!ModelState.IsValid)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            updateCoinPackageReqDto.PackageId = packageId;
+            var result = await _packageService.UpdateCoinPackage(updateCoinPackageReqDto);
+            if (!result.IsSuccess)
             {
-                if (!ModelState.IsValid)
+                if (result.InternalErrorMessage is not null)
                 {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
+                    _logger.LogError("Error when update coin package: {ex}", result.InternalErrorMessage);
                 }
-
-                updateCoinPackageReqDto.PackageId = packageId;
-
-                res = await _packageService.UpdateCoinPackage(updateCoinPackageReqDto);
-                if (!res.IsSuccess)
-                    return BadRequest(res);
-                return Ok(res);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch
-            {
-                return StatusCode(500, res);
-            }
+            return StatusCode(200, result);
         }
 
         [HttpDelete("{packageId}")]
         public async Task<IActionResult> DeleteCoinPackage(Guid packageId)
         {
-            Return<dynamic> res = new()
+            var result = await _packageService.DeleteCoinPackage(packageId);
+            if (!result.IsSuccess)
             {
-                Message = ErrorEnumApplication.SERVER_ERROR,
-            };
-            try
-            {
-                res = await _packageService.DeleteCoinPackage(packageId);
-                if (!res.IsSuccess)
-                    return BadRequest(res);
-                return Ok(res);
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when delete coin package: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch
-            {
-                return StatusCode(500, res);
-            }
+            return StatusCode(200, result);
         }
     }
 }

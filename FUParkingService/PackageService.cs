@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -17,64 +18,34 @@ namespace FUParkingService
         {
             _packageRepository = packageRepository;
             _helpperService = helpperService;
-        }
+        }                
 
-        public async Task<Return<IEnumerable<dynamic>>> GetCoinPackages(string? status, int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<SupervisorGetCoinPackageResDto>>> GetPackageForUserAsync(GetListObjectWithFiller req)
         {
             try
             {
-                if (status == StatusPackageEnum.ACTIVE || status == null)
-                {
-                    // Token is invalid, treat as customer and return active packages
-                    var activePackagesResult = await _packageRepository.GetCoinPackages(StatusPackageEnum.ACTIVE, pageSize, pageIndex);
-                    if (!activePackagesResult.IsSuccess)
-                    {
-                        return new Return<IEnumerable<dynamic>>
-                        {
-                            InternalErrorMessage = activePackagesResult.InternalErrorMessage,
-                            Message = ErrorEnumApplication.SERVER_ERROR
-                        };
-                    }
-                    return new Return<IEnumerable<dynamic>>
-                    {
-                        IsSuccess = true,
-                        Data = activePackagesResult.Data?.Select(package => new CustomerGetCoinPackageResDto
-                        {
-                            Id = package.Id,
-                            Name = package.Name,
-                            CoinAmount = package.CoinAmount.ToString(),
-                            Price = package.Price,
-                            ExtraCoin = package.ExtraCoin,
-                            EXPPackage = package.EXPPackage
-                        }),
-                        TotalRecord = activePackagesResult.TotalRecord,
-                        Message = activePackagesResult.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
-                    };
-                }
-
-                // Check if token is valid
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<dynamic>>
+                    return new Return<IEnumerable<SupervisorGetCoinPackageResDto>>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
                 }
-                var allPackagesResult = await _packageRepository.GetCoinPackages(null, pageSize, pageIndex);
-                if (!allPackagesResult.IsSuccess)
+                var result = await _packageRepository.GetAllPackagesAsync(req);
+                if (!result.IsSuccess)
                 {
-                    return new Return<IEnumerable<dynamic>>
+                    return new Return<IEnumerable<SupervisorGetCoinPackageResDto>>
                     {
-                        InternalErrorMessage = allPackagesResult.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
                     };
                 }
-                return new Return<IEnumerable<dynamic>>
+                return new Return<IEnumerable<SupervisorGetCoinPackageResDto>>
                 {
-                    IsSuccess = allPackagesResult.IsSuccess,
-                    Data = allPackagesResult.Data?.Select(package => new SupervisorGetCoinPackageResDto
+                    IsSuccess = true,
+                    Data = result.Data?.Select(package => new SupervisorGetCoinPackageResDto
                     {
                         Id = package.Id,
                         Name = package.Name,
@@ -86,13 +57,52 @@ namespace FUParkingService
                         CreateDate = package.CreatedDate.ToString("dd/MM/yyyy"),
                         DeletedDate = package.DeletedDate?.ToString("dd/MM/yyyy")
                     }),
-                    TotalRecord = allPackagesResult.TotalRecord,
-                    Message = allPackagesResult.IsSuccess ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.SERVER_ERROR
+                    TotalRecord = result.TotalRecord,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            } 
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<SupervisorGetCoinPackageResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<CustomerGetCoinPackageResDto>>> GetPackagesByCustomerAsync(GetListObjectWithPageReqDto req)
+        {
+            try
+            {
+                var result = await _packageRepository.GetPackageForCustomerAsync(req);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<CustomerGetCoinPackageResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<CustomerGetCoinPackageResDto>>
+                {
+                    IsSuccess = true,
+                    Data = result.Data?.Select(package => new CustomerGetCoinPackageResDto
+                    {
+                        Id = package.Id,
+                        Name = package.Name,
+                        CoinAmount = package.CoinAmount.ToString(),
+                        Price = package.Price,
+                        ExtraCoin = package.ExtraCoin,
+                        EXPPackage = package.EXPPackage
+                    }),
+                    TotalRecord = result.TotalRecord,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
             {
-                return new Return<IEnumerable<dynamic>>
+                return new Return<IEnumerable<CustomerGetCoinPackageResDto>>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

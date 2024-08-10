@@ -25,115 +25,59 @@ namespace FUParkingApi.Controllers
         [HttpPost("free")]
         public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CustomerReqDto req)
         {
-            Return<dynamic> res = new() { Message = ErrorEnumApplication.SERVER_ERROR };
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return UnprocessableEntity(Helper.GetValidationErrors(ModelState));
-                }
-
-                res = await _customerService.CreateCustomerAsync(req);
-                if (res.Message.Equals(ErrorEnumApplication.NOT_AUTHORITY))
-                {
-                    return Unauthorized(res);
-                }
-
-                if (res.Message.Equals(ErrorEnumApplication.EMAIL_IS_EXIST))
-                {
-                    return Conflict(res);
-                }
-
-                if (res.Message.Equals(ErrorEnumApplication.BANNED))
-                {
-                    return Forbid();
-                }
-
-                if (!res.IsSuccess)
-                {
-                    return BadRequest(res);
-                }
-                return Ok(res);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch
+            var result = await _customerService.CreateCustomerAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
             {
-                return StatusCode(502, res);
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when create non-paid customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return Ok(result);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCustomerListAsync(GetCustomersWithFillerReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var res = await _customerService.GetListCustomerAsync(req);
-                if (!res.IsSuccess)
-                {
-                    switch (res.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(401, res);
-                        case ErrorEnumApplication.BANNED:
-                            return StatusCode(403, res);
-                        default:
-                            if (res.InternalErrorMessage is not null)
-                            {
-                                _logger.LogError("Error at get list customer: {ex}", res.InternalErrorMessage);
-                            }
-                            return StatusCode(500, res);
-                    }
-                }
-                return Ok(res);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception ex)
+            var res = await _customerService.GetListCustomerAsync(req);
+            if (!res.IsSuccess)
             {
-                _logger.LogError("Error at get list customer: {ex}", ex);
-                return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
+                if (res.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get list customer: {ex}", res.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(res.Message);
             }
+            return Ok(res);
         }
 
         [Authorize]
         [HttpPut("status")]
         public async Task<IActionResult> UpdateCustomerStatusAsync([FromBody] ChangeStatusCustomerReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                    );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
-                }
-
-                var result = await _customerService.ChangeStatusCustomerAsync(req);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest(result);
-                }
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception)
+            var result = await _customerService.ChangeStatusCustomerAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
             {
-                return StatusCode(500, new Return<object>
+                if (result.InternalErrorMessage is not null)
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
+                    _logger.LogError("Error when update customer status: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return Ok(result);
         }
     }
 }

@@ -92,7 +92,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Wallets.FirstOrDefaultAsync(w => w.CustomerId.Equals(customerId) && w.WalletType == WalletType.EXTRA);
+                var result = await _db.Wallets
+                    .FirstOrDefaultAsync(w => w.CustomerId
+                    .Equals(customerId) && w.WalletType == WalletType.EXTRA);
                 return new Return<Wallet>
                 {
                     IsSuccess = true,
@@ -137,8 +139,9 @@ namespace FUParkingRepository
         {
             try
             {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 // Get all ExpiredDate of Wallet Extra, if ExpiredDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")), set Extra = 0
-                var wallets = await _db.Wallets.Where(w => w.WalletType == WalletType.EXTRA && w.EXPDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))).ToListAsync();
+                var wallets = await _db.Wallets.Where(w => w.WalletType == WalletType.EXTRA && w.EXPDate <= datetimenow).ToListAsync();
                 foreach (var wallet in wallets)
                 {
                     wallet.Balance = 0;

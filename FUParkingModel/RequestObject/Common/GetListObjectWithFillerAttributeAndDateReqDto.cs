@@ -5,12 +5,20 @@ namespace FUParkingModel.RequestObject.Common
 {
     public class GetListObjectWithFillerAttributeAndDateReqDto
     {
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageSize { get; set; } = Pagination.PAGE_SIZE;
+
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageIndex { get; set; } = Pagination.PAGE_INDEX;
+
         public DateTime? StartDate { get; set; }
+
         public DateTime? EndDate { get; set; }
+
         public string? SearchInput { get; set; }
+
         public string? Attribute { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (validationContext is not null)

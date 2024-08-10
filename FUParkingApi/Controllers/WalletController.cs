@@ -1,7 +1,6 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,125 +24,76 @@ namespace FUParkingApi.Controllers
         [HttpGet("transaction/main")]
         public async Task<IActionResult> GetTransactionWalletMain([FromQuery] GetListObjectWithFillerDateReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var result = await _walletService.GetTransactionWalletMainAsync(req);
-                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
-                {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        default:
-                            _logger.LogError("Error when get transaction wallet main: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
-                    }
-                }
-                return StatusCode(200, result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception ex)
+            var result = await _walletService.GetTransactionWalletMainAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
-                _logger.LogError("Error when get transaction wallet main: {ex}", ex.Message);
-                return StatusCode(500, new Return<dynamic>
+                if (result.InternalErrorMessage is not null)
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
+                    _logger.LogError("Error at get transaction wallet main: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
+
         }
 
         [HttpGet("transaction/extra")]
         public async Task<IActionResult> GetTransactionWalletExtra([FromQuery] GetListObjectWithFillerDateReqDto req)
         {
-            try
+
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var result = await _walletService.GetTransactionWalletExtraAsync(req);
-                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
-                {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        default:
-                            _logger.LogError("Error when get transaction wallet extra: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
-                    }
-                }
-                return StatusCode(200, result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception ex)
+            var result = await _walletService.GetTransactionWalletExtraAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
-                _logger.LogError("Error when get transaction wallet extra: {ex}", ex.Message);
-                return StatusCode(500, new Return<dynamic>
+                if (result.InternalErrorMessage is not null)
                 {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
+                    _logger.LogError("Error at get transaction wallet extra: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
+
         }
 
         [HttpGet("balance/main")]
         public async Task<IActionResult> GetBalanceWalletMain()
         {
-            try
+
+            var result = await _walletService.GetBalanceWalletMainAsync();
+            if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
-                var result = await _walletService.GetBalanceWalletMainAsync();
-                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+                if (result.InternalErrorMessage is not null)
                 {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        default:
-                            _logger.LogError("Error when get balance wallet main: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
-                    }
+                    _logger.LogError("Error at get balance wallet main: {ex}", result.InternalErrorMessage);
                 }
-                return StatusCode(200, result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error when get balance wallet main: {ex}", ex.Message);
-                return StatusCode(500, new Return<dynamic>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
+
         }
 
         [HttpGet("balance/extra")]
         public async Task<IActionResult> GetBalanceWalletExtra()
         {
-            try
+
+            var result = await _walletService.GetBalanceWalletExtraAsync();
+            if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
-                var result = await _walletService.GetBalanceWalletExtraAsync();
-                if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+                if (result.InternalErrorMessage is not null)
                 {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY });
-                        default:
-                            _logger.LogError("Error when get balance wallet extra: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR });
-                    }
+                    _logger.LogError("Error at get balance wallet extra: {ex}", result.InternalErrorMessage);
                 }
-                return StatusCode(200, result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error when get balance wallet extra: {ex}", ex.Message);
-                return StatusCode(500, new Return<dynamic>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
+
         }
     }
 }

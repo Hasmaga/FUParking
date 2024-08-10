@@ -15,99 +15,70 @@ namespace FUParkingApi.Controllers
     public class GateController : Controller
     {
         private readonly IGateService _gateService;
+        private readonly ILogger<GateController> _logger;
 
-        public GateController(IGateService gateService)
+        public GateController(IGateService gateService, ILogger<GateController> logger)
         {
             _gateService = gateService;
+            _logger = logger;
         }
 
         [Authorize]
         [HttpGet("/api/gates")]
         public async Task<IActionResult> GetListGate(GetListObjectWithFiller req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var result = await _gateService.GetAllGateAsync(req);
-                if (result.IsSuccess == false)
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _gateService.GetAllGateAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
                 {
-                    return BadRequest(result);
+                    _logger.LogError("Error when get list gate: {ex}", result.InternalErrorMessage);
                 }
-                return Ok(result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return BadRequest(new Return<IEnumerable<Gate>>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateGateAsync([FromBody] CreateGateReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                    );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
-                }
-                var result = await _gateService.CreateGateAsync(req);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception e)
+            var result = await _gateService.CreateGateAsync(req);
+            if (!result.IsSuccess)
             {
-                return StatusCode(500, new Return<string>
+                if (result.InternalErrorMessage is not null)
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-
-                    InternalErrorMessage = e,
-                });
+                    _logger.LogError("Error when create gate: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateGateAsync([FromRoute] Guid id, [FromBody] UpdateGateReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-
-                var result = await _gateService.UpdateGateAsync(req, id);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception e)
+            var result = await _gateService.UpdateGateAsync(req, id);
+            if (!result.IsSuccess)
             {
-                return StatusCode(500, new Return<string>
+                if (result.InternalErrorMessage is not null)
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-
-                    InternalErrorMessage = e,
-                });
+                    _logger.LogError("Error when update gate: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
         }
 
 
@@ -115,31 +86,16 @@ namespace FUParkingApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGate([FromRoute] Guid id)
         {
-            try
+            var result = await _gateService.DeleteGate(id);
+            if (!result.IsSuccess)
             {
-                if (!ModelState.IsValid)
+                if (result.InternalErrorMessage is not null)
                 {
-                    return StatusCode(500, Helper.GetValidationErrors(ModelState));
+                    _logger.LogError("Error when delete gate: {ex}", result.InternalErrorMessage);
                 }
-
-                var result = await _gateService.DeleteGate(id);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest(result);
-                }
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<object>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
     }
 }

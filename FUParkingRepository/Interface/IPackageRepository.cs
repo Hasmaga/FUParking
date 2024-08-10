@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -7,9 +8,8 @@ namespace FUParkingRepository.Interface
     {
         Task<Return<Package>> CreatePackageAsync(Package package);
         Task<Return<Package>> GetPackageByPackageIdAsync(Guid id);
-        Task<Return<IEnumerable<Package>>> GetPackagesByStatusAsync(bool active);
-        Task<Return<IEnumerable<Package>>> GetAllPackagesAsync();
-        Task<Return<IEnumerable<Package>>> GetCoinPackages(string? status, int pageSize, int pageIndex);
+        Task<Return<IEnumerable<Package>>> GetPackageForCustomerAsync(GetListObjectWithPageReqDto req);
+        Task<Return<IEnumerable<Package>>> GetAllPackagesAsync(GetListObjectWithFiller req);        
         Task<Return<Package>> UpdateCoinPackage(Package package);
         Task<Return<Package>> GetPackageByNameAsync(string PacketName);
     }

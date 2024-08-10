@@ -167,7 +167,7 @@ namespace FUParkingService
         }
 
 
-        public async Task<Return<bool>> CallbackZaloPayAsync(string app_trans_id) // Not exp date yet
+        public async Task<Return<bool>> CallbackZaloPayAsync(string app_trans_id)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try

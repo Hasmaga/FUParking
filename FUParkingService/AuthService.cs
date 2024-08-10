@@ -120,20 +120,13 @@ namespace FUParkingService
         public async Task<Return<LoginResDto>> LoginWithCredentialAsync(LoginWithCredentialReqDto req)
         {
             try
-            {
-                // Check the email is registered
-                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());
-                if (!isUserRegistered.IsSuccess)
+            {                
+                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());                
+                if (!isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isUserRegistered.Data is null)
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT) || isUserRegistered.Data is null)
-                {
-                    return new Return<LoginResDto>
-                    {
+                        InternalErrorMessage = isUserRegistered.InternalErrorMessage,
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
                 }
@@ -141,7 +134,14 @@ namespace FUParkingService
                 {
                     return new Return<LoginResDto>
                     {
-                        Message = ErrorEnumApplication.ACCOUNT_IS_BANNED
+                        Message = ErrorEnumApplication.ACCOUNT_IS_LOCK
+                    };
+                }
+                if (isUserRegistered.Data.StatusUser == StatusUserEnum.INACTIVE)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.ACCOUNT_IS_INACTIVE
                     };
                 }
                 // Check the password is correct
@@ -168,8 +168,8 @@ namespace FUParkingService
                     Data = new LoginResDto
                     {
                         BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
-                        Name = isUserRegistered.Data.FullName ?? "",
-                        Email = isUserRegistered.Data.Email ?? "",
+                        Name = isUserRegistered.Data.FullName,
+                        Email = isUserRegistered.Data.Email,
                         Role = isUserRegistered.Data.Role?.Name ?? ""
                     },
                     IsSuccess = true,
@@ -190,25 +190,30 @@ namespace FUParkingService
         {
             try
             {
-                // Check token is valid
-                var isValid = _helpperService.IsTokenValid();
-                if (isValid == false)
+                if (!_helpperService.IsTokenValid())
                 {
                     return new Return<LoginResDto>
                     {
                         Message = ErrorEnumApplication.NOT_AUTHENTICATION
                     };
                 }
-                var user = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
-                if (!user.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || user.Data is null)
+                var accountLogged = await _userRepository.GetUserByIdAsync(_helpperService.GetAccIdFromLogged());
+                if (!accountLogged.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || accountLogged.Data == null || accountLogged.Data.Role?.Name == null)
                 {
                     return new Return<LoginResDto>
                     {
-                        InternalErrorMessage = user.InternalErrorMessage,
-                        Message = ErrorEnumApplication.USER_NOT_EXIST
+                        InternalErrorMessage = accountLogged.InternalErrorMessage,
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-                if (user.Data.WrongPassword >= 5)
+                if (accountLogged.Data.WrongPassword >= 5)
+                {
+                    return new Return<LoginResDto>
+                    {
+                        Message = ErrorEnumApplication.ACCOUNT_IS_LOCK
+                    };
+                }
+                if (accountLogged.Data.StatusUser.Equals(StatusUserEnum.INACTIVE))
                 {
                     return new Return<LoginResDto>
                     {
@@ -219,7 +224,7 @@ namespace FUParkingService
                 {
                     Data = new LoginResDto
                     {
-                        Role = user.Data.Role?.Name ?? ""
+                        Role = accountLogged.Data.Role?.Name ?? ""
                     },
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
@@ -306,8 +311,8 @@ namespace FUParkingService
                         Data = new LoginWithGoogleMoblieResDto
                         {
                             BearerToken = CreateBearerTokenAccount(resultCreateCus.Data.Id),
-                            Name = resultCreateCus.Data.FullName ?? "",
-                            Email = resultCreateCus.Data.Email ?? "",
+                            Name = resultCreateCus.Data.FullName,
+                            Email = resultCreateCus.Data.Email,
                             Avatar = payload.Picture
                         },
                         IsSuccess = true,
@@ -322,8 +327,8 @@ namespace FUParkingService
                         Data = new LoginWithGoogleMoblieResDto
                         {
                             BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
-                            Name = isUserRegistered.Data.FullName ?? "",
-                            Email = isUserRegistered.Data.Email ?? "",
+                            Name = isUserRegistered.Data.FullName,
+                            Email = isUserRegistered.Data.Email,
                             Avatar = payload.Picture
                         },
                         IsSuccess = true,

@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
@@ -29,14 +30,15 @@ namespace FUParkingApi.Controllers
                     return StatusCode(400, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
                 }
                 var result = await _zaloService.CallbackZaloPayAsync(req.AppTransId);
-                if (result.IsSuccess)
+                if (!result.IsSuccess)
                 {
-                    return StatusCode(200, result);
+                    if (result.InternalErrorMessage is not null)
+                    {
+                        _logger.LogInformation("Error at Callback Zalo: {result.InternalErrorMessage}", result.InternalErrorMessage);
+                    }
+                    return Helper.GetErrorResponse(result.Message);
                 }
-                else
-                {
-                    return StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR });
-                }
+                return Ok(new Return<bool> { Message = SuccessfullyEnumServer.SUCCESSFULLY});
             }
             catch (Exception ex)
             {
@@ -46,13 +48,26 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] dynamic cbdata)
+        public async Task<IActionResult> CallbackZaloPayAsync([FromBody] dynamic cbdata)
         {            
             var result = new Dictionary<string, object>();            
             var dataStr = cbdata.GetProperty("data").GetString();
             var dataJson = JsonConvert.DeserializeObject<Dictionary<string, object>>(dataStr);
             var appTransId = dataJson["app_trans_id"];
-            var result1 = await _zaloService.CallbackZaloPayAsync(appTransId);
+            Return<bool> result1 = await _zaloService.CallbackZaloPayAsync(appTransId);
+            if (!result1.IsSuccess)
+            {
+                if (result1.InternalErrorMessage is not null)
+                {
+                    _logger.LogInformation("Error at Callback Zalo: {result1.InternalErrorMessage}", result1.InternalErrorMessage);
+                }
+                switch (result1.Message) {                    
+                    default:
+                        result["return_code"] = 0;
+                        result["return_message"] = "error";
+                        break;
+                }
+            }
             result["return_code"] = 1;
             result["return_message"] = "success";
             return Ok(result);

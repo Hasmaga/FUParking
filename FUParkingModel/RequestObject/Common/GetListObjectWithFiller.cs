@@ -7,9 +7,11 @@ namespace FUParkingModel.RequestObject.Common
     public class GetListObjectWithFiller : IValidatableObject
     {
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageSize { get; set; } = Pagination.PAGE_SIZE;
 
         [FromQuery]
+        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageIndex { get; set; } = Pagination.PAGE_INDEX;
 
         [FromQuery]

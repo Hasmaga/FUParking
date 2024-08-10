@@ -107,7 +107,7 @@ namespace FUParkingService
                         CreatedDate = x.CreatedDate,
                     }),
                     TotalRecord = res.TotalRecord,
-                    Message = res.TotalRecord > 0 ? SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    Message = res.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception ex)
@@ -201,6 +201,16 @@ namespace FUParkingService
                     {
                         InternalErrorMessage = card.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_NOT_EXIST
+                    };
+                }
+                // Check card is in use
+                var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(CardId);
+                if (isCardInUse.Data?.GateOutId is not null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isCardInUse.InternalErrorMessage,
+                        Message = ErrorEnumApplication.CARD_IN_USE
                     };
                 }
                 card.Data.PlateNumber = PlateNumber;

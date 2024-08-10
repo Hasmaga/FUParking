@@ -1,10 +1,12 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace FUParkingApi.Controllers
 {
@@ -14,139 +16,93 @@ namespace FUParkingApi.Controllers
     public class ParkingAreaController : Controller
     {
         private readonly IParkingAreaService _parkingAreaService;
+        private readonly ILogger<ParkingAreaController> _logger;
 
-        public ParkingAreaController(IParkingAreaService parkingAreaService)
+        public ParkingAreaController(IParkingAreaService parkingAreaService, ILogger<ParkingAreaController> logger)
         {
             _parkingAreaService = parkingAreaService;
+            _logger = logger;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateParkingAreaAsync([FromBody] CreateParkingAreaReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToList()
-                    );
-                    return StatusCode(422, new Return<Dictionary<string, List<string>?>>
-                    {
-                        Data = errors,
-                        IsSuccess = false,
-                        Message = ErrorEnumApplication.INVALID_INPUT
-                    });
-                }
-                var result = await _parkingAreaService.CreateParkingAreaAsync(req);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception e)
+            var result = await _parkingAreaService.CreateParkingAreaAsync(req);
+            if (!result.IsSuccess)
             {
-                return StatusCode(500, new Return<string>
+                if (result.InternalErrorMessage is not null)
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-
-                    InternalErrorMessage = e,
-                });
+                    _logger.LogError("Error when create parking area: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetParkingAreasAsync(int pageIndex, int pageSize)
+        public async Task<IActionResult> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var result = await _parkingAreaService.GetParkingAreasAsync(pageIndex, pageSize);
-                if (result.IsSuccess)
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _parkingAreaService.GetParkingAreasAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
                 {
-                    return Ok(result);
+                    _logger.LogError("Error when get parking areas: {ex}", result.InternalErrorMessage);
                 }
-                return BadRequest(result);
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<string>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-
-                UpdateParkingAreaReqDto updateParkingAreaReqDto = new()
-                {
-                    ParkingAreaId = id,
-                    Name = req.Name,
-                    Description = req.Description,
-                    Block = req.Block,
-                    MaxCapacity = req.MaxCapacity,
-                    Mode = req.Mode,
-                };
-
-                var result = await _parkingAreaService.UpdateParkingAreaAsync(updateParkingAreaReqDto);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception e)
+            var result = await _parkingAreaService.UpdateParkingAreaAsync(new UpdateParkingAreaReqDto
             {
-                return StatusCode(500, new Return<string>
+                ParkingAreaId = id,
+                Block = req.Block,
+                Description = req.Description,
+                MaxCapacity = req.MaxCapacity,
+                Name = req.Name,
+                Mode = req.Mode                
+            });
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
                 {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-
-                    InternalErrorMessage = e,
-                });
+                    _logger.LogError("Error when update parking area: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
         }
 
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteParkingArea([FromRoute] Guid id)
         {
-            try
+            var result = await _parkingAreaService.DeleteParkingArea(id);
+            if (!result.IsSuccess)
             {
-                if (!ModelState.IsValid)
+                if (result.InternalErrorMessage is not null)
                 {
-                    return StatusCode(500, Helper.GetValidationErrors(ModelState));
+                    _logger.LogError("Error when delete parking area: {ex}", result.InternalErrorMessage);
                 }
-
-                var result = await _parkingAreaService.DeleteParkingArea(id);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return BadRequest(result);
-                }
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception)
-            {
-                return StatusCode(500, new Return<object>
-                {
-                    IsSuccess = false,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-            }
+            return StatusCode(200, result);
         }
     }
 }

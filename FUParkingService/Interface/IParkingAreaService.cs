@@ -1,5 +1,7 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -8,7 +10,7 @@ namespace FUParkingService.Interface
     {
         Task<Return<dynamic>> CreateParkingAreaAsync(CreateParkingAreaReqDto req);
         Task<Return<dynamic>> DeleteParkingArea(Guid id);
-        Task<Return<IEnumerable<ParkingArea>>> GetParkingAreasAsync(int pageIndex, int pageSize);
+        Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithPageReqDto req);
         Task<Return<dynamic>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
     }
 }

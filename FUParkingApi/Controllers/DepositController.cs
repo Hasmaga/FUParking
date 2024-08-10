@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -11,37 +12,28 @@ namespace FUParkingApi.Controllers
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class DepositController : Controller
     {
-        public readonly IZaloService _zaloService;
+        private readonly IZaloService _zaloService;
+        private readonly ILogger<DepositController> _logger;
 
-        public DepositController(IZaloService zaloService)
+        public DepositController(IZaloService zaloService, ILogger<DepositController> logger)
         {
             _zaloService = zaloService;
+            _logger = logger;
         }
 
         [HttpPost("{packetId}")]
         public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute] Guid packetId)
         {
-            try
+            var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
+            if (!result.Message.Equals(SuccessfullyEnumServer.SUCCESSFULLY))
             {
-                var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packetId);
-                if (result.IsSuccess)
+                if (result.InternalErrorMessage is not null)
                 {
-                    return StatusCode(200, result);
+                    _logger.LogError("Error when create request buy package by ZaloPay: {ex}", result.InternalErrorMessage);
                 }
-                else
-                {
-                    return result.Message switch
-                    {
-                        ErrorEnumApplication.NOT_AUTHORITY => StatusCode(403, new Return<bool> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
-                        ErrorEnumApplication.PACKAGE_NOT_EXIST => StatusCode(404, new Return<bool> { Message = ErrorEnumApplication.PACKAGE_NOT_EXIST }),
-                        _ => StatusCode(500, new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR }),
-                    };
-                }
+                return Helper.GetErrorResponse(result.Message);
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(result);
         }
     }
 }

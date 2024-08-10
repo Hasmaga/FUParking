@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,31 +25,20 @@ namespace FUParkingApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetListTransactionPaymentAsync([FromQuery] GetListObjectWithFillerAttributeAndDateReqDto req)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return StatusCode(422, Helper.GetValidationErrors(ModelState));
-                }
-                var result = await _transactionService.GetListTransactionPaymentAsync(req);
-                if (!result.IsSuccess)
-                {
-                    switch (result.Message)
-                    {
-                        case ErrorEnumApplication.NOT_AUTHORITY:
-                            return StatusCode(403, new { message = ErrorEnumApplication.NOT_AUTHORITY });
-                        default:
-                            _logger.LogInformation("Error when get list transaction payment: {ex}", result.InternalErrorMessage);
-                            return StatusCode(500, new { message = ErrorEnumApplication.SERVER_ERROR });
-                    }
-                }
-                return Ok(result);
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            catch (Exception ex)
+            var result = await _transactionService.GetListTransactionPaymentAsync(req);
+            if (!result.IsSuccess)
             {
-                _logger.LogError("Error when get list transaction payment: {ex}", ex.Message);
-                return StatusCode(500, new { message = "Internal server error." });
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Get list transaction payment: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
             }
+            return StatusCode(200, result);
         }
     }
 }
