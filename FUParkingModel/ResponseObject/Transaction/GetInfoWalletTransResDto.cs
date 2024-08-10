@@ -2,6 +2,7 @@
 {
     public class GetInfoWalletTransResDto
     {
+        public Guid Id { get; set; }
         public int Amount { get; set; }
         public string TransactionDescription { get; set; } = null!;
         public string TransactionStatus { get; set; } = null!;

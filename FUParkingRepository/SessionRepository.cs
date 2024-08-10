@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -258,6 +259,41 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<Session>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticSessionAppResDto>>> StatisticSessionAppAsync()
+        {
+            try
+            {
+                var datetimeend = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var datetimestart = datetimeend.AddDays(-30);
+                // Get total session each day from datetimestart to datetimeend and group by date
+                var result = await _db.Sessions
+                    .Where(x => x.CreatedDate >= datetimestart && x.CreatedDate <= datetimeend && x.Status.Equals(SessionEnum.CLOSED))
+                    .GroupBy(x => x.CreatedDate.Date)
+                    .Select(x => new StatisticSessionAppResDto
+                    {
+                        Date = x.Key,
+                        TotalSession = x.Count()
+                    })
+                    .OrderBy(x => x.Date)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<StatisticSessionAppResDto>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticSessionAppResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e

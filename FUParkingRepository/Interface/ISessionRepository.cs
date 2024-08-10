@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -14,5 +15,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Session>> UpdateSessionAsync(Session session);
         Task<Return<IEnumerable<Session>>> GetListSessionByCustomerIdAsync(Guid customerId, DateTime? startDate, DateTime? endDate, int pageSize, int pageIndex);
         Task<Return<IEnumerable<Session>>> GetListSessionActiveByParkingIdAsync(Guid parkingId);
+        Task<Return<IEnumerable<StatisticSessionAppResDto>>> StatisticSessionAppAsync();
     }
 }

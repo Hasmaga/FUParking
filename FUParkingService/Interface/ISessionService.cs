@@ -2,6 +2,7 @@
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -13,5 +14,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> UpdatePaymentSessionAsync(string CardNumber);
         Task<Return<CheckOutResDto>> CheckOutAsync(CheckOutAsyncReqDto req);
         Task<Return<IEnumerable<GetHistorySessionResDto>>> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req);
+        Task<Return<IEnumerable<StatisticSessionAppResDto>>> StatisticSessionAppAsync();
     }
 }

@@ -188,6 +188,19 @@ namespace FUParkingService
                 }
                 return new Return<IEnumerable<GetParkingAreaReqDto>>
                 {
+                    Data = result.Data?.Select(p => new GetParkingAreaReqDto
+                    {
+                        Id = p.Id,
+                        Block = p.Block,
+                        CreateBy = p.CreateBy?.Email ?? "",
+                        CreateDate = p.CreatedDate,
+                        Description = p.Description ?? "",
+                        LastModifyBy = p.LastModifyBy?.Email,
+                        LastModifyDate = p.LastModifyDate,
+                        MaxCapacity = p.MaxCapacity,
+                        Name = p.Name,
+                        StatusParkingArea = p.StatusParkingArea
+                    }),
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,

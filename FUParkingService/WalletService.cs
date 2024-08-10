@@ -51,6 +51,7 @@ namespace FUParkingService
 
                 var data = transactions.Data?.Select(x => new GetInfoWalletTransResDto
                 {
+                    Id = x.Id,
                     Amount = x.Amount,
                     TransactionDescription = x.TransactionDescription,
                     TransactionStatus = x.TransactionStatus,
@@ -106,11 +107,12 @@ namespace FUParkingService
 
                 var data = transactions.Data?.Select(x => new GetInfoWalletTransResDto
                 {
+                    Id = x.Id,
                     Amount = x.Amount,
                     TransactionDescription = x.TransactionDescription,
                     TransactionStatus = x.TransactionStatus,
                     Date = x.CreatedDate,
-                    TransactionType = x.DepositId is null ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
+                    TransactionType = (x.DepositId is not null) ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
                 });
 
                 return new Return<IEnumerable<GetInfoWalletTransResDto>>()
