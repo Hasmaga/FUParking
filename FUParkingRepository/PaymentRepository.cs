@@ -214,7 +214,7 @@ namespace FUParkingRepository
                 };
             }
         }
-        public async Task<Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>> StatisticSessionPaymentMethodByCustomerAsync(Guid customerId)
+        public async Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodByCustomerAsync(Guid customerId)
         {
             try
             {
@@ -234,19 +234,19 @@ namespace FUParkingRepository
                     .ToListAsync();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
-                var resultWallet = new StatisticSessionPaymentMethodByCustomerResDto()
+                var resultWallet = new StatisticSessionPaymentMethodResDto()
                 {
                     PaymentMethod = PaymentMethods.WALLET,
                     TotalPayment = resultListPaymentWallet.Count,
                 };
 
-                var resultCash = new StatisticSessionPaymentMethodByCustomerResDto()
+                var resultCash = new StatisticSessionPaymentMethodResDto()
                 {
                     PaymentMethod = PaymentMethods.CASH,
                     TotalPayment = resultListPaymentCash.Count,
                 };
 
-                return new Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>
+                return new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
                 {
                     Message = SuccessfullyEnumServer.SUCCESSFULLY,
                     Data = [resultWallet, resultCash],
@@ -255,7 +255,54 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>
+                return new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodAsync()
+        {
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var resultListPaymentWallet = await _db.Payments
+                    .Include(t => t.Session.Customer)
+                    .Include(t => t.PaymentMethod)
+                    .Where(t => t.CreatedDate.Month == datetimenow.Month && t.CreatedDate.Year == datetimenow.Year && t.PaymentMethod.Name.Equals(PaymentMethods.WALLET))
+                    .ToListAsync();
+
+                var resultListPaymentCash = await _db.Payments
+                    .Include(t => t.Session.Customer)
+                    .Include(t => t.PaymentMethod)
+                    .Where(t =>  t.CreatedDate.Month == datetimenow.Month && t.CreatedDate.Year == datetimenow.Year && t.PaymentMethod.Name.Equals(PaymentMethods.CASH))
+                    .ToListAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                var resultWallet = new StatisticSessionPaymentMethodResDto()
+                {
+                    PaymentMethod = PaymentMethods.WALLET,
+                    TotalPayment = resultListPaymentWallet.Count,
+                };
+
+                var resultCash = new StatisticSessionPaymentMethodResDto()
+                {
+                    PaymentMethod = PaymentMethods.CASH,
+                    TotalPayment = resultListPaymentCash.Count,
+                };
+
+                return new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
+                {
+                    Message = SuccessfullyEnumServer.SUCCESSFULLY,
+                    Data = [resultWallet, resultCash],
+                    IsSuccess = true,
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e

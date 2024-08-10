@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.ResponseObject.Statistic
 {
-    public class StatisticSessionPaymentMethodByCustomerResDto
+    public class StatisticSessionPaymentMethodResDto
     {
         public string PaymentMethod { get; set; } = null!;
         public int TotalPayment { get; set; }

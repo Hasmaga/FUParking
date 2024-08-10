@@ -14,6 +14,7 @@ namespace FUParkingRepository.Interface
         Task<Return<PaymentMethod>> GetPaymentMethodByNameAsync(string name);
         Task<Return<Payment>> GetPaymentBySessionIdAsync(Guid sessionId);
         Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync(Guid customerId);
-        Task<Return<IEnumerable<StatisticSessionPaymentMethodByCustomerResDto>>> StatisticSessionPaymentMethodByCustomerAsync(Guid customerId);
+        Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodByCustomerAsync(Guid customerId);
+        Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodAsync();
     }
 }

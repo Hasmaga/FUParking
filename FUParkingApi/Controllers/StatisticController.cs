@@ -77,5 +77,24 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("payment/method")]
+        public async Task<IActionResult> StatisticSessionPaymentMethodAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _paymentService.StatisticSessionPaymentMethodAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
