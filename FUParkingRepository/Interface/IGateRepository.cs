@@ -14,5 +14,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Gate>> GetGateByIdAsync(Guid id);
         Task<Return<Gate>> GetGateByNameAsync(string name);
         Task<Return<Gate>> GetGateTypeByIdAsync(Guid id);
+        Task<Return<Gate>> GetVirtualGateAsync();
     }
 }

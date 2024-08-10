@@ -15,6 +15,9 @@ namespace FUParkingModel.Object
         public Guid? CreatedById { get; set; }
         public User? CreateBy { get; set; }
 
+        [Column("Status")]
+        public string Status { get; set; } = null!;
+
         [Column("LastModifyById")]
         public Guid? LastModifyById { get; set; }
         public User? LastModifyBy { get; set; }

@@ -6,5 +6,6 @@
         public string CardNumber { get; set; } = null!;
         public string? PlateNumber { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string Status { get; set; } = null!;
     }
 }

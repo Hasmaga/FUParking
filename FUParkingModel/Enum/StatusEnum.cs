@@ -135,4 +135,11 @@
         public const string ACTIVE = "ACTIVE";
         public const string INACTIVE = "INACTIVE";
     }
+
+    public class CardStatusEnum
+    {
+        public const string ACTIVE = "ACTIVE";
+        public const string INACTIVE = "INACTIVE";
+        public const string MISSING = "MISSING";
+    }
 }

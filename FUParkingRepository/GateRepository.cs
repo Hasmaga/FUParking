@@ -221,5 +221,25 @@ namespace FUParkingRepository
                 return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
+
+        public async Task<Return<Gate>> GetVirtualGateAsync()
+        {
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var result = await _db.Gates.Include(p => p.GateType).FirstOrDefaultAsync(p => p.GateType.Name.Equals(GateTypeEnum.VIRUTAL));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                return new Return<Gate>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
     }
 }

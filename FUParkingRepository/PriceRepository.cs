@@ -201,14 +201,15 @@ namespace FUParkingRepository
         {
             try
             {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _db.PriceTables
                     .Include(r => r.VehicleType)
                     .Where(t => t.DeletedDate == null &&
                         t.VehicleTypeId.Equals(vehicleTypeId) &&
                         (
                             (t.ApplyFromDate == null && t.ApplyToDate == null) || // Active forever
-                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))) || // Check ApplyFromDate
-                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"))) // Check ApplyToDate
+                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= datetimenow || // Check ApplyFromDate
+                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= datetimenow)) // Check ApplyToDate
                         )
                     ).ToListAsync();
                 return new Return<IEnumerable<PriceTable>>
