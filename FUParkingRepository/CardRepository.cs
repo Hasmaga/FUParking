@@ -44,7 +44,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var query = _db.Cards.Where(x => x.DeletedDate == null).AsQueryable();
+                var query = _db.Cards
+                    .Where(x => x.DeletedDate == null)
+                    .AsQueryable();
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {
                     switch (req.Attribute.ToLower())

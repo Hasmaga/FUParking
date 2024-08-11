@@ -7,5 +7,7 @@
         public string? PlateNumber { get; set; }
         public DateTime CreatedDate { get; set; }
         public string Status { get; set; } = null!;
+        public string SessionId { get; set; } = null!;
+        public string PlateNumberSession { get; set; } = null!;
     }
 }
