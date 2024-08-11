@@ -96,7 +96,8 @@ namespace FUParkingService
                     Data = result.Data?.Select(x => new GetVehicleTypeByCustomerResDto
                     {
                         Id = x.Id,
-                        Name = x.Name
+                        Name = x.Name,
+                        Description = x.Description ?? ""
                     })
                 };
             }

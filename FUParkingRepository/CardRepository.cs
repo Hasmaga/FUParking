@@ -45,6 +45,7 @@ namespace FUParkingRepository
             try
             {
                 var query = _db.Cards
+                    .Include(x => x.Sessions)
                     .Where(x => x.DeletedDate == null)
                     .AsQueryable();
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))

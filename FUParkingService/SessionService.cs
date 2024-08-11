@@ -122,7 +122,7 @@ namespace FUParkingService
                             PlateImage = vehicle.Data.PlateImage,
                             PlateNumber = vehicle.Data.PlateNumber,
                             StatusVehicle = vehicle.Data.StatusVehicle,
-                            VehicleType = vehicle.Data.VehicleType?.Name ?? "",
+                            VehicleType = vehicle.Data.VehicleTypeId,
                         }
                     };
                 // Object name = PlateNumber + TimeIn + extension file
