@@ -635,7 +635,7 @@ namespace FUParkingService
         {
             try
             {
-                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     return new Return<dynamic>

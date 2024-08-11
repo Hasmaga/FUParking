@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Card;
+using FUParkingModel.ResponseObject.Card;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -40,14 +41,35 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<Card>>> GetAllCardsAsync(GetCardsWithFillerReqDto req)
+        public async Task<Return<IEnumerable<GetCardResDto>>> GetAllCardsAsync(GetCardsWithFillerReqDto req)
         {
             try
             {
+#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8604 // Possible null reference argument.
                 var query = _db.Cards
                     .Include(x => x.Sessions)
                     .Where(x => x.DeletedDate == null)
-                    .AsQueryable();
+                    .Select(x => new GetCardResDto
+                    {
+                        Id = x.Id,
+                        CardNumber = x.CardNumber,
+                        PlateNumber = x.PlateNumber,
+                        CreatedDate = x.CreatedDate,
+                        Status = x.Status,
+                        SessionId = _db.Sessions
+                            .Where(s => s.CardId == x.Id && s.Status.Equals(SessionEnum.PARKED))
+                            .OrderByDescending(s => s.CreatedDate)
+                            .Select(s => s.Id.ToString())
+                            .FirstOrDefault(),
+                        PlateNumberSession = _db.Sessions
+                            .Where(s => s.CardId == x.Id && s.Status.Equals(SessionEnum.PARKED))
+                            .OrderByDescending(s => s.CreatedDate)
+                            .Select(s => s.PlateNumber)
+                            .FirstOrDefault()
+                    });
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8601 // Possible null reference assignment.
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {
                     switch (req.Attribute.ToLower())
@@ -58,6 +80,12 @@ namespace FUParkingRepository
                         case "platenumber":
                             query = query.Where(x => (x.PlateNumber ?? "").Contains(req.SearchInput));
                             break;
+                        case "platenumbersession":
+                            query = query.Where(x => (x.PlateNumberSession ?? "").Contains(req.SearchInput));
+                            break;
+                        case "status":
+                            query = query.Where(x => x.Status.Equals(req.SearchInput));
+                            break;
                     }
                 }
                 var result = await query
@@ -65,7 +93,7 @@ namespace FUParkingRepository
                         .Skip((req.PageIndex - 1) * req.PageSize)
                         .Take(req.PageSize)
                         .ToListAsync();
-                return new Return<IEnumerable<Card>>
+                return new Return<IEnumerable<GetCardResDto>>
                 {
                     Data = result,
                     TotalRecord = result.Count,
@@ -75,7 +103,7 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<Card>>
+                return new Return<IEnumerable<GetCardResDto>>
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR

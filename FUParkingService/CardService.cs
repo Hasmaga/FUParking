@@ -97,20 +97,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                return new Return<IEnumerable<GetCardResDto>>
-                {
-                    IsSuccess = true,
-                    Data = res.Data?.Select(x => new GetCardResDto
-                    {
-                        Id = x.Id,
-                        PlateNumber = x.PlateNumber,
-                        CardNumber = x.CardNumber,
-                        CreatedDate = x.CreatedDate,
-                        Status = x.Status
-                    }),
-                    TotalRecord = res.TotalRecord,
-                    Message = res.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
-                };
+                return res;
             }
             catch (Exception ex)
             {
