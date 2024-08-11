@@ -629,5 +629,65 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<dynamic>> ChangeStatusVehicleByUserAsync(UpdateNewCustomerVehicleByUseReqDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                if (!vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicle.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_NOT_EXIST
+                    };
+                }
+                // Check vehicle is active
+                if (vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.ACTIVE))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_IS_ACTIVE
+                    };
+                }
+                if (req.VehicleType is not null && req.IsAccept)
+                {
+                    // Check vehicle type id exists
+                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleType.Value);
+                    if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                        };
+                    }
+                    vehicle.Data.VehicleTypeId = req.VehicleType.Value;
+                }
+                vehicle.Data.StatusVehicle = req.IsAccept ? StatusVehicleEnum.ACTIVE : StatusVehicleEnum.REJECTED;
+                vehicle.Data.LastModifyById = checkAuth.Data.Id;
+                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

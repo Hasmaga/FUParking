@@ -11,6 +11,7 @@
         public const string PENDING = "PENDING";
         public const string ACTIVE = "ACTIVE";
         public const string INACTIVE = "INACTIVE";
+        public const string REJECTED = "REJECTED";
     }
 
     public class StatusPriceTableEnum

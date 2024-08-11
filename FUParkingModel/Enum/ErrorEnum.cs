@@ -61,6 +61,7 @@
         public const string CANNOT_DELETE_VIRTUAL_GATE = "Can not delete virual gate";
         public const string CANNOT_DELETE_VIRTUAL_PARKING_AREA = "Can not delete virtual parking area";
         public const string NOT_FOUND_SESSION_WITH_PLATE_NUMBER = "Not found session with plate number";
+        public const string VEHICLE_IS_ACTIVE = "Vehicle is active";
     }
 
     public class MinioErrorServerDefineEnum

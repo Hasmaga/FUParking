@@ -108,6 +108,8 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
                 if (!vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicle.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+                if (!vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.REJECTED))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
                 if (vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
                     // show information vehicle 
                     return new Return<dynamic>

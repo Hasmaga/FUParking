@@ -226,5 +226,20 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpPut("user/vehicle")]
+        public async Task<IActionResult> ChangeStatusVehicleByUser([FromBody] UpdateNewCustomerVehicleByUseReqDto req)
+        {
+            var result = await _vehicleService.ChangeStatusVehicleByUserAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at change status vehicle by user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
