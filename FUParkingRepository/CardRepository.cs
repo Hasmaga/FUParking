@@ -46,7 +46,6 @@ namespace FUParkingRepository
             try
             {
 #pragma warning disable CS8601 // Possible null reference assignment.
-#pragma warning disable CS8604 // Possible null reference argument.
                 var query = _db.Cards
                     .Include(x => x.Sessions)
                     .Where(x => x.DeletedDate == null)
@@ -68,7 +67,6 @@ namespace FUParkingRepository
                             .Select(s => s.PlateNumber)
                             .FirstOrDefault()
                     });
-#pragma warning restore CS8604 // Possible null reference argument.
 #pragma warning restore CS8601 // Possible null reference assignment.
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {

@@ -847,12 +847,10 @@ namespace FUParkingService
                     });
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
-                
-
                 return new Return<IEnumerable<GetHistorySessionResDto>>
                 {
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Message = listSession.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     Data = listSessionData,
                     TotalRecord = listSession.TotalRecord
                 };

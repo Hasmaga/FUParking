@@ -466,7 +466,7 @@ namespace FUParkingService
                     };
                 }
                 var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
-                var objNamePlateNumber = checkAuth.Data.Id + "_" + "_" + TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
+                var objNamePlateNumber = checkAuth.Data.Id + "_" + reqDto.PlateNumber + "_" + TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
                 UploadObjectReqDto imageUpload = new()
                 {
                     ObjFile = reqDto.PlateImage,
