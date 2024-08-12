@@ -119,7 +119,7 @@ namespace FUParkingService
                 var zaloPayResDto = JsonConvert.DeserializeObject<ZaloResDto>(result);
                 if (zaloPayResDto?.Return_code != 1)
                 {
-                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR, Data = zaloPayResDto };
                 }
                 // Create transaction                
                 var paymentMethod = (await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.ZALOPAY)).Data;

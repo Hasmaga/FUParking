@@ -62,6 +62,7 @@
         public const string CANNOT_DELETE_VIRTUAL_PARKING_AREA = "Can not delete virtual parking area";
         public const string NOT_FOUND_SESSION_WITH_PLATE_NUMBER = "Not found session with plate number";
         public const string VEHICLE_IS_ACTIVE = "Vehicle is active";
+        public const string CARD_IS_INACTIVE = "Card is inactive";
     }
 
     public class MinioErrorServerDefineEnum

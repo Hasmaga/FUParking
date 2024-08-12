@@ -63,6 +63,8 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
+                if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
@@ -1163,6 +1165,27 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetSessionByUserResDto>>> GetListSessionByUserAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetSessionByUserResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetSessionByUserResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

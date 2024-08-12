@@ -1,6 +1,8 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -300,6 +302,81 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }        
+        }
+
+        // Supervisor/manager want to see the session list
+        // To support suppervisor checkout function
+        public async Task<Return<IEnumerable<Session>>> GetListSessionAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
+        {          
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var query = _db.Sessions
+                    .Include(t => t.GateIn)
+                    .Include(t => t.GateOut)
+                    .Include(t => t.PaymentMethod)
+                    .Include(t => t.CreateBy)
+                    .Include(t => t.LastModifyBy)
+                    .Include(t => t.VehicleType)
+                    .Include(t => t.GateIn.ParkingArea)
+                    .Include(t => t.Customer)
+                    .Where(p => p.DeletedDate != null)
+                    .AsQueryable();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+                if (req.SearchInput is not null && req.SearchInput is not null)
+                {
+                    switch (req.SearchInput.ToLower()) {
+                        case "platenumber":
+                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
+                            break;
+
+                        case "cardnumber":
+                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput)); 
+                            break;
+
+                        case "customeremail":
+                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
+                            break;
+
+                        case "parkingarea":
+                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
+                            break;
+
+                        default:                             
+                            break;
+                    }
+                }
+
+                req.StartDate ??= DateTime.MinValue;
+
+                req.EndDate ??= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
+
+                var result = await query
+                    .Where(p => p.CreatedDate >= req.StartDate && p.CreatedDate <= req.EndDate)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<Session>>
+                {
+                    Data = result,
+                    TotalRecord = query.Count(),
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true,
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<Session>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        
     }
 }

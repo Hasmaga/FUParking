@@ -153,6 +153,8 @@ app.Services.UseScheduler(scheduler =>
 {
     scheduler.Schedule<PriceBackgroudTask>().DailyAtHour(0);
 });
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FU_Parking"));
 
 app.UseHttpsRedirection();
 

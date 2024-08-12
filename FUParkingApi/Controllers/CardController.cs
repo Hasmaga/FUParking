@@ -29,7 +29,7 @@ namespace FUParkingApi.Controllers
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
             var result = await _cardService.GetListCardAsync(req);
-            if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+            if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
                 {
