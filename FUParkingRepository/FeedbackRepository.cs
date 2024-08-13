@@ -47,17 +47,21 @@ namespace FUParkingRepository
             };
             try
             {
-                var feedbacks = await _db.Feedbacks.Where(f => f.CustomerId.Equals(customerGuiId))
-                                                                .Include(t => t.ParkingArea)
-                                                                .Where(t => t.DeletedDate == null)
-                                                                .OrderByDescending(t => t.CreatedDate)
-                                                                .Skip((pageIndex - 1) * pageSize)
-                                                                .Take(pageSize)
-                                                                .ToListAsync();
-                res.Data = feedbacks;
+                var query = _db.Feedbacks.Where(f => f.CustomerId.Equals(customerGuiId))
+                                         .Include(t => t.ParkingArea)
+                                         .Where(t => t.DeletedDate == null)
+                                         .OrderByDescending(t => t.CreatedDate)
+                                         .AsQueryable();                                         
+
+                var result = await query                                                                
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                res.Data = result;
                 res.IsSuccess = true;
-                res.TotalRecord = feedbacks.Count;
-                res.Message = feedbacks.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
+                res.TotalRecord = query.Count();
+                res.Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 return res;
             }
             catch (Exception ex)
