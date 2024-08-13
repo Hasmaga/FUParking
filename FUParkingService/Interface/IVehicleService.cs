@@ -21,5 +21,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> UpdateVehicleInformationAsync(UpdateCustomerVehicleReqDto req);
         Task<Return<dynamic>> ChangeStatusVehicleTypeAsync(Guid id, bool isActive);
         Task<Return<dynamic>> ChangeStatusVehicleByUserAsync(UpdateNewCustomerVehicleByUseReqDto req);
+        Task<Return<dynamic>> UpdateStatusInactiveAndActiveCustomerVehicleByUserAsync(UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req);
     }
 }

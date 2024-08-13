@@ -241,5 +241,20 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpPut("user/vehicle/status")]
+        public async Task<IActionResult> UpdateStatusInactiveAndActiveCustomerVehicleByUser(UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req)
+        {
+            var result = await _vehicleService.UpdateStatusInactiveAndActiveCustomerVehicleByUserAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update status inactive and active customer vehicle by user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
