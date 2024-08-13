@@ -2,7 +2,7 @@
 
 namespace FUParkingModel.RequestObject
 {
-    public class CreatePriceTableReqDto
+    public class CreatePriceTableReqDto : IValidatableObject
     {
         [Required(ErrorMessage = "Must have vehicle type")]
         public Guid VehicleTypeId { get; set; }
@@ -13,10 +13,9 @@ namespace FUParkingModel.RequestObject
 
         [Required(ErrorMessage = "Must have Name")]
         public string Name { get; set; } = null!;
-
-        public DateTime? ApplyFromDate { get; set; }
-
-        [Compare("ApplyFromDate", ErrorMessage = "Apply To Date must be greater than Apply From Date")]
+        
+        public DateTime? ApplyFromDate { get; set; }       
+        
         public DateTime? ApplyToDate { get; set; }
 
         [Required(ErrorMessage = "Must have price per block default")]
@@ -27,5 +26,16 @@ namespace FUParkingModel.RequestObject
 
         [Required(ErrorMessage = "Must have min price default")]
         public int MinPrice { get; set; }
-    }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (ApplyFromDate is not null && ApplyToDate is not null)
+            {
+                if (ApplyFromDate > ApplyToDate)
+                {
+                    yield return new ValidationResult("ApplyFromDate must be less than ApplyToDate", new[] { nameof(ApplyFromDate), nameof(ApplyToDate) });
+                }
+            }
+        }
+    }    
 }

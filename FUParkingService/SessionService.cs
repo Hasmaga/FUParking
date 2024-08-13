@@ -1181,7 +1181,42 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                return null;
+                var result = await _sessionRepository.GetListSessionAsync(req);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetSessionByUserResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<IEnumerable<GetSessionByUserResDto>>
+                {
+                    IsSuccess = true,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Data = result.Data?.Select(x => new GetSessionByUserResDto
+                    {
+                        Id = x.Id,
+                        Block = x.Block,
+                        CardNumber = x.Card?.CardNumber ?? "",
+                        Mode = x.Mode,
+                        ImageOutUrl = x.ImageOutUrl ?? "",
+                        ImageInUrl = x.ImageInUrl,
+                        GateOutName = x.GateOut?.Name ?? "",
+                        GateInName = x.GateIn?.Name ?? "",
+                        PlateNumber = x.PlateNumber,
+                        CheckInStaff = x.CreateBy?.Email ?? "",
+                        CheckOutStaff = x.LastModifyBy?.Email ?? "",
+                        TimeIn = x.TimeIn,
+                        CustomerEmail = x.Customer?.Email ?? "",
+                        ParkingArea = x.GateIn?.ParkingArea?.Name ?? "",
+                        PaymentMethodName = x.PaymentMethod?.Name ?? "",
+                        Status = x.Status,
+                        TimeOut = x.TimeOut,
+                        VehicleTypeName = x.VehicleType?.Name ?? "",
+                    }),
+                    TotalRecord = result.TotalRecord
+                };
             }
             catch (Exception ex)
             {

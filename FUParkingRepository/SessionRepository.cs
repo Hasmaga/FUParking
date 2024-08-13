@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -320,7 +319,8 @@ namespace FUParkingRepository
                     .Include(t => t.VehicleType)
                     .Include(t => t.GateIn.ParkingArea)
                     .Include(t => t.Customer)
-                    .Where(p => p.DeletedDate != null)
+                    .Include(t => t.Card)
+                    .Where(p => p.DeletedDate == null)
                     .AsQueryable();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
@@ -337,11 +337,7 @@ namespace FUParkingRepository
 
                         case "customeremail":
                             query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
-                            break;
-
-                        case "parkingarea":
-                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
-                            break;
+                            break;                        
 
                         default:                             
                             break;
@@ -375,8 +371,6 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }
-
-        
+        }        
     }
 }

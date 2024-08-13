@@ -277,24 +277,21 @@ namespace FUParkingService
                 }
 
                 var result = await _priceRepository.GetAllPriceItemByPriceTableAsync(PriceTableId);
-                if (result.IsSuccess)
+                if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<PriceItem>>
                     {
-                        Data = result.Data,
-                        IsSuccess = true,
-                        TotalRecord = result.TotalRecord,
-                        Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
-                    };
-                }
-                else
-                {
-                    return new Return<IEnumerable<PriceItem>>
-                    {
-                        IsSuccess = false,
+                        InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                return new Return<IEnumerable<PriceItem>>
+                {
+                    Data = result.Data,
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord,
+                    Message = result.Message
+                };
             }
             catch (Exception e)
             {
@@ -562,7 +559,7 @@ namespace FUParkingService
                 }
                 // Check priority is exist
                 var isPriorityExist = await _priceRepository.GetPriceTableByPriorityAndVehicleTypeAsync(req.Priority, isVehicleTypeExist.Data.Id);
-                if (!isPriorityExist.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                if (!isPriorityExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     scope.Dispose();
                     return new Return<dynamic>
@@ -610,6 +607,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                scope.Complete();
                 return new Return<dynamic>
                 {
                     IsSuccess = true,
@@ -618,6 +616,7 @@ namespace FUParkingService
             }
             catch (Exception e)
             {
+                scope.Dispose();
                 return new Return<dynamic>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,

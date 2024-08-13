@@ -1,15 +1,12 @@
 ﻿using FUParkingApi.HelperClass;
-using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Price;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FUParkingApi.Controllers
-{
-    [ApiController]
+{    
     [Authorize(AuthenticationSchemes = "Defaut")]
     public class PriceController : Controller
     {
@@ -23,7 +20,7 @@ namespace FUParkingApi.Controllers
         }           
 
         [HttpGet("/api/price/{id}/items")]
-        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync(Guid id)
+        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync([FromQuery] Guid id)
         {
             var result = await _priceService.GetAllPriceItemByPriceTableAsync(id);
             if (!result.IsSuccess)
@@ -38,7 +35,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("/api/price")]
-        public async Task<IActionResult> CreatePriceTableAsync(CreatePriceTableReqDto req)
+        public async Task<IActionResult> CreatePriceTableAsync([FromBody] CreatePriceTableReqDto req)
         {
             if (!ModelState.IsValid)
             {
@@ -57,7 +54,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPut("/api/price/status")]
-        public async Task<IActionResult> UpdatePriceTableStatusAsync(ChangeStatusPriceTableReqDto req)
+        public async Task<IActionResult> UpdatePriceTableStatusAsync([FromBody] ChangeStatusPriceTableReqDto req)
         {
             if (!ModelState.IsValid)
             {
@@ -91,7 +88,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("/api/price/vehicle/default")]
-        public async Task<IActionResult> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req)
+        public async Task<IActionResult> CreateDefaultPriceTableAsync([FromBody] CreateDefaultPriceTableReqDto req)
         {
             if (!ModelState.IsValid)
             {
@@ -110,7 +107,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("/api/price/vehicle/item/default")]
-        public async Task<IActionResult> CreateDefaultPriceItemForDefaultPriceTableAsync(CreateDefaultItemPriceReqDto req)
+        public async Task<IActionResult> CreateDefaultPriceItemForDefaultPriceTableAsync([FromBody] CreateDefaultItemPriceReqDto req)
         {
             if (!ModelState.IsValid)
             {
@@ -129,7 +126,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("/api/price/vehicle/item")]
-        public async Task<IActionResult> CreatePriceItemAsync(CreateListPriceItemReqDto req)
+        public async Task<IActionResult> CreatePriceItemAsync([FromBody] CreateListPriceItemReqDto req)
         {
             if (!ModelState.IsValid)
             {

@@ -163,6 +163,20 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
                 }
+                // Reset the wrong password count
+                if (isUserRegistered.Data.WrongPassword > 0)
+                {
+                    isUserRegistered.Data.WrongPassword = 0;
+                    var result = await _userRepository.UpdateUserAsync(isUserRegistered.Data);
+                    if (!result.IsSuccess)
+                    {
+                        return new Return<LoginResDto>
+                        {
+                            InternalErrorMessage = result.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
                 return new Return<LoginResDto>
                 {
                     Data = new LoginResDto
