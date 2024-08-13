@@ -243,7 +243,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPut("user/vehicle/status")]
-        public async Task<IActionResult> UpdateStatusInactiveAndActiveCustomerVehicleByUser(UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req)
+        public async Task<IActionResult> UpdateStatusInactiveAndActiveCustomerVehicleByUser([FromBody] UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req)
         {
             var result = await _vehicleService.UpdateStatusInactiveAndActiveCustomerVehicleByUserAsync(req);
             if (!result.IsSuccess)
