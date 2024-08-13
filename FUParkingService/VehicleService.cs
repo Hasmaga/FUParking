@@ -759,7 +759,7 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
                         };
                     }
-                    vehicle.Data.StatusVehicle = StatusVehicleEnum.REJECTED;
+                    vehicle.Data.StatusVehicle = StatusVehicleEnum.INACTIVE;
                 }
                 vehicle.Data.LastModifyById = checkAuth.Data.Id;
                 vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
