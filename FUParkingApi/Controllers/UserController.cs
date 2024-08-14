@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -74,6 +75,22 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at create manager: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsersAsync(GetListObjectWithFiller req)
+        {
+            var result = await _userService.GetListUserAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get all users: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

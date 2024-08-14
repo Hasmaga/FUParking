@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,47 @@ namespace FUParkingRepository
                     IsSuccess = true,
                     TotalRecord = result.Count,
                     Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<User>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<User>>> GetListUserAsync(GetListObjectWithFiller req)
+        {
+            try
+            {
+                var query = _db.Users
+                    .Include(r => r.Role)
+                    .AsQueryable();
+
+                if (req.Attribute != null && req.SearchInput != null)
+                {
+                    switch (req.Attribute)
+                    {
+                        case "email":
+                            query = query.Where(u => u.Email.Contains(req.SearchInput));
+                            break;
+                        case "name":
+                            query = query.Where(u => u.FullName.Contains(req.SearchInput));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                var result = await query.Skip((req.PageIndex - 1) * req.PageSize).Take(req.PageSize).ToListAsync();
+                return new Return<IEnumerable<User>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = query.Count(),
+                    Message = result.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception ex)

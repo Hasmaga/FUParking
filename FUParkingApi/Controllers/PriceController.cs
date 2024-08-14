@@ -144,5 +144,25 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+
+        [HttpPut("/api/price/vehicle/item")]
+        public async Task<IActionResult> UpdatePriceItemAsync([FromBody] CreateListPriceItemReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _priceService.UpdatePriceItemAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update price item async: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

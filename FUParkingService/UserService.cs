@@ -1,6 +1,8 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.User;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -211,6 +213,56 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetUserResDto>>> GetListUserAsync(GetListObjectWithFiller req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetUserResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _userRepository.GetListUserAsync(req);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetUserResDto>>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = result.InternalErrorMessage
+                    };
+                }
+                return new Return<IEnumerable<GetUserResDto>>
+                {
+                    IsSuccess = true,
+                    Data = result.Data?.Select(t => new GetUserResDto
+                    {
+                        CreatedDate = t.CreatedDate,
+                        Email = t.Email,
+                        FullName = t.FullName,
+                        Id = t.Id,
+                        Role = t.Role?.Name ?? "",
+                        Status= t.StatusUser
+                    }),
+                    TotalRecord = result.TotalRecord,
+                    Message = result.Message
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetUserResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
