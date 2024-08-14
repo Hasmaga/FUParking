@@ -3,6 +3,7 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Price;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ResponseObject.Price;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -11,7 +12,7 @@ namespace FUParkingService.Interface
     {
         Task<Return<dynamic>> CreateDefaultPriceItemForDefaultPriceTableAsync(CreateDefaultItemPriceReqDto req);
         Task<Return<dynamic>> CreatePriceItemAsync(CreateListPriceItemReqDto req);
-        Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
+        Task<Return<IEnumerable<GetPriceItemResDto>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
         Task<Return<bool>> UpdatePriceItemAsync(CreateListPriceItemReqDto req);
         Task<Return<dynamic>> CreateDefaultPriceTableAsync(CreateDefaultPriceTableReqDto req);
         Task<Return<dynamic>> CreatePriceTableAsync(CreatePriceTableReqDto req);

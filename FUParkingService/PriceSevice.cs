@@ -4,6 +4,7 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Price;
 using FUParkingModel.ResponseObject;
+using FUParkingModel.ResponseObject.Price;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -253,14 +254,14 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
+        public async Task<Return<IEnumerable<GetPriceItemResDto>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
         {
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<PriceItem>>
+                    return new Return<IEnumerable<GetPriceItemResDto>>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
@@ -270,7 +271,7 @@ namespace FUParkingService
                 var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(PriceTableId);
                 if (isPriceTableExist.Data == null || isPriceTableExist.IsSuccess == false)
                 {
-                    return new Return<IEnumerable<PriceItem>>
+                    return new Return<IEnumerable<GetPriceItemResDto>>
                     {
                         IsSuccess = false,
                         Message = ErrorEnumApplication.PRICE_TABLE_NOT_EXIST
@@ -280,15 +281,27 @@ namespace FUParkingService
                 var result = await _priceRepository.GetAllPriceItemByPriceTableAsync(PriceTableId);
                 if (!result.IsSuccess)
                 {
-                    return new Return<IEnumerable<PriceItem>>
+                    return new Return<IEnumerable<GetPriceItemResDto>>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                return new Return<IEnumerable<PriceItem>>
+                return new Return<IEnumerable<GetPriceItemResDto>>
                 {
-                    Data = result.Data,
+                    Data = result.Data?.Select(t => new GetPriceItemResDto
+                    {
+                        ApplyToHour = t.ApplyFromHour,
+                        ApplyFromHour = t.ApplyFromHour,
+                        MaxPrice = t.MaxPrice,
+                        MinPrice = t.MinPrice,
+                        BlockPricing = t.BlockPricing,
+                        CreatedBy = t.CreateBy?.Email ?? "",
+                        CreatedDate = t.CreatedDate,
+                        Id = t.Id,
+                        LastModifyBy = t.LastModifyBy?.Email ?? "",
+                        LastModifyDate = t.LastModifyDate
+                    }),
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
                     Message = result.Message
@@ -296,7 +309,7 @@ namespace FUParkingService
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<PriceItem>>
+                return new Return<IEnumerable<GetPriceItemResDto>>
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR

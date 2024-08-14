@@ -187,7 +187,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.PriceTables.Where(r => r.DeletedDate == null && r.Id.Equals(id)).FirstOrDefaultAsync();
+                var result = await _db.PriceTables
+                    .Where(r => r.DeletedDate == null && r.Id.Equals(id))
+                    .FirstOrDefaultAsync();
                 return new Return<PriceTable>
                 {
                     Data = result,

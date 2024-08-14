@@ -21,7 +21,7 @@ namespace FUParkingApi.Controllers
         }           
 
         [HttpGet("/api/price/{id}/items")]
-        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync([FromQuery] Guid id)
+        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync([FromRoute] Guid id)
         {
             var result = await _priceService.GetAllPriceItemByPriceTableAsync(id);
             if (!result.IsSuccess)

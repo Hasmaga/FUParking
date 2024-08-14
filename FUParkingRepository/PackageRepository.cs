@@ -52,9 +52,9 @@ namespace FUParkingRepository
                     .Take(req.PageSize)
                     .ToListAsync();
 
-                res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
+                res.Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
-                res.TotalRecord = result.Count;
+                res.TotalRecord = query.Count();
                 res.Data = result;
                 return res;
             }
