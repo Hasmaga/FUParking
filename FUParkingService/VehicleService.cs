@@ -286,7 +286,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetCustomerVehicleByCustomerIdAsync()
+        public async Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetListCustomerVehicleByCustomerIdAsync()
         {
             Return<IEnumerable<GetCustomerVehicleByCustomerResDto>> res = new()
             {
@@ -771,6 +771,60 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<GetCustomerVehicleByCustomerResDto>> GetCustomerVehicleByVehicleIdAsync(Guid VehicleId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetCustomerVehicleByCustomerResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(VehicleId);
+                if (!vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicle.Data is null)
+                {
+                    return new Return<GetCustomerVehicleByCustomerResDto>
+                    {
+                        InternalErrorMessage = vehicle.InternalErrorMessage,
+                        Message = ErrorEnumApplication.VEHICLE_NOT_EXIST
+                    };
+                }
+                if (vehicle.Data.CustomerId != checkAuth.Data.Id)
+                {
+                    return new Return<GetCustomerVehicleByCustomerResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+                return new Return<GetCustomerVehicleByCustomerResDto>
+                {
+                    Data = new GetCustomerVehicleByCustomerResDto
+                    {
+                        Id = vehicle.Data.Id,
+                        PlateNumber = vehicle.Data.PlateNumber,
+                        VehicleTypeName = vehicle.Data.VehicleType?.Name ?? "",
+                        PlateImage = vehicle.Data.PlateImage,
+                        StatusVehicle = vehicle.Data.StatusVehicle,
+                        CreateDate = vehicle.Data.CreatedDate
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetCustomerVehicleByCustomerResDto>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

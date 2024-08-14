@@ -63,6 +63,7 @@
         public const string NOT_FOUND_SESSION_WITH_PLATE_NUMBER = "Not found session with plate number";
         public const string VEHICLE_IS_ACTIVE = "Vehicle is active";
         public const string CARD_IS_INACTIVE = "Card is inactive";
+        public const string PLATE_NUMBER_NOT_MATCH = "Plate number is not match";
     }
 
     public class MinioErrorServerDefineEnum

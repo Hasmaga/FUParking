@@ -1,5 +1,6 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Price;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -73,9 +74,9 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("/api/prices")]
-        public async Task<IActionResult> GetAllPriceTableAsync()
+        public async Task<IActionResult> GetAllPriceTableAsync([FromQuery] GetListObjectWithFillerAttributeAndDateReqDto req)
         {
-            var result = await _priceService.GetAllPriceTableAsync();
+            var result = await _priceService.GetAllPriceTableAsync(req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

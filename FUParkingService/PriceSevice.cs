@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Price;
 using FUParkingModel.ResponseObject;
 using FUParkingModel.ReturnCommon;
@@ -625,7 +626,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync()
+        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
             {
@@ -638,7 +639,7 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _priceRepository.GetAllPriceTableAsync();
+                var result = await _priceRepository.GetAllPriceTableAsync(req);
                 if (result.IsSuccess && !(result.Data == null))
                 {
                     var listPriceTable = new List<GetPriceTableResDto>();

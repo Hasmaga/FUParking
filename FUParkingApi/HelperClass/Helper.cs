@@ -85,7 +85,10 @@ namespace FUParkingApi.HelperClass
                 ErrorEnumApplication.CAN_NOT_UPDATE_STATUS_DEFAULT_PRICE_TABLE => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_GATE => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_PARKING_AREA => new ObjectResult(result) { StatusCode = 409 },
-
+                ErrorEnumApplication.NOT_FOUND_SESSION_WITH_PLATE_NUMBER => new ObjectResult(result) { StatusCode = 404 },
+                ErrorEnumApplication.VEHICLE_IS_ACTIVE => new ObjectResult(result) { StatusCode = 409 },
+                ErrorEnumApplication.CARD_IS_INACTIVE => new ObjectResult(result) { StatusCode = 409 },
+                ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH => new ObjectResult(result) { StatusCode = 409 },
                 _ => new ObjectResult(result) { StatusCode = 500 },
             };
         }

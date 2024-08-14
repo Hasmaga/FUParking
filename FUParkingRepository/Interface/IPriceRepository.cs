@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -8,7 +9,7 @@ namespace FUParkingRepository.Interface
         Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable);
         Task<Return<PriceTable>> GetPriceTableByIdAsync(Guid id);
         Task<Return<PriceTable>> UpdatePriceTableAsync(PriceTable priceTable);
-        Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync();
+        Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
         Task<Return<PriceItem>> CreatePriceItemAsync(PriceItem priceItem);
         Task<Return<dynamic>> DeletePriceItemAsync(PriceItem priceItem);
         Task<Return<PriceItem>> GetPriceItemByIdAsync(Guid id);

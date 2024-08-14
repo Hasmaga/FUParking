@@ -13,7 +13,7 @@ namespace FUParkingService.Interface
         Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto);
         Task<Return<bool>> UpdateVehicleTypeAsync(Guid Id, UpdateVehicleTypeReqDto reqDto);
         Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
-        Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetCustomerVehicleByCustomerIdAsync();
+        Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetListCustomerVehicleByCustomerIdAsync();
         Task<Return<dynamic>> DeleteVehicleTypeAsync(Guid id);
         Task<Return<GetInformationVehicleCreateResDto>> CreateCustomerVehicleAsync(CreateCustomerVehicleReqDto reqDto);
         Task<Return<IEnumerable<GetVehicleTypeByCustomerResDto>>> GetListVehicleTypeByCustomer();
@@ -22,5 +22,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> ChangeStatusVehicleTypeAsync(Guid id, bool isActive);
         Task<Return<dynamic>> ChangeStatusVehicleByUserAsync(UpdateNewCustomerVehicleByUseReqDto req);
         Task<Return<dynamic>> UpdateStatusInactiveAndActiveCustomerVehicleByUserAsync(UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req);
+        Task<Return<GetCustomerVehicleByCustomerResDto>> GetCustomerVehicleByVehicleIdAsync(Guid VehicleId);
     }
 }

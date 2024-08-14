@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -129,7 +130,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync()
+        public async Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
         {
             try
             {

@@ -21,5 +21,9 @@ namespace FUParkingModel.RequestObject.Session
         [FromForm]
         [Required(ErrorMessage = "Must have ImageOut")]
         public IFormFile ImageOut { get; set; } = null!;
+
+        [FromForm]
+        [Required(ErrorMessage = "")]
+        public string PlateNumber { get; set; } = null!;
     }
 }

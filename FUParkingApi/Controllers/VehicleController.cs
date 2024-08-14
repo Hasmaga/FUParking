@@ -182,7 +182,7 @@ namespace FUParkingApi.Controllers
         public async Task<IActionResult> GetCustomerVehicleByCustomerIdAsync()
         {
 
-            var result = await _vehicleService.GetCustomerVehicleByCustomerIdAsync();
+            var result = await _vehicleService.GetListCustomerVehicleByCustomerIdAsync();
             if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
             {
                 if (result.InternalErrorMessage is not null)
@@ -251,6 +251,21 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at update status inactive and active customer vehicle by user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("customer/{id}")]
+        public async Task<IActionResult> GetCustomerVehicleByVehicleId([FromRoute] Guid id)
+        {
+            var result = await _vehicleService.GetCustomerVehicleByVehicleIdAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get customer vehicle by vehicle id: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }
