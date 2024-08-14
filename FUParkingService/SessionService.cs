@@ -1199,9 +1199,8 @@ namespace FUParkingService
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     Data = result.Data?.Select(x => new GetSessionByUserResDto
                     {
-                        Id = x.Id,
-                        Block = x.Block,
-                        CardNumber = x.Card?.CardNumber ?? "",
+                        Id = x.Id,                        
+                        CardNumber = x.Card?.CardNumber ?? "",                        
                         Mode = x.Mode,
                         ImageOutUrl = x.ImageOutUrl ?? "",
                         ImageInUrl = x.ImageInUrl,
@@ -1224,6 +1223,60 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<IEnumerable<GetSessionByUserResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<GetSessionByUserResDto>> GetSessionBySessionIdAsync(Guid sessionId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetSessionByUserResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _sessionRepository.GetSessionByIdAsync(sessionId);
+                if (!result.IsSuccess || result.Data == null)
+                {
+                    return new Return<GetSessionByUserResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<GetSessionByUserResDto>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new GetSessionByUserResDto
+                    {
+                        Id = result.Data.Id,
+                        CardNumber = result.Data.Card?.CardNumber ?? "",
+                        Mode = result.Data.Mode,
+                        ImageOutUrl = result.Data.ImageOutUrl ?? "",
+                        ImageInUrl = result.Data.ImageInUrl,
+                        GateOutName = result.Data.GateOut?.Name ?? "",
+                        GateInName = result.Data.GateIn?.Name ?? "",
+                        PlateNumber = result.Data.PlateNumber,
+                        CheckInStaff = result.Data.CreateBy?.Email ?? "",
+                        CheckOutStaff = result.Data.LastModifyBy?.Email ?? "",
+                        TimeIn = result.Data.TimeIn,
+                        CustomerEmail = result.Data.Customer?.Email ?? "",
+                        ParkingArea = result.Data.GateIn?.ParkingArea?.Name ?? "",
+                        PaymentMethodName = result.Data.PaymentMethod?.Name ?? "",
+                        Status = result.Data.Status,
+                        TimeOut = result.Data.TimeOut,
+                        VehicleTypeName = result.Data.VehicleType?.Name ?? "",                        
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetSessionByUserResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

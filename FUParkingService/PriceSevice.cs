@@ -640,36 +640,30 @@ namespace FUParkingService
                     };
                 }
                 var result = await _priceRepository.GetAllPriceTableAsync(req);
-                if (result.IsSuccess && !(result.Data == null))
-                {
-                    var listPriceTable = new List<GetPriceTableResDto>();
-                    foreach (var item in result.Data)
-                    {
-                        listPriceTable.Add(new GetPriceTableResDto
-                        {
-                            PriceTableId = item.Id,
-                            Name = item.Name,
-                            ApplyFromDate = item.ApplyFromDate,
-                            ApplyToDate = item.ApplyToDate,
-                            Priority = item.Priority,
-                            StatusPriceTable = item.StatusPriceTable ?? "",
-                            VehicleType = item.VehicleType?.Name ?? ""
-                        });
-                    }
-                    return new Return<IEnumerable<GetPriceTableResDto>>
-                    {
-                        Data = listPriceTable,
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.FOUND_OBJECT
-                    };
-                }
-                else
+                if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetPriceTableResDto>>
-                    {                        
-                        Message = ErrorEnumApplication.GET_OBJECT_ERROR
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                return new Return<IEnumerable<GetPriceTableResDto>>
+                {
+                    Data = result.Data?.Select(t => new GetPriceTableResDto
+                    {
+                        Name = t.Name,
+                        ApplyFromDate = t.ApplyFromDate,
+                        ApplyToDate = t.ApplyToDate,
+                        Priority = t.Priority,
+                        PriceTableId = t.Id,
+                        StatusPriceTable = t.StatusPriceTable,
+                        VehicleType = t.VehicleType?.Name ?? ""
+                    }),
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord,
+                    Message = result.Message
+                };
             }
             catch (Exception e)
             {
@@ -750,7 +744,7 @@ namespace FUParkingService
                     }
                     else
                     {
-                        isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.ACTIVE;
+                        isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.INACTIVE;
                         // Update status Account
                         var isUpdate = await _priceRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
                         if (isUpdate.Data == null || isUpdate.IsSuccess == false)

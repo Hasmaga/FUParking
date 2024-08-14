@@ -148,5 +148,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("user/history/{id}")]
+        public async Task<IActionResult> GetSessionBySessionIdAsync([FromRoute] Guid id)
+        {
+            var result = await _sessionService.GetSessionBySessionIdAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Get Session By Session Id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

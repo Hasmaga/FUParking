@@ -17,5 +17,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<StatisticSessionAppResDto>>> StatisticSessionAppAsync();
         Task<Return<CheckOutResDto>> CheckOutSessionByPlateNumberAsync(string PlateNumber, DateTime timeOut);
         Task<Return<IEnumerable<GetSessionByUserResDto>>> GetListSessionByUserAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
+        Task<Return<GetSessionByUserResDto>> GetSessionBySessionIdAsync(Guid sessionId);
     }
 }
