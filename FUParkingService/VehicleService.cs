@@ -562,12 +562,22 @@ namespace FUParkingService
                 if (!vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING) && !vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.REJECTED))
                     return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
 
+                // Check vehicle type id exists
+                if (req.VehicleTypeId != null)
+                {
+                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId.Value);
+                    if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                        };
+                    }
+                    vehicle.Data.VehicleTypeId = vehicleType.Data.Id;
+                }
                 if (req.PlateNumber != null)
                     vehicle.Data.PlateNumber = req.PlateNumber;
-
-                if (req.VehicleTypeId != null)
-                    vehicle.Data.VehicleTypeId = req.VehicleTypeId.Value;
-
+                vehicle.Data.StatusVehicle = StatusVehicleEnum.PENDING;
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
