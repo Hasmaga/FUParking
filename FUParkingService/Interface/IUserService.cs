@@ -11,5 +11,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> CreateSupervisorAsync(CreateUserReqDto req);
         Task<Return<bool>> CreateManagerAsync(CreateUserReqDto req);
         Task<Return<IEnumerable<GetUserResDto>>> GetListUserAsync(GetListObjectWithFiller req);
+        Task<Return<bool>> DeleteUserByIdAsync(Guid id);
     }
 }
