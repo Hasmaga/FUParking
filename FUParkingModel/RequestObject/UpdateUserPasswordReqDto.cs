@@ -9,6 +9,8 @@ namespace FUParkingModel.RequestObject
 {
     public class UpdateUserPasswordReqDto
     {
+        [Required]
+        public string OldPassword { get; set; } = null!;
 
         [Required]
         [MinLength(8, ErrorMessage = "Password has to be 8 or more character")]

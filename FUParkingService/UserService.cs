@@ -327,6 +327,7 @@ namespace FUParkingService
                 }
                 return new Return<bool>
                 {
+                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
@@ -380,6 +381,7 @@ namespace FUParkingService
                 }
                 return new Return<bool>
                 {
+                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
@@ -431,6 +433,7 @@ namespace FUParkingService
                 }
                 return new Return<bool>
                 {
+                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
@@ -470,6 +473,15 @@ namespace FUParkingService
                     };
                 }
 
+                // Verify password
+                if (!VerifyPasswordHash(req.OldPassword, Convert.FromBase64String(user.Data.PasswordSalt ?? ""), user.Data.PasswordHash ?? ""))
+                {
+                    return new Return<bool> 
+                    {
+                        Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
+                    };
+                }
+
                 user.Data.PasswordHash = CreatePassHashAndPassSalt(req.Password, out byte[] passwordSalt);
                 user.Data.PasswordSalt = Convert.ToBase64String(passwordSalt);
                 user.Data.LastModifyById = user.Data.Id;
@@ -485,6 +497,7 @@ namespace FUParkingService
                 }
                 return new Return<bool>
                 {
+                    Data = true,
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
@@ -538,6 +551,14 @@ namespace FUParkingService
                     InternalErrorMessage = ex
                 };
             }
+        }
+
+        // Verify Password Hash
+        private static bool VerifyPasswordHash(string pass, byte[] passwordSalt, string passwordHash)
+        {
+            using var hmac = new HMACSHA512(passwordSalt);
+            var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass)));
+            return computedHash.Equals(passwordHash);
         }
 
         // Create Password Hash and Password Salt
