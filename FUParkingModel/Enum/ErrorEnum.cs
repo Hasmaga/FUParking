@@ -65,6 +65,7 @@
         public const string CARD_IS_INACTIVE = "Card is inactive";
         public const string PLATE_NUMBER_NOT_MATCH = "Plate number is not match";
         public const string CAN_NOT_CHANGE_STATUS_YOURSELF = "Can not change status yourself";
+        public const string CAN_NOT_DELETE_YOUR_ACCOUNT = "Can not delete your account";
     }
 
     public class MinioErrorServerDefineEnum

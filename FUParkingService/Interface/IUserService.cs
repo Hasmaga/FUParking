@@ -15,5 +15,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> ResetWrongPasswordCountAsync(Guid userId);
         Task<Return<bool>> UpdateUserAsync(UpdateUserReqDto req);
         Task<Return<bool>> UpdatePasswordAsync(UpdateUserPasswordReqDto req);
+        Task<Return<bool>> DeleteUserByIdAsync(Guid id);
     }
 }

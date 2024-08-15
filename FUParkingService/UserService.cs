@@ -4,6 +4,7 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.User;
 using FUParkingModel.ReturnCommon;
+using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using System.Security.Cryptography;
@@ -547,5 +548,80 @@ namespace FUParkingService
             return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(pass)));
         }
         #endregion
+
+        public async Task<Return<bool>> DeleteUserByIdAsync(Guid id)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var userLoggedIn = _helpperService.GetAccIdFromLogged();
+
+                if (userLoggedIn == id)
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.CAN_NOT_DELETE_YOUR_ACCOUNT
+                    };
+                }
+
+
+                var user = await _userRepository.GetUserByIdAsync(id);
+
+                if (!user.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || user.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.USER_NOT_EXIST,
+                        InternalErrorMessage = user.InternalErrorMessage
+                    };
+                }
+
+                // if user is manager, can not change status
+                if (user.Data.Role == null || user.Data.Role.Name == RoleEnum.MANAGER)
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.NOT_AUTHORITY
+                    };
+                }
+
+                user.Data.StatusUser = StatusUserEnum.INACTIVE;
+                user.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                user.Data.LastModifyById = checkAuth.Data.Id;
+                user.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var res = await _userRepository.UpdateUserAsync(user.Data);
+                if (!res.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = res.InternalErrorMessage
+                    };
+                }
+                return new Return<bool>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY,
+                    Data = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

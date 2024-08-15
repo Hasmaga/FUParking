@@ -90,6 +90,7 @@ namespace FUParkingApi.HelperClass
                 ErrorEnumApplication.CARD_IS_INACTIVE => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.CAN_NOT_CHANGE_STATUS_YOURSELF => new ObjectResult(result) { StatusCode = 409 },
+                ErrorEnumApplication.CAN_NOT_DELETE_YOUR_ACCOUNT => new ObjectResult(result) { StatusCode = 409 },
                 _ => new ObjectResult(result) { StatusCode = 500 },
             };
         }

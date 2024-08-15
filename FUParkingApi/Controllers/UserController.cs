@@ -176,5 +176,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUserByIdAsync(Guid id)
+        {
+            var result = await _userService.DeleteUserByIdAsync(id);
+            if (!result.Message.Equals(SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY))
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at delete user by id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
