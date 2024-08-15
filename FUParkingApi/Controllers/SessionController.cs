@@ -163,5 +163,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpPost("{SessionId}/cancel")]
+        public async Task<IActionResult> CancelSessionBySessionIdAsync(Guid SessionId)
+        {
+            var result = await _sessionService.CancleSessionByIdAsync(SessionId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Cancel Session By Session Id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
