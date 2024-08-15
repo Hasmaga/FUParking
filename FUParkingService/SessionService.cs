@@ -1279,5 +1279,65 @@ namespace FUParkingService
                 return new Return<GetSessionByUserResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
+
+        public async Task<Return<bool>> CancleSessionByIdAsync(Guid sessionId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _sessionRepository.GetSessionByIdAsync(sessionId);
+                if (!result.IsSuccess || result.Data == null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                if (!result.Data.Status.Equals(SessionEnum.PARKED))
+                {
+                    return new Return<bool>
+                    {
+                        Message = ErrorEnumApplication.NOT_AUTHORITY,
+                    };
+                }
+                result.Data.Status = SessionEnum.CANCELLED;
+                result.Data.LastModifyById = checkAuth.Data.Id;
+                result.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var updateSession = await _sessionRepository.UpdateSessionAsync(result.Data);
+                if (!updateSession.IsSuccess)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = updateSession.InternalErrorMessage,
+                        Message = updateSession.Message
+                    };
+                }
+                return new Return<bool>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
+                    Data = true
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
