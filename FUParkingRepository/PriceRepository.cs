@@ -359,7 +359,7 @@ namespace FUParkingRepository
                 var result = await _db.PriceItems
                     .Where(r => r.DeletedDate == null &&
                         r.PriceTableId.Equals(priceTableId) &&
-                        r.ApplyFromHour == null &&
+                        r.ApplyFromHour == null ||
                         r.ApplyToHour == null
                     ).FirstOrDefaultAsync();
                 return new Return<PriceItem>
@@ -384,6 +384,8 @@ namespace FUParkingRepository
             try
             {
                 var priceItems = await _db.PriceItems.Where(r => r.PriceTableId.Equals(priceTableId)).ToListAsync();
+                // Not remove default price item in the list price item 
+                priceItems = priceItems.Where(r => r.ApplyFromHour != null && r.ApplyToHour != null).ToList();                
                 foreach (var item in priceItems)
                 {
                     _db.PriceItems.Remove(item);

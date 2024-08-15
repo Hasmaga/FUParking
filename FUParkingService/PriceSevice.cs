@@ -286,7 +286,7 @@ namespace FUParkingService
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                }
+                }          
                 return new Return<IEnumerable<GetPriceItemResDto>>
                 {
                     Data = result.Data?.Select(t => new GetPriceItemResDto
