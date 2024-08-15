@@ -3,12 +3,12 @@
 namespace FUParkingModel.RequestObject
 {
     public class CreatePriceItemReqDto : IValidatableObject
-    {
+    {        
         [Range(0, 24, ErrorMessage = "Range is from 0 to 24")]
-        public int? From { get; set; } // Hour
+        public int From { get; set; } // Hour
 
         [Range(0, 24, ErrorMessage = "Range is from 0 to 24")]
-        public int? To { get; set; } // Hour
+        public int To { get; set; } // Hour
 
         [Range(0, int.MaxValue, ErrorMessage = "MaxPrice must be greater than or equal to 0")]
         public int MaxPrice { get; set; }
@@ -21,7 +21,7 @@ namespace FUParkingModel.RequestObject
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (From.HasValue && To.HasValue && From >= To)
+            if (From >= To)
             {
                 yield return new ValidationResult(
                     "The 'From' hour must be less than the 'To' hour.",
