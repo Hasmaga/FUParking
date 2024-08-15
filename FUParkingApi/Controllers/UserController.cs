@@ -98,6 +98,85 @@ namespace FUParkingApi.Controllers
         }
 
         [Authorize]
+        [HttpPut("status")]
+        public async Task<IActionResult> UpdateStatusUserAsync([FromQuery] Guid userId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _userService.ChangeUserStatusAsync(userId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update status user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpPut("password-failures/reset")]
+        public async Task<IActionResult> ResetWrongPasswordCountAsync([FromQuery] Guid userId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _userService.ResetWrongPasswordCountAsync(userId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at refresh wrong password count: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpPut]
+        public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _userService.UpdateUserAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpPut("password")]
+        public async Task<IActionResult> UpdatePasswordAsync([FromBody] UpdateUserPasswordReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _userService.UpdatePasswordAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update password: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserByIdAsync(Guid id)
         {
