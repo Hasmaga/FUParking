@@ -291,7 +291,7 @@ namespace FUParkingService
                 {
                     Data = result.Data?.Select(t => new GetPriceItemResDto
                     {
-                        ApplyToHour = t.ApplyFromHour,
+                        ApplyToHour = t.ApplyToHour,
                         ApplyFromHour = t.ApplyFromHour,
                         MaxPrice = t.MaxPrice,
                         MinPrice = t.MinPrice,
