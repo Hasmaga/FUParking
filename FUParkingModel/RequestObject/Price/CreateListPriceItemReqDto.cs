@@ -12,16 +12,12 @@ namespace FUParkingModel.RequestObject.Price
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            var priceItemsWithDefinedTimes = PriceItems
-                .Where(item => item.From.HasValue && item.To.HasValue)
-                .ToList();
-
-            for (int i = 0; i < priceItemsWithDefinedTimes.Count; i++)
+            for (int i = 0; i < PriceItems.Count; i++)
             {
-                for (int j = i + 1; j < priceItemsWithDefinedTimes.Count; j++)
+                for (int j = i + 1; j < PriceItems.Count; j++)
                 {
-                    var first = priceItemsWithDefinedTimes[i];
-                    var second = priceItemsWithDefinedTimes[j];
+                    var first = PriceItems[i];
+                    var second = PriceItems[j];
 
                     if (first.From < second.To && second.From < first.To)
                     {
