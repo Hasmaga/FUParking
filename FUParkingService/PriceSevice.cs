@@ -254,7 +254,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetPriceItemResDto>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
+        public async Task<Return<IEnumerable<GetPriceItemResDto>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId, GetListObjectWithPageReqDto req)
         {
             try
             {
@@ -278,7 +278,7 @@ namespace FUParkingService
                     };
                 }
 
-                var result = await _priceRepository.GetAllPriceItemByPriceTableAsync(PriceTableId);
+                var result = await _priceRepository.GetAllPriceItemByPriceTableWithPageAsync(PriceTableId, req);
                 if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetPriceItemResDto>>
@@ -639,7 +639,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
+        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableAsync(GetListObjectWithFiller req)
         {
             try
             {
@@ -665,11 +665,11 @@ namespace FUParkingService
                 {
                     Data = result.Data?.Select(t => new GetPriceTableResDto
                     {
+                        Id = t.Id,
                         Name = t.Name,
                         ApplyFromDate = t.ApplyFromDate,
                         ApplyToDate = t.ApplyToDate,
-                        Priority = t.Priority,
-                        PriceTableId = t.Id,
+                        Priority = t.Priority,                        
                         StatusPriceTable = t.StatusPriceTable,
                         VehicleType = t.VehicleType?.Name ?? ""
                     }),

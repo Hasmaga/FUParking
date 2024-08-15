@@ -6,6 +6,7 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 
 namespace FUParkingRepository
 {
@@ -39,23 +40,26 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }
+        }        
 
-        public async Task<Return<dynamic>> DeletePriceItemAsync(PriceItem priceItem)
+        public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
         {
             try
             {
-                _db.PriceItems.Remove(priceItem);
-                await _db.SaveChangesAsync();
-                return new Return<dynamic>
+                var result = await _db.PriceItems
+                    .Where(r => r.PriceTableId.Equals(PriceTableId) && r.DeletedDate == null)
+                    .ToListAsync();                
+                return new Return<IEnumerable<PriceItem>>
                 {
+                    Data = result,
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY
+                    TotalRecord = result.Count,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception e)
             {
-                return new Return<dynamic>
+                return new Return<IEnumerable<PriceItem>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
@@ -63,17 +67,21 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId)
+        public async Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableWithPageAsync(Guid PriceTableId, GetListObjectWithPageReqDto req)
         {
             try
             {
-                var result = await _db.PriceItems.Where(r => r.PriceTableId.Equals(PriceTableId) && r.DeletedDate == null).ToListAsync();
+                var res = await _db.PriceItems
+                    .Where(r => r.PriceTableId.Equals(PriceTableId) && r.DeletedDate == null)
+                    .ToListAsync();
+
+                var result = res.Skip((req.PageIndex - 1) * req.PageSize).Take(req.PageSize);
                 return new Return<IEnumerable<PriceItem>>
                 {
                     Data = result,
                     IsSuccess = true,
-                    TotalRecord = result.Count,
-                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = res.Count,
+                    Message = res.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception e)
@@ -131,7 +139,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
+        public async Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFiller req)
         {
             try
             {
@@ -156,11 +164,6 @@ namespace FUParkingRepository
                             break;
                     }
                 }
-                req.StartDate ??= DateTime.MinValue;
-                req.EndDate ??= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-
-                query = query.Where(r => r.ApplyFromDate >= req.StartDate && r.ApplyToDate <= req.EndDate && (r.ApplyToDate == null || r.ApplyFromDate == null));
-
                 var result = await query.OrderByDescending(t => t.CreatedDate)
                     .Skip((req.PageIndex - 1) * req.PageSize)
                     .Take(req.PageSize)

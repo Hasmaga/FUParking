@@ -9,9 +9,8 @@ namespace FUParkingRepository.Interface
         Task<Return<PriceTable>> CreatePriceTableAsync(PriceTable priceTable);
         Task<Return<PriceTable>> GetPriceTableByIdAsync(Guid id);
         Task<Return<PriceTable>> UpdatePriceTableAsync(PriceTable priceTable);
-        Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
-        Task<Return<PriceItem>> CreatePriceItemAsync(PriceItem priceItem);
-        Task<Return<dynamic>> DeletePriceItemAsync(PriceItem priceItem);
+        Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableAsync(GetListObjectWithFiller req);
+        Task<Return<PriceItem>> CreatePriceItemAsync(PriceItem priceItem);        
         Task<Return<PriceItem>> GetPriceItemByIdAsync(Guid id);
         Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableAsync(Guid PriceTableId);
         Task<Return<IEnumerable<PriceTable>>> GetListPriceTableActiveByVehicleTypeAsync(Guid vehicleTypeId);
@@ -20,5 +19,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<PriceItem>>> GetListOverlapPriceItemAsync(Guid priceTableId, int from, int to);
         Task<Return<PriceItem>> GetDefaultPriceItemByPriceTableIdAsync(Guid priceTableId);
         Task<Return<dynamic>> DeleteAllPriceItemByPriceTableIdAsync(Guid priceTableId);
+        Task<Return<IEnumerable<PriceItem>>> GetAllPriceItemByPriceTableWithPageAsync(Guid PriceTableId, GetListObjectWithPageReqDto req);
     }
 }

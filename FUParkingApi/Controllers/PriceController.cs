@@ -21,9 +21,9 @@ namespace FUParkingApi.Controllers
         }           
 
         [HttpGet("/api/price/{id}/items")]
-        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync([FromRoute] Guid id)
+        public async Task<IActionResult> GetAllPriceItemByPriceTableAsync([FromRoute] Guid id, [FromQuery] GetListObjectWithPageReqDto req)
         {
-            var result = await _priceService.GetAllPriceItemByPriceTableAsync(id);
+            var result = await _priceService.GetAllPriceItemByPriceTableAsync(id, req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
@@ -74,7 +74,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("/api/prices")]
-        public async Task<IActionResult> GetAllPriceTableAsync([FromQuery] GetListObjectWithFillerAttributeAndDateReqDto req)
+        public async Task<IActionResult> GetAllPriceTableAsync([FromQuery] GetListObjectWithFiller req)
         {
             var result = await _priceService.GetAllPriceTableAsync(req);
             if (!result.IsSuccess)

@@ -1,8 +1,8 @@
 ﻿namespace FUParkingModel.ResponseObject
 {
     public class GetPriceTableResDto
-    {
-        public Guid PriceTableId { get; set; }
+    {        
+        public Guid Id { get; set; }
         public string VehicleType { get; set; } = null!;
         public int Priority { get; set; }
         public string Name { get; set; } = null!;
