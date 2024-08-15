@@ -64,6 +64,7 @@
         public const string VEHICLE_IS_ACTIVE = "Vehicle is active";
         public const string CARD_IS_INACTIVE = "Card is inactive";
         public const string PLATE_NUMBER_NOT_MATCH = "Plate number is not match";
+        public const string CAN_NOT_CHANGE_STATUS_YOURSELF = "Can not change status yourself";
     }
 
     public class MinioErrorServerDefineEnum
