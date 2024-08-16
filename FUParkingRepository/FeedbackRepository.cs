@@ -90,6 +90,12 @@ namespace FUParkingRepository
                 {
                     query = query.Where(t => t.ParkingArea.Name.Contains(parkName));
                 }
+                if(!string.IsNullOrEmpty(parkName) && !string.IsNullOrEmpty(cusName))
+                {
+                    query = query
+                        .Where(t => t.ParkingArea.Name.Contains(parkName))
+                        .Where(t => t.Customer.FullName.Contains(cusName));
+                }
 
                 var result = await query                        
                         .Skip((pageIndex - 1) * pageSize)
