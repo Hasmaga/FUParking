@@ -14,12 +14,10 @@ namespace FUParkingModel.RequestObject.Common
         [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageIndex { get; set; } = Pagination.PAGE_INDEX;
 
-        [FromQuery]
-        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
+        [FromQuery]        
         public DateTime? StartDate { get; set; }
 
-        [FromQuery]
-        [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
+        [FromQuery]        
         public DateTime? EndDate { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

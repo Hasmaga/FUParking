@@ -382,6 +382,11 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }        
+        }
+
+        public Task<Return<int>> GetTotalSessionParkingTodayAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

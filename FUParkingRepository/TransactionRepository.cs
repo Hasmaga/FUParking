@@ -209,5 +209,10 @@ namespace FUParkingRepository
             }
 
         }
+
+        public Task<Return<int>> GetRevenueTodayAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

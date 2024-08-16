@@ -11,5 +11,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Transaction>> UpdateTransactionAsync(Transaction transaction);
         Task<Return<IEnumerable<Transaction>>> GetTransByWalletIdAsync(Guid walletId, int pageSize, int pageIndex, DateTime? startDate, DateTime? endDate);
         Task<Return<IEnumerable<Transaction>>> GetListTransactionPaymentAsync(int pageSize, int pageIndex, DateTime? startDate, DateTime? endDate, string? searchInput = null, string? Attribute = null);
+        Task<Return<int>> GetRevenueTodayAsync();
     }
 }
