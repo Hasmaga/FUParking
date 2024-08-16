@@ -334,28 +334,27 @@ namespace FUParkingRepository
                     .Include(t => t.Card)
                     .Where(p => p.DeletedDate == null)
                     .AsQueryable();
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
-                if (req.SearchInput is not null && req.SearchInput is not null)
+                if (req.SearchInput is not null && req.Attribute is not null)
                 {
-                    switch (req.SearchInput.ToLower()) {
+                    switch (req.Attribute.ToLower()) {
                         case "platenumber":
                             query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
                             break;
 
                         case "cardnumber":
-                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput)); 
+                            query = query.Where(p => p.Card.CardNumber.Contains(req.SearchInput)); 
                             break;
 
                         case "customeremail":
-                            query = query.Where(p => p.PlateNumber.Contains(req.SearchInput));
+                            query = query.Where(p => p.Customer.Email.Contains(req.SearchInput));
                             break;                        
 
                         default:                             
                             break;
                     }
                 }
-
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 req.StartDate ??= DateTime.MinValue;
 
                 req.EndDate ??= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                

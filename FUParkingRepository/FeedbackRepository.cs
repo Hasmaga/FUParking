@@ -75,20 +75,24 @@ namespace FUParkingRepository
         {
             try
             {
-                var feedbacks = await _db.Feedbacks
-                        .OrderByDescending(t => t.CreatedDate)
-                        .Include(f => f.Customer)
-                        .Include(f => f.ParkingArea)
+                var query = _db.Feedbacks
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Include(f => f.Customer)
+                    .Include(f => f.ParkingArea)
+                    .Where(t => t.DeletedDate == null)
+                    .AsQueryable();
+
+                var result = await query                        
                         .Skip((pageIndex - 1) * pageSize)
                         .Take(pageSize)
                         .ToListAsync();
 
                 return new Return<IEnumerable<Feedback>>()
                 {
-                    Data = feedbacks,
+                    Data = result,
                     IsSuccess = true,
-                    TotalRecord = feedbacks.Count,
-                    Message = feedbacks.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    TotalRecord = query.Count(),
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)

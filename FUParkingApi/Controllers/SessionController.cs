@@ -116,9 +116,9 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("user/checkout")]
-        public async Task<IActionResult> CheckOutSessionByPlateNumberAsync(string PlateNumber, DateTime TimeOut)
+        public async Task<IActionResult> CheckOutSessionByPlateNumberAsync([FromBody] CheckOutSessionReqDto req)
         {
-            var result = await _sessionService.CheckOutSessionByPlateNumberAsync(PlateNumber, TimeOut);
+            var result = await _sessionService.CheckOutSessionByPlateNumberAsync(req.PlateNumber, req.TimeOut);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

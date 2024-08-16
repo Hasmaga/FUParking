@@ -2,6 +2,7 @@
 {
     public class GetListFeedbacksResDto
     {
+        public Guid Id { get; set; }
         public required string CustomerName { get; set; }
         public required string ParkingAreaName { get; set; }
         public required string Title { get; set; }

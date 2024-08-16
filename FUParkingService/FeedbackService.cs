@@ -149,6 +149,7 @@ namespace FUParkingService
                     IsSuccess = true,
                     Data = res.Data?.Select(fb => new GetListFeedbacksResDto
                     {
+                        Id = fb.Id,
                         CustomerName = fb.Customer?.FullName ?? "N/A",
                         ParkingAreaName = fb.ParkingArea?.Name ?? "N/A",
                         Title = fb.Title ?? "N/A",
