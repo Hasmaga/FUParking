@@ -133,19 +133,22 @@ namespace FUParkingService
                 }
                 // Check card is in use
                 var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(id);
-                if (!isCardInUse.IsSuccess || isCardInUse.Data is null) {
+                if (!isCardInUse.IsSuccess) {
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (isCardInUse.Data.Status.Equals(SessionEnum.PARKED))
+                if (isCardInUse.Data != null)
                 {
-                    return new Return<dynamic>
-                    {                        
-                        Message = ErrorEnumApplication.CARD_IN_USE
-                    };
+                    if (isCardInUse.Data.Status.Equals(SessionEnum.PARKED))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.CARD_IN_USE
+                        };
+                    }
                 }
                 card.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 card.Data.LastModifyById = checkAuth.Data.Id;
