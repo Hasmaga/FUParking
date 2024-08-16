@@ -62,9 +62,9 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetFeedbacksAsync([FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
+        public async Task<IActionResult> GetFeedbacksAsync([FromQuery] string? cusName, [FromQuery] string? parkName, [FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
-            var result = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex);
+            var result = await _feedbackService.GetFeedbacksAsync(pageSize, pageIndex, cusName, parkName);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

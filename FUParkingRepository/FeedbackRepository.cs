@@ -71,7 +71,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<Feedback>>> GetFeedbacksAsync(int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<Feedback>>> GetFeedbacksAsync(int pageSize, int pageIndex, string? cusName, string? parkName)
         {
             try
             {
@@ -81,6 +81,15 @@ namespace FUParkingRepository
                     .Include(f => f.ParkingArea)
                     .Where(t => t.DeletedDate == null)
                     .AsQueryable();
+
+                if(!string.IsNullOrEmpty(cusName))
+                {
+                    query = query.Where(t => t.Customer.FullName.Contains(cusName));
+                }
+                if(!string.IsNullOrEmpty(parkName))
+                {
+                    query = query.Where(t => t.ParkingArea.Name.Contains(parkName));
+                }
 
                 var result = await query                        
                         .Skip((pageIndex - 1) * pageSize)

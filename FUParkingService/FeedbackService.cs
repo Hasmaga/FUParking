@@ -122,7 +122,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex)
+        public async Task<Return<IEnumerable<GetListFeedbacksResDto>>> GetFeedbacksAsync(int pageSize, int pageIndex, string? cusName, string? parkName)
         {
             try
             {
@@ -135,7 +135,7 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var res = await _feedbackRepository.GetFeedbacksAsync(pageSize, pageIndex);
+                var res = await _feedbackRepository.GetFeedbacksAsync(pageSize, pageIndex, cusName, parkName);
                 if (!res.IsSuccess)
                 {
                     return new Return<IEnumerable<GetListFeedbacksResDto>>
