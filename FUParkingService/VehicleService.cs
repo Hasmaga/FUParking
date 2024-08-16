@@ -475,7 +475,7 @@ namespace FUParkingService
                         InternalErrorMessage = vehicle.InternalErrorMessage,
                         Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
                     };
-                }                
+                }
                 var fileExtensionPlateNumber = Path.GetExtension(reqDto.PlateImage.FileName);
                 var objNamePlateNumber = checkAuth.Data.Id + "_" + reqDto.PlateNumber + "_" + TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date.ToString("dd-MM-yyyy") + "_plateNumber" + fileExtensionPlateNumber;
                 UploadObjectReqDto imageUpload = new()
@@ -483,7 +483,7 @@ namespace FUParkingService
                     ObjFile = reqDto.PlateImage,
                     ObjName = objNamePlateNumber,
                     BucketName = BucketMinioEnum.BUCKET_IMAGE_VEHICLE
-                };                
+                };
                 var resultUploadImagePlateNumber = await _minioService.UploadObjectAsync(imageUpload);
                 if (!resultUploadImagePlateNumber.Message.Equals(SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY))
                 {
@@ -612,7 +612,7 @@ namespace FUParkingService
                 if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
                 if (vehicle.Data.CustomerId != checkAuth.Data.Id)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };                
+                    return new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY };
                 // Check vehicle is in any session 
                 var newestSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(vehicle.Data.PlateNumber);
                 if (!newestSession.IsSuccess)
@@ -835,6 +835,69 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<GetCustomerVehicleByCustomerResDto>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> UpdateVehicleInformationByUserAsync(Guid vehicleId, Guid vehicleTypeId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(vehicleId);
+                if (!vehicle.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+
+                if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+
+                // Check vehicle is in any session
+                var newestSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(vehicle.Data.PlateNumber);
+                if (!newestSession.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = newestSession.InternalErrorMessage
+                    };
+                }
+                if (newestSession.Data?.GateOut is not null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_IS_IN_SESSION
+                    };
+                }
+
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(vehicleTypeId);
+                if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                    };
+                }
+                vehicle.Data.VehicleTypeId = vehicleType.Data.Id;
+                vehicle.Data.StatusVehicle = StatusVehicleEnum.ACTIVE;
+                var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

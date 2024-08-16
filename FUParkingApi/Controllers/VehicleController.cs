@@ -271,5 +271,20 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpPost("user/update")]
+        public async Task<IActionResult> UpdateCustomerVehicleByUser([FromBody] UpdateCustomerVehicleByUserReqDto req)
+        {
+            var result = await _vehicleService.UpdateVehicleInformationByUserAsync(req.VehicleId, req.VehicleTypeId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at update customer vehicle by user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
