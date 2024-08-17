@@ -43,6 +43,18 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.CARD_IS_EXIST
                     };
                 }
+                if (req.PlateNumber is not null)
+                {
+                    var isExistPlateNumber = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
+                    if (!isExistPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isExistPlateNumber.InternalErrorMessage,
+                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                        };
+                    }
+                }
                 Card newCard = new()
                 {
                     PlateNumber = req.PlateNumber,
@@ -208,6 +220,16 @@ namespace FUParkingService
                     {
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_IN_USE
+                    };
+                }
+                // Check plate number is exist in other card
+                var isExist = await _cardRepository.GetCardByPlateNumberAsync(PlateNumber);
+                if (!isExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isExist.InternalErrorMessage,
+                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD
                     };
                 }
                 card.Data.PlateNumber = PlateNumber;

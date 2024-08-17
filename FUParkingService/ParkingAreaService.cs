@@ -34,7 +34,7 @@ namespace FUParkingService
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
-                }                
+                }
                 // Check if ParkingAreaId exists
                 var existedParking = await _parkingAreaRepository.GetParkingAreaByIdAsync(id);
                 if (existedParking.Data == null || existedParking.IsSuccess is not true)
@@ -62,7 +62,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_PARKING_AREA
                     };
-                }                
+                }
                 existedParking.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedParking.Data.LastModifyById = checkAuth.Data.Id;
                 existedParking.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -291,6 +291,68 @@ namespace FUParkingService
                 if (!updateResult.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
+                }
+                return new Return<dynamic> { Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY, IsSuccess = true };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> UpdateStatusParkingAreaAsync(Guid parkingId, bool isActive)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var parkingArea = await _parkingAreaRepository.GetParkingAreaByIdAsync(parkingId);
+                if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST, InternalErrorMessage = parkingArea.InternalErrorMessage };
+                }
+                
+                // Check any session is using this parking area
+                var isUsingParkingArea = await _sessionRepository.GetListSessionActiveByParkingIdAsync(parkingId);
+                if (!isUsingParkingArea.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isUsingParkingArea.InternalErrorMessage,
+                        Message = ErrorEnumApplication.PARKING_AREA_IS_USING
+                    };
+                }
+                if (isActive)
+                {
+                    if (parkingArea.Data.StatusParkingArea == StatusParkingEnum.ACTIVE)
+                    {
+                        return new Return<dynamic> { Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY };
+                    }
+                    parkingArea.Data.StatusParkingArea = StatusParkingEnum.ACTIVE;
+                }
+                else
+                {
+                    if (parkingArea.Data.StatusParkingArea == StatusParkingEnum.INACTIVE)
+                    {
+                        return new Return<dynamic> { Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY };
+                    }
+                    parkingArea.Data.StatusParkingArea = StatusParkingEnum.INACTIVE;
+                }
+                var updateResult = await _parkingAreaRepository.UpdateParkingAreaAsync(parkingArea.Data);
+                if (!updateResult.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateResult.InternalErrorMessage };
                 }
                 return new Return<dynamic> { Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY, IsSuccess = true };
             }

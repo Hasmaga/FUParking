@@ -153,6 +153,30 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<Card>> GetCardByPlateNumberAsync(string plateNumber)
+        {
+            try
+            {
+                var result = await _db.Cards
+                    .Where(x => x.DeletedDate == null)
+                    .FirstOrDefaultAsync(x => x.PlateNumber == plateNumber);
+                return new Return<Card>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Card>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
         public async Task<Return<Card>> UpdateCardAsync(Card card)
         {
             try

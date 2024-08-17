@@ -12,5 +12,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> DeleteParkingArea(Guid id);
         Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithFiller req);
         Task<Return<dynamic>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
+        Task<Return<dynamic>> UpdateStatusParkingAreaAsync(Guid parkingId, bool isActive);
     }
 }
