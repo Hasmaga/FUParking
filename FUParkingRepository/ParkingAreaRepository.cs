@@ -139,7 +139,7 @@ namespace FUParkingRepository
                 {
                     switch (req.Attribute)
                     {
-                        case "Name":
+                        case "name":
                             query = query.Where(t => t.Name.Contains(req.SearchInput));
                             break;
                         default:
@@ -147,6 +147,7 @@ namespace FUParkingRepository
                     }
                 }
                 var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
                     .Skip((req.PageIndex - 1) * req.PageSize)
                     .Take(req.PageSize)
                     .ToListAsync();

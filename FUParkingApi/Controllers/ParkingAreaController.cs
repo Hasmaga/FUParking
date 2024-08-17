@@ -108,7 +108,7 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPut("status")]
-        public async Task<IActionResult> UpdateStatusParkingAreaAsync(UpdateStatusParkingAreaReqDto req)
+        public async Task<IActionResult> UpdateStatusParkingAreaAsync([FromBody] UpdateStatusParkingAreaReqDto req)
         {
             var result = await _parkingAreaService.UpdateStatusParkingAreaAsync(req.ParkingId, req.IsActive);
             if (!result.IsSuccess)

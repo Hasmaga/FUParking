@@ -3,6 +3,7 @@ using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Gate;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -92,6 +93,26 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error when delete gate: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpPut("status")]
+        public async Task<IActionResult> UpdateStatusGateAsync([FromBody] UpdateStatusGateReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _gateService.UpdateStatusGateAsync(req.GateId, req.IsActive);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when update status gate: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

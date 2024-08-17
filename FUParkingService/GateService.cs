@@ -264,5 +264,83 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<dynamic>> UpdateStatusGateAsync(Guid gateId, bool isActive)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var existedGate = await _gateRepository.GetGateByIdAsync(gateId);
+                if (existedGate.Data == null || !existedGate.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = existedGate.InternalErrorMessage,
+                        Message = ErrorEnumApplication.GATE_NOT_EXIST
+                    };
+                }
+                if (existedGate.Data.GateType?.Name.Equals(GateTypeEnum.VIRUTAL) ?? false)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.CANNOT_UPDATE_STATUS_VIRTUAL_GATE
+                    };
+                }
+                if (isActive)
+                {
+                    if (existedGate.Data.StatusGate == StatusGateEnum.ACTIVE)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    existedGate.Data.StatusGate = StatusGateEnum.ACTIVE;
+                }
+                else
+                {
+                    if (existedGate.Data.StatusGate == StatusGateEnum.INACTIVE)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    existedGate.Data.StatusGate = StatusGateEnum.INACTIVE;
+                }
+                existedGate.Data.LastModifyById = checkAuth.Data.Id;
+                existedGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _gateRepository.UpdateGateAsync(existedGate.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
