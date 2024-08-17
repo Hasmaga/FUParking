@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -85,6 +84,10 @@ namespace FUParkingApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllUsersAsync(GetListObjectWithFiller req)
         {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
             var result = await _userService.GetListUserAsync(req);
             if (!result.IsSuccess)
             {

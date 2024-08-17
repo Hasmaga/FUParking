@@ -44,7 +44,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<IActionResult> GetParkingAreasAsync(GetListObjectWithFiller req)
         {
             if (!ModelState.IsValid)
             {

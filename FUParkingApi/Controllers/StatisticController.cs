@@ -1,5 +1,4 @@
 ﻿using FUParkingApi.HelperClass;
-using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,12 +12,14 @@ namespace FUParkingApi.Controllers
         private readonly ILogger<StatisticController> _logger;
         private readonly ISessionService _sessionService;
         private readonly IPaymentService _paymentService;
+        private readonly ITransactionService _transactionService;
 
-        public StatisticController(ILogger<StatisticController> logger, ISessionService sessionService, IPaymentService paymentService)
+        public StatisticController(ILogger<StatisticController> logger, ISessionService sessionService, IPaymentService paymentService, ITransactionService transactionService)
         {
             _logger = logger;
             _sessionService = sessionService;
             _paymentService = paymentService;
+            _transactionService = transactionService;
         }
 
         [HttpGet("session")]        
@@ -91,6 +92,51 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("revenue/today")]
+        public async Task<IActionResult> StatisticRevenueTodayAsync()
+        {            
+            var result = await _transactionService.GetRevenueTodayAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetRevenueTodayAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("session/today")]
+        public async Task<IActionResult> StatisticSessionTodayAsync()
+        {            
+            var result = await _sessionService.GetTotalSessionParkingTodayAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetTransactionTodayAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("session/average")]
+        public async Task<IActionResult> StatisticSessionAverageAsync()
+        {            
+            var result = await _sessionService.GetAverageSessionDurationPerDayAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetTransactionTodayAsync: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

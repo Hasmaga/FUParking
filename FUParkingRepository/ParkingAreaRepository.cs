@@ -5,6 +5,7 @@ using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Metrics;
 
 namespace FUParkingRepository
 {
@@ -129,15 +130,23 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(GetListObjectWithFiller req)
         {
             try
             {
-                var result = await _db.ParkingAreas
-                    .Include(t => t.CreateBy)
-                    .Include(t => t.LastModifyBy)
-                    .Where(t => t.DeletedDate == null)
-                    .OrderByDescending(t => t.CreatedDate)
+                var query = _db.ParkingAreas.Where(t => t.DeletedDate == null);
+                if (req.Attribute is not null && req.SearchInput is not null)
+                {
+                    switch (req.Attribute)
+                    {
+                        case "Name":
+                            query = query.Where(t => t.Name.Contains(req.SearchInput));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                var result = await query
                     .Skip((req.PageIndex - 1) * req.PageSize)
                     .Take(req.PageSize)
                     .ToListAsync();
@@ -146,8 +155,8 @@ namespace FUParkingRepository
                 {
                     Data = result,
                     IsSuccess = true,
-                    TotalRecord = result.Count,
-                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                    TotalRecord = query.Count(),
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };
             }
             catch (Exception e)

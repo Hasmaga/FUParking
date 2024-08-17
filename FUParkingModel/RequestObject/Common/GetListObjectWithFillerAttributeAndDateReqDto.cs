@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FUParkingModel.RequestObject.Common
 {
-    public class GetListObjectWithFillerAttributeAndDateReqDto
+    public class GetListObjectWithFillerAttributeAndDateReqDto : IValidatableObject
     {
         [Range(0, int.MaxValue, ErrorMessage = "PageSize must be a non-negative value.")]
         public int PageSize { get; set; } = Pagination.PAGE_SIZE;

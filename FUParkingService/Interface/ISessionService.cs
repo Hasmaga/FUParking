@@ -20,5 +20,6 @@ namespace FUParkingService.Interface
         Task<Return<GetSessionByUserResDto>> GetSessionBySessionIdAsync(Guid sessionId);
         Task<Return<bool>> CancleSessionByIdAsync(Guid sessionId);
         Task<Return<int>> GetTotalSessionParkingTodayAsync();
+        Task<Return<double>> GetAverageSessionDurationPerDayAsync();
     }
 }

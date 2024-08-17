@@ -91,7 +91,7 @@ namespace FUParkingRepository
                     Data = result,
                     IsSuccess = true,
                     TotalRecord = query.Count(),
-                    Message = result.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Message = result.Count != 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                 };
             }
             catch (Exception ex)

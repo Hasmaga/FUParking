@@ -210,9 +210,34 @@ namespace FUParkingRepository
 
         }
 
-        public Task<Return<int>> GetRevenueTodayAsync()
+        public async Task<Return<int>> GetRevenueTodayAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var dateTimeNow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _db.Transactions
+                    .Where(t => 
+                        t.CreatedDate.Date == dateTimeNow.Date && 
+                        t.TransactionStatus.Equals(StatusTransactionEnum.SUCCEED) && 
+                        t.PaymentId != null && 
+                        t.DepositId == null
+                    )
+                    .SumAsync(t => t.Amount);
+                return new Return<int> 
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<int>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
         }
     }
 }

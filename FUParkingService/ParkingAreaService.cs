@@ -172,7 +172,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithFiller req)
         {
             try
             {

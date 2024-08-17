@@ -384,9 +384,62 @@ namespace FUParkingRepository
             }
         }
 
-        public Task<Return<int>> GetTotalSessionParkingTodayAsync()
+        public async Task<Return<int>> GetTotalSessionParkingTodayAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _db.Sessions
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date && x.Status.Equals(SessionEnum.CLOSED))
+                    .CountAsync();
+                return new Return<int>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<int>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
         }
+
+        public async Task<Return<double>> GetAverageSessionDurationPerDayAsync()
+        {
+            try
+            {
+                var sessions = await _db.Sessions
+                    .Where(x => x.Status.Equals(SessionEnum.CLOSED))
+                    .ToListAsync();
+
+                var result = sessions
+                    .GroupBy(x => x.CreatedDate.Date)
+                    .Select(x => new
+                    {
+                        Date = x.Key,
+                        AverageDuration = x.Average(y => (y.TimeOut.GetValueOrDefault() - y.TimeIn).TotalMinutes) / 60 
+                    })
+                    .Average(x => x.AverageDuration);
+                return new Return<double> 
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<double>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }        
     }
 }

@@ -1378,5 +1378,45 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<double>> GetAverageSessionDurationPerDayAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<double>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _sessionRepository.GetAverageSessionDurationPerDayAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<double>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+
+                return new Return<double>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = result.Data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<double>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
