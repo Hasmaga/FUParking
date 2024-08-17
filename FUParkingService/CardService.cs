@@ -145,12 +145,24 @@ namespace FUParkingService
                 }
                 // Check card is in use
                 var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(id);
-                if (!isCardInUse.IsSuccess) {
+                if (!isCardInUse.IsSuccess)
+                {
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
+                }
+                if (isCardInUse.Data is not null)
+                {
+                    if (isCardInUse.Data?.GateOutId is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
+                            Message = ErrorEnumApplication.CARD_IN_USE
+                        };
+                    }
                 }
                 if (isCardInUse.Data != null)
                 {
@@ -214,13 +226,24 @@ namespace FUParkingService
                 }
                 // Check card is in use
                 var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(CardId);
-                if (isCardInUse.Data?.GateOutId is not null)
+                if (!isCardInUse.IsSuccess)
                 {
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
-                        Message = ErrorEnumApplication.CARD_IN_USE
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
+                }
+                if (isCardInUse.Data is not null)
+                {
+                    if (isCardInUse.Data?.GateOutId is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
+                            Message = ErrorEnumApplication.CARD_IN_USE
+                        };
+                    }
                 }
                 // Check plate number is exist in other card
                 var isExist = await _cardRepository.GetCardByPlateNumberAsync(PlateNumber);
@@ -284,14 +307,25 @@ namespace FUParkingService
                 }
                 // Check card is in use
                 var isCardInUse = await _sessionRepository.GetNewestSessionByCardIdAsync(cardId);
-                if (isCardInUse.Data?.GateOutId is null)
+                if (!isCardInUse.IsSuccess)
                 {
                     return new Return<bool>
                     {
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
-                        Message = ErrorEnumApplication.CARD_IN_USE
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                if (isCardInUse.Data is not null)
+                {
+                    if (isCardInUse.Data?.GateOutId is null)
+                    {
+                        return new Return<bool>
+                        {
+                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
+                            Message = ErrorEnumApplication.CARD_IN_USE
+                        };
+                    }
+                }          
 
                 if (isActive)
                 {                    
