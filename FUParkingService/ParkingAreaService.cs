@@ -203,7 +203,14 @@ namespace FUParkingService
                         CreateBy = p.CreateBy?.Email ?? "",
                         CreateDate = p.CreatedDate,
                         Description = p.Description ?? "",
-                        Mode = p.Mode,
+                        Mode = p.Mode switch
+                        {
+                            ModeEnum.MODE1 => 1,
+                            ModeEnum.MODE2 => 2,
+                            ModeEnum.MODE3 => 3,
+                            ModeEnum.MODE4 => 4,
+                            _ => 0 
+                        },
                         LastModifyBy = p.LastModifyBy?.Email,
                         LastModifyDate = p.LastModifyDate,
                         MaxCapacity = p.MaxCapacity,
