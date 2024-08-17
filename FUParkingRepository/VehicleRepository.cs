@@ -284,7 +284,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.VehicleTypes.Where(a => a.DeletedDate == null).FirstOrDefaultAsync(vt => vt.Name.Equals(VehicleTypeName, StringComparison.OrdinalIgnoreCase));
+                var result = await _db.VehicleTypes
+                    .Where(a => a.DeletedDate == null)
+                    .FirstOrDefaultAsync(vt => vt.Name.Equals(VehicleTypeName));
                 return new Return<VehicleType>
                 {
                     Data = result,
