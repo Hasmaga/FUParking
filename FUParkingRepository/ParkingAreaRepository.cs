@@ -129,18 +129,24 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(int pageSize, int pageIndex, string? name)
         {
             try
             {
-                var result = await _db.ParkingAreas
-                    .Include(t => t.CreateBy)
-                    .Include(t => t.LastModifyBy)
-                    .Where(t => t.DeletedDate == null)
+                var query = _db.ParkingAreas
                     .OrderByDescending(t => t.CreatedDate)
-                    .Skip((req.PageIndex - 1) * req.PageSize)
-                    .Take(req.PageSize)
-                    .ToListAsync();
+                    .Where(t => t.DeletedDate == null)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(name))
+                {
+                    query = query.Where(t => t.Name.Contains(name));
+                }
+
+                var result = await query
+                        .Skip((pageIndex - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToListAsync();
 
                 return new Return<IEnumerable<ParkingArea>>
                 {
@@ -154,7 +160,7 @@ namespace FUParkingRepository
             {
                 return new Return<IEnumerable<ParkingArea>>
                 {
-                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
             }

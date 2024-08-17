@@ -172,7 +172,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<Return<IEnumerable<GetParkingAreaReqDto>>> GetParkingAreasAsync(int pageSize, int pageIndex, string? name)
         {
             try
             {
@@ -185,7 +185,8 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _parkingAreaRepository.GetAllParkingAreasAsync(req);
+
+                var result = await _parkingAreaRepository.GetAllParkingAreasAsync(pageSize, pageIndex, name);
                 if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     return new Return<IEnumerable<GetParkingAreaReqDto>>

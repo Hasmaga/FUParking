@@ -44,22 +44,29 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetParkingAreasAsync(GetListObjectWithPageReqDto req)
+        public async Task<IActionResult> GetParkingAreasAsync([FromQuery] string? name, [FromQuery] int pageIndex = Pagination.PAGE_INDEX, [FromQuery] int pageSize = Pagination.PAGE_SIZE)
         {
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            var result = await _parkingAreaService.GetParkingAreasAsync(req);
+            var result = await _parkingAreaService.GetParkingAreasAsync(pageSize, pageIndex, name);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error when get parking areas: {ex}", result.InternalErrorMessage);
                 }
-                return Helper.GetErrorResponse(result.Message);
+                return result.Message switch
+                {
+                    ErrorEnumApplication.NOT_AUTHENTICATION => StatusCode(401, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHENTICATION }),
+                    ErrorEnumApplication.NOT_AUTHORITY => StatusCode(409, new Return<dynamic> { Message = ErrorEnumApplication.NOT_AUTHORITY }),
+                    ErrorEnumApplication.ACCOUNT_IS_LOCK => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_LOCK }),
+                    ErrorEnumApplication.ACCOUNT_IS_BANNED => StatusCode(403, new Return<dynamic> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED }),
+                    _ => StatusCode(500, new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR }),
+                };
             }
-            return StatusCode(200, result);
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
