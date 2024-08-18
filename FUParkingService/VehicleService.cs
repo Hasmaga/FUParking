@@ -167,7 +167,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> UpdateVehicleTypeAsync(Guid Id, UpdateVehicleTypeReqDto reqDto)
+        public async Task<Return<bool>> UpdateVehicleTypeAsync(UpdateVehicleTypeReqDto reqDto)
         {
             try
             {
@@ -182,7 +182,7 @@ namespace FUParkingService
                 }
 
                 // Check the vehicle type id exists
-                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(Id);
+                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(reqDto.Id);
                 if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
                 {
                     return new Return<bool>

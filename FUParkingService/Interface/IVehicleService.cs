@@ -11,7 +11,7 @@ namespace FUParkingService.Interface
     {
         Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req);
         Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto);
-        Task<Return<bool>> UpdateVehicleTypeAsync(Guid Id, UpdateVehicleTypeReqDto reqDto);
+        Task<Return<bool>> UpdateVehicleTypeAsync(UpdateVehicleTypeReqDto reqDto);
         Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetVehiclesAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
         Task<Return<IEnumerable<GetCustomerVehicleByCustomerResDto>>> GetListCustomerVehicleByCustomerIdAsync();
         Task<Return<dynamic>> DeleteVehicleTypeAsync(Guid id);

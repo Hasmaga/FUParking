@@ -80,14 +80,14 @@ namespace FUParkingApi.Controllers
         }
 
         // PUT api/vehicles/types/{id}
-        [HttpPut("types/{id}")]
-        public async Task<IActionResult> UpdateVehicleType([FromRoute] Guid id, [FromBody] UpdateVehicleTypeReqDto reqDto)
+        [HttpPut("types")]
+        public async Task<IActionResult> UpdateVehicleType([FromBody] UpdateVehicleTypeReqDto reqDto)
         {
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            var result = await _vehicleService.UpdateVehicleTypeAsync(id, reqDto);
+            var result = await _vehicleService.UpdateVehicleTypeAsync(reqDto);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
