@@ -4,6 +4,7 @@ namespace FUParkingModel.RequestObject
 {
     public class UpdateParkingAreaReqDto
     {
+        [Required(ErrorMessage = "Must have parking Area")]
         public Guid ParkingAreaId { get; set; }
 
         public string? Name { get; set; }

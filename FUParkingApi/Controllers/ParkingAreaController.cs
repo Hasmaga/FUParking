@@ -63,22 +63,14 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateParkingAreaAsync([FromRoute] Guid id, [FromBody] CreateParkingAreaReqDto req)
+        [HttpPut]
+        public async Task<IActionResult> UpdateParkingAreaAsync([FromBody] UpdateParkingAreaReqDto req)
         {
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            var result = await _parkingAreaService.UpdateParkingAreaAsync(new UpdateParkingAreaReqDto
-            {
-                ParkingAreaId = id,
-                Block = req.Block,
-                Description = req.Description,
-                MaxCapacity = req.MaxCapacity,
-                Name = req.Name,
-                Mode = req.Mode                
-            });
+            var result = await _parkingAreaService.UpdateParkingAreaAsync(req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
