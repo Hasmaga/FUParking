@@ -190,7 +190,7 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Name.Equals(name));
                 return new Return<Gate>
                 {
                     Data = result,
