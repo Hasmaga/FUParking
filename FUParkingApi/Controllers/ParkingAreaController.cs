@@ -113,5 +113,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("option")]
+        public async Task<IActionResult> GetParkingAreaOptionAsync()
+        {
+            var result = await _parkingAreaService.GetParkingAreaOptionAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get parking area option: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

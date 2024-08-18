@@ -13,5 +13,6 @@ namespace FUParkingRepository.Interface
         Task<Return<ParkingArea>> GetParkingAreaByIdAsync(Guid parkingId);
         Task<Return<IEnumerable<ParkingArea>>> GetAllParkingAreasAsync(GetListObjectWithFiller req);
         Task<Return<ParkingArea>> GetParkingAreaByGateIdAsync(Guid gateId);
+        Task<Return<IEnumerable<ParkingArea>>> GetParkingAreaOptionAsync();
     }
 }

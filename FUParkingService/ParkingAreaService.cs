@@ -372,5 +372,49 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetParkingAreaOptionResDto>>> GetParkingAreaOptionAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetParkingAreaOptionResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _parkingAreaRepository.GetParkingAreaOptionAsync();
+                if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<IEnumerable<GetParkingAreaOptionResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetParkingAreaOptionResDto>>
+                {
+                    Data = result.Data?.Select(p => new GetParkingAreaOptionResDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name
+                    }),
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetParkingAreaOptionResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

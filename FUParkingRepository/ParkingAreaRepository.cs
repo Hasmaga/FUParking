@@ -186,5 +186,27 @@ namespace FUParkingRepository
                 return new Return<ParkingArea> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = e };
             }
         }
+
+        public async Task<Return<IEnumerable<ParkingArea>>> GetParkingAreaOptionAsync()
+        {
+            try
+            {
+                var result = await _db.ParkingAreas.Where(t => t.DeletedDate == null).ToListAsync();
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<ParkingArea>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }
