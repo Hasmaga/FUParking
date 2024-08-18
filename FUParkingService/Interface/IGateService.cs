@@ -12,5 +12,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> CreateGateAsync(CreateGateReqDto req);
         Task<Return<dynamic>> DeleteGate(Guid id);
         Task<Return<dynamic>> UpdateStatusGateAsync(Guid gateId, bool isActive);
+        Task<Return<IEnumerable<GetGetTypeResDto>>> GetAllGateTypeAsync();
     }
 }

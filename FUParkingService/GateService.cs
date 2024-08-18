@@ -10,13 +10,13 @@ using FUParkingService.Interface;
 namespace FUParkingService
 {
     public class GateService : IGateService
-    {        
+    {
         private readonly IHelpperService _helpperService;
         private readonly IGateRepository _gateRepository;
         private readonly IParkingAreaRepository _parkingAreaRepository;
 
         public GateService(IHelpperService helpperService, IGateRepository gateRepository, IParkingAreaRepository parkingAreaRepository)
-        {            
+        {
             _helpperService = helpperService;
             _gateRepository = gateRepository;
             _parkingAreaRepository = parkingAreaRepository;
@@ -336,6 +336,51 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetGetTypeResDto>>> GetAllGateTypeAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetGetTypeResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _gateRepository.GetAllGateTypeAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetGetTypeResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetGetTypeResDto>>
+                {
+                    Data = result.Data?.Select(x => new GetGetTypeResDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Descriptipn = x.Descriptipn                        
+                    }),
+                    IsSuccess = true,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetGetTypeResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex

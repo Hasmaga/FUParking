@@ -118,5 +118,21 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [Authorize]
+        [HttpGet("types")]
+        public async Task<IActionResult> GetAllGateTypeAsync()
+        {
+            var result = await _gateService.GetAllGateTypeAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get list gate type: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
