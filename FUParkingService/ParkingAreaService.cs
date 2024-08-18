@@ -252,7 +252,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                 }
 
-                if (req.Name?.Trim() is not null)
+                if (!string.IsNullOrWhiteSpace(req.Name) && !req.Name.Trim().Equals(existingParkingArea.Data.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     var isNameParkingExist = await _parkingAreaRepository.GetParkingAreaByNameAsync(req.Name);
                     if (!isNameParkingExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
