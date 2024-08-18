@@ -187,7 +187,21 @@ namespace FUParkingService
                         };
                     }
                 }
-                existingGate.Data.Name = req.Name ?? existingGate.Data.Name;
+
+                // Check gate name is existed
+                if (req.Name is not null && !req.Name.Equals(existingGate.Data.Name))
+                {
+                    var isGateNameExisted = await _gateRepository.GetGateByNameAsync(req.Name);
+                    if (!isGateNameExisted.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.OBJECT_EXISTED,
+                            InternalErrorMessage = isGateNameExisted.InternalErrorMessage
+                        };
+                    }
+                }
+                
                 existingGate.Data.Description = req.Description ?? existingGate.Data.Description;
                 existingGate.Data.GateTypeId = req.GateTypeId ?? existingGate.Data.GateTypeId;
                 existingGate.Data.ParkingAreaId = req.ParkingAreaId ?? existingGate.Data.ParkingAreaId;
