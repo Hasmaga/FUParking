@@ -187,7 +187,7 @@ namespace FUParkingService
                     };
                 }
 
-                if (updateCoinPackageReqDto.Name?.Trim() is not null)
+                if (updateCoinPackageReqDto.Name is not null && !updateCoinPackageReqDto.Name.Equals(package.Data.Name))
                 {
                     var isNameExist = await _packageRepository.GetPackageByNameAsync(updateCoinPackageReqDto.Name);
                     if (isNameExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
@@ -198,9 +198,8 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.OBJECT_EXISTED
                         };
                     }
-                }
-
-                package.Data.Name = updateCoinPackageReqDto.Name ?? package.Data.Name;
+                    package.Data.Name = updateCoinPackageReqDto.Name;
+                }                
                 if (updateCoinPackageReqDto.IsActive != null)
                 {
                     if (updateCoinPackageReqDto.IsActive == true)
