@@ -400,7 +400,8 @@ namespace FUParkingService
                     Data = result.Data?.Select(p => new GetParkingAreaOptionResDto
                     {
                         Id = p.Id,
-                        Name = p.Name
+                        Name = p.Name,
+                        Description = p.Description ?? "",
                     }),
                     IsSuccess = true,
                     TotalRecord = result.TotalRecord,
