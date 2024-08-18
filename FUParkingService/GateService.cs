@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Gate;
+using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -51,8 +52,18 @@ namespace FUParkingService
                         Id = x.Id,
                         Name = x.Name,
                         Description = x.Description ?? "",
-                        ParkingAreaName = x.ParkingArea?.Name ?? "",
-                        GateTypeName = x.GateType?.Name ?? "",
+                        ParkingArea = new GetParkingAreaOptionResDto
+                        {
+                            Id = x.ParkingArea?.Id ?? Guid.Empty,
+                            Name = x.ParkingArea?.Name ?? "",
+                            Description = x.ParkingArea?.Description ?? ""
+                        },
+                        GateType = new GetGetTypeResDto
+                        {
+                            Id = x.GateType?.Id ?? Guid.Empty,
+                            Name = x.GateType?.Name ?? "",
+                            Descriptipn = x.GateType?.Descriptipn ?? ""
+                        },
                         StatusGate = x.StatusGate.ToString(),
                         CreatedBy = x.CreateBy?.Email ?? "",
                         LastModifyBy = x.LastModifyBy?.Email ?? ""

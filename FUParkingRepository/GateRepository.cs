@@ -204,12 +204,12 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<Gate>> GetGateTypeByIdAsync(Guid id)
+        public async Task<Return<GateType>> GetGateTypeByIdAsync(Guid id)
         {
             try
             {
-                var result = await _db.Gates.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(id));
-                return new Return<Gate>
+                var result = await _db.GateTypes.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(id));
+                return new Return<GateType>
                 {
                     Data = result,
                     IsSuccess = true,
@@ -218,7 +218,7 @@ namespace FUParkingRepository
             }
             catch (Exception ex)
             {
-                return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+                return new Return<GateType> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 
