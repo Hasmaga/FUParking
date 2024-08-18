@@ -200,6 +200,7 @@ namespace FUParkingService
                             InternalErrorMessage = isGateNameExisted.InternalErrorMessage
                         };
                     }
+                    existingGate.Data.Name = req.Name;
                 }
                 
                 existingGate.Data.Description = req.Description ?? existingGate.Data.Description;

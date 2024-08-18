@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Customer;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -16,5 +17,6 @@ namespace FUParkingRepository.Interface
         Task<Return<CustomerType>> CreateCustomerTypeAsync(CustomerType customerType);
         Task<Return<IEnumerable<Customer>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req);
         Task<Return<Customer>> GetCustomerByPlateNumberAsync(string plateNumber);
+        Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
     }
 }

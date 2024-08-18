@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ResponseObject.Customer;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingService.Interface
@@ -11,5 +12,6 @@ namespace FUParkingService.Interface
         Task<Return<GetCustomersWithFillerResDto>> GetCustomerByIdAsync(Guid customerId);
         Task<Return<IEnumerable<GetCustomersWithFillerResDto>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req);
         Task<Return<dynamic>> CreateCustomerAsync(CustomerReqDto customer);
+        Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
     }
 }

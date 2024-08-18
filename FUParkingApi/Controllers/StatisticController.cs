@@ -13,6 +13,7 @@ namespace FUParkingApi.Controllers
         private readonly ISessionService _sessionService;
         private readonly IPaymentService _paymentService;
         private readonly ITransactionService _transactionService;
+        private readonly ICustomerService _customerService;
 
         public StatisticController(ILogger<StatisticController> logger, ISessionService sessionService, IPaymentService paymentService, ITransactionService transactionService)
         {
@@ -137,6 +138,21 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at GetTransactionTodayAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("customer")]
+        public async Task<IActionResult> StatisticCustomerAsync()
+        {            
+            var result = await _customerService.StatisticCustomerAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

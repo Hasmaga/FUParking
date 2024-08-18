@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ResponseObject.Customer;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -233,6 +234,45 @@ namespace FUParkingService
             {
                 res.InternalErrorMessage = ex;
                 return res;
+            }
+        }
+
+        public async Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<StatisticCustomerResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _customerRepository.StatisticCustomerAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<StatisticCustomerResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<StatisticCustomerResDto>
+                {
+                    Data = result.Data,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<StatisticCustomerResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
             }
         }
     }
