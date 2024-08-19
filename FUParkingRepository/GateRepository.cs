@@ -241,5 +241,32 @@ namespace FUParkingRepository
                 return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
+
+        public async Task<Return<IEnumerable<Gate>>> GetListGateByParkingAreaAsync(Guid parkingAreaId)
+        {
+            try
+            {
+                var result = await _db.Gates
+                    .Include(p => p.GateType)
+                    .Include(p => p.ParkingArea)
+                    .Where(p => p.ParkingAreaId.Equals(parkingAreaId) && p.StatusGate.Equals(StatusGateEnum.ACTIVE))
+                    .ToListAsync();
+                return new Return<IEnumerable<Gate>>
+                {
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = result.Count
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<Gate>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

@@ -134,5 +134,21 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [Authorize]
+        [HttpGet("area/{id}")]
+        public async Task<IActionResult> GetListGateByParkingAreaAsync([FromRoute] Guid id)
+        {
+            var result = await _gateService.GetListGateByParkingAreaAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get list gate by parking area: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

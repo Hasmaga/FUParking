@@ -413,5 +413,62 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetListGateByParkingAreaAsync(Guid parkingAreaId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var isParkingAreaExist = await _parkingAreaRepository.GetParkingAreaByIdAsync(parkingAreaId);
+                if (!isParkingAreaExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isParkingAreaExist.Data == null)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST,
+                        InternalErrorMessage = isParkingAreaExist.InternalErrorMessage
+                    };
+                }
+
+                var result = await _gateRepository.GetListGateByParkingAreaAsync(parkingAreaId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                {
+                    Data = result.Data?.Select(x => new GetGateByParkingAreaResDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Description = x.Description ?? "",
+                        GateType = x.GateType?.Name ?? ""
+                    }),
+                    IsSuccess = true,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
