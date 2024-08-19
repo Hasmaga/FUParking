@@ -1,6 +1,8 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.ResponseObject.ParkingArea;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -155,7 +157,7 @@ namespace FUParkingRepository
                     .Include(t => t.Payment.PaymentMethod)
                     .Include(t => t.Payment.Session)
                     .Include(t => t.Payment.Session.GateIn)
-                    .Include(t => t.Deposit.Package)                    
+                    .Include(t => t.Deposit.Package)
                     .AsQueryable();
                 //.Where(t => t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.PaymentId.HasValue)
                 //.OrderByDescending(t => t.CreatedDate)
@@ -216,14 +218,14 @@ namespace FUParkingRepository
             {
                 var dateTimeNow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _db.Transactions
-                    .Where(t => 
-                        t.CreatedDate.Date == dateTimeNow.Date && 
-                        t.TransactionStatus.Equals(StatusTransactionEnum.SUCCEED) && 
-                        t.PaymentId != null && 
+                    .Where(t =>
+                        t.CreatedDate.Date == dateTimeNow.Date &&
+                        t.TransactionStatus.Equals(StatusTransactionEnum.SUCCEED) &&
+                        t.PaymentId != null &&
                         t.DepositId == null
                     )
                     .SumAsync(t => t.Amount);
-                return new Return<int> 
+                return new Return<int>
                 {
                     Data = result,
                     IsSuccess = true,
@@ -233,6 +235,60 @@ namespace FUParkingRepository
             catch (Exception ex)
             {
                 return new Return<int>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync()
+        {
+            try
+            {
+                // Get total revenue of each parking area
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var revenueData = await _db.Transactions
+                    .Where(t => t.Payment != null && t.Payment.Session != null && t.Payment.Session.GateIn != null && t.TransactionStatus == StatusTransactionEnum.SUCCEED)
+                    .GroupBy(t => t.Payment.Session.GateIn.ParkingAreaId)
+                    .Select(g => new
+                    {
+                        ParkingAreaId = g.Key,
+                        Revenue = g.Sum(t => t.Amount)
+                    })
+                    .ToListAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+                // Get all parking areas
+                var parkingAreas = await _db.ParkingAreas.Where(t => t.DeletedDate == null).ToListAsync();
+
+                // Join the revenue data with parking areas
+                var result = parkingAreas
+                    .GroupJoin(
+                        revenueData,
+                        p => p.Id,
+                        r => r.ParkingAreaId,
+                        (p, r) => new StatisticParkingAreaRevenueResDto
+                        {
+                            ParkingArea = new GetParkingAreaOptionResDto
+                            {
+                                Id = p.Id,
+                                Description = p.Description ?? string.Empty,
+                                Name = p.Name,
+                            },
+                            Revenue = r.FirstOrDefault()?.Revenue ?? 0
+                        })
+                    .ToList();
+                return new Return<IEnumerable<StatisticParkingAreaRevenueResDto>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticParkingAreaRevenueResDto>>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

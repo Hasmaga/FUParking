@@ -440,6 +440,39 @@ namespace FUParkingRepository
                     InternalErrorMessage = e
                 };
             }
-        }        
+        }
+
+        public async Task<Return<StatisticCheckInCheckOutResDto>> GetStatisticCheckInCheckOutAsync()
+        {
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var totalCheckIn = await _db.Sessions
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date && x.Status.Equals(SessionEnum.PARKED))
+                    .CountAsync();
+                var totalCheckOut = await _db.Sessions
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date && x.Status.Equals(SessionEnum.CLOSED))
+                    .CountAsync();
+
+                return new Return<StatisticCheckInCheckOutResDto> 
+                { 
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, 
+                    Data = new StatisticCheckInCheckOutResDto 
+                    { 
+                        TotalCheckInToday = totalCheckIn, 
+                        TotalCheckOutToday = totalCheckOut 
+                    }, 
+                    IsSuccess = true 
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticCheckInCheckOutResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

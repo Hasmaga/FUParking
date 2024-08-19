@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -391,6 +392,37 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Vehicle>() { InternalErrorMessage = e, Message = ErrorEnumApplication.SERVER_ERROR };
+            }
+        }
+
+        public async Task<Return<StatisticVehicleResDto>> GetStatisticVehicleAsync()
+        {
+            try
+            {
+                var totalVehicle = await _db.Vehicles.CountAsync();
+
+                var totalNewResgisterVehicleInMonth = await _db.Vehicles
+                    .Where(v => v.CreatedDate.Month == DateTime.Now.Month && v.CreatedDate.Year == DateTime.Now.Year)
+                    .CountAsync();
+
+                return new Return<StatisticVehicleResDto>()
+                {
+                    Data = new StatisticVehicleResDto()
+                    {
+                        TotalVehicle = totalVehicle,
+                        TotalNewResgisterVehicleInMonth = totalNewResgisterVehicleInMonth
+                    },
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticVehicleResDto>()
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
             }
         }
     }

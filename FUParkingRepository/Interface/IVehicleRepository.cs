@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -20,5 +21,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Vehicle>> UpdateVehicleAsync(Vehicle vehicle);
         Task<Return<IEnumerable<VehicleType>>> GetAllVehicleTypeByCustomer();
         Task<Return<Vehicle>> GetNewestVehicleByVehicleTypeId(Guid vehicleTypeId);
+        Task<Return<StatisticVehicleResDto>> GetStatisticVehicleAsync();
     }
 }

@@ -14,13 +14,18 @@ namespace FUParkingApi.Controllers
         private readonly IPaymentService _paymentService;
         private readonly ITransactionService _transactionService;
         private readonly ICustomerService _customerService;
+        private readonly IVehicleService _vehicleService;
+        private readonly ICardService _cardService;
 
-        public StatisticController(ILogger<StatisticController> logger, ISessionService sessionService, IPaymentService paymentService, ITransactionService transactionService)
+        public StatisticController(ILogger<StatisticController> logger, ISessionService sessionService, IPaymentService paymentService, ITransactionService transactionService, IVehicleService vehicleService, ICustomerService customerService, ICardService cardService)
         {
             _logger = logger;
             _sessionService = sessionService;
             _paymentService = paymentService;
             _transactionService = transactionService;
+            _vehicleService = vehicleService;
+            _customerService = customerService;
+            _cardService = cardService;
         }
 
         [HttpGet("session")]        
@@ -148,6 +153,66 @@ namespace FUParkingApi.Controllers
         public async Task<IActionResult> StatisticCustomerAsync()
         {            
             var result = await _customerService.StatisticCustomerAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("vehicle")]
+        public async Task<IActionResult> StatisticVehicleAsync()
+        {            
+            var result = await _vehicleService.GetStatisticVehicleAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("session/checkin-checkout")]
+        public async Task<IActionResult> StatisticCheckInCheckOutAsync()
+        {            
+            var result = await _sessionService.GetStatisticCheckInCheckOutAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("card")]
+        public async Task<IActionResult> StatisticCardAsync()
+        {            
+            var result = await _cardService.GetStatisticCardAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("parkingarea/renvenue")]
+        public async Task<IActionResult> StatisticParkingAreaRevenueAsync()
+        {            
+            var result = await _transactionService.GetListStatisticParkingAreaRevenueAsync();
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
@@ -898,6 +899,46 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<StatisticVehicleResDto>> GetStatisticVehicleAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<StatisticVehicleResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _vehicleRepository.GetStatisticVehicleAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<StatisticVehicleResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<StatisticVehicleResDto>
+                {
+                    Data = result.Data,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<StatisticVehicleResDto>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

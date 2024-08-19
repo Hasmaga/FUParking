@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -102,6 +103,41 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<int>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<StatisticParkingAreaRevenueResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _transactionRepository.GetListStatisticParkingAreaRevenueAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticParkingAreaRevenueResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticParkingAreaRevenueResDto>>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

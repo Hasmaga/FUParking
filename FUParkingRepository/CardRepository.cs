@@ -3,6 +3,7 @@ using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Card;
 using FUParkingModel.ResponseObject.Card;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -170,6 +171,33 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<StatisticCardResDto>> GetStatisticCardAsync()
+        {
+            try
+            {
+                var totalCard = await _db.Cards.CountAsync(x => x.DeletedDate == null);
+                var totalCardInUse = await _db.Sessions.CountAsync(x => x.Status.Equals(SessionEnum.PARKED));
+                return new Return<StatisticCardResDto>
+                {
+                    Data = new StatisticCardResDto
+                    {
+                        TotalCard = totalCard,
+                        TotalCardInUse = totalCardInUse
+                    },
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticCardResDto>
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR

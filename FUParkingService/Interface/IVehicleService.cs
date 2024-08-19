@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Vehicle;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
@@ -24,5 +25,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> UpdateStatusInactiveAndActiveCustomerVehicleByUserAsync(UpdateStatusInactiveAndActiveCustomerVehicleByUserReqDto req);
         Task<Return<GetCustomerVehicleByCustomerResDto>> GetCustomerVehicleByVehicleIdAsync(Guid VehicleId);
         Task<Return<dynamic>> UpdateVehicleInformationByUserAsync(Guid vehicleId, Guid vehicleTypeId);
+        Task<Return<StatisticVehicleResDto>> GetStatisticVehicleAsync();
     }
 }

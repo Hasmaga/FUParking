@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Card;
 using FUParkingModel.ResponseObject.Card;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
@@ -420,6 +421,40 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<bool>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<StatisticCardResDto>> GetStatisticCardAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<StatisticCardResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _cardRepository.GetStatisticCardAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<StatisticCardResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<StatisticCardResDto>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

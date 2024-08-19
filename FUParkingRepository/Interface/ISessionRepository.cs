@@ -20,5 +20,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<Session>>> GetListSessionAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
         Task<Return<int>> GetTotalSessionParkingTodayAsync();
         Task<Return<double>> GetAverageSessionDurationPerDayAsync();
+        Task<Return<StatisticCheckInCheckOutResDto>> GetStatisticCheckInCheckOutAsync();
     }
 }

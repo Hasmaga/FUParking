@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Card;
 using FUParkingModel.ResponseObject.Card;
+using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
 namespace FUParkingRepository.Interface
@@ -13,5 +14,6 @@ namespace FUParkingRepository.Interface
         Task<Return<Card>> GetCardByCardNumberAsync(string cardNumber);
         Task<Return<Card>> UpdateCardAsync(Card card);
         Task<Return<Card>> GetCardByPlateNumberAsync(string plateNumber);
+        Task<Return<StatisticCardResDto>> GetStatisticCardAsync();
     }
 }
