@@ -275,5 +275,52 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<bool>> UpdateCustomerAccountAsync(UpdateCustomerAccountReqDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // update account that are call this medthod
+                var account = checkAuth.Data;
+                account.FullName = req.FullName;
+                //account.LastModifyById = account.Id;
+                account.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
+                var result = await _customerRepository.UpdateCustomerAsync(account);
+                if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<bool> 
+                { 
+                    Data = true,
+                    IsSuccess = true, 
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY 
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

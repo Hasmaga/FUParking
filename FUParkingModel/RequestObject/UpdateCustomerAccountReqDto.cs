@@ -7,16 +7,9 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.RequestObject
 {
-    public class UpdateUserReqDto
+    public class UpdateCustomerAccountReqDto
     {
-        [Required]
-        public Guid Id { get; set; }
-
-        [Required]
+        [Required(ErrorMessage = "Name Must have")]
         public required string FullName { get; set; }
-
-        [Required]
-        [EmailAddress(ErrorMessage = "Must be email format")]
-        public string Email { get; set; } = null!;
     }
 }

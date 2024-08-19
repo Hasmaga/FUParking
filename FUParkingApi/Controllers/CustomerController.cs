@@ -79,5 +79,25 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPut]
+        public async Task<IActionResult> UpdateCustomerAsync([FromBody] UpdateCustomerAccountReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _customerService.UpdateCustomerAccountAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when update customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
