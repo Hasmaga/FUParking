@@ -290,11 +290,20 @@ namespace FUParkingService
                     };
                 }
 
-                // update account that are call this medthod
+                // update account that are calling this medthod
                 var account = checkAuth.Data;
+
+                if (account.FullName.Equals(req.FullName))
+                {
+                    return new Return<bool>
+                    {
+                        Data = true,
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                    };
+                }
+
                 account.FullName = req.FullName;
-                //account.LastModifyById = account.Id;
-                account.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
                 var result = await _customerRepository.UpdateCustomerAsync(account);
                 if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -311,7 +320,6 @@ namespace FUParkingService
                     IsSuccess = true, 
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY 
                 };
-
             }
             catch (Exception ex)
             {
