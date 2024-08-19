@@ -192,18 +192,18 @@ namespace FUParkingService
                     };
                 }
 
-                // Check for duplicate vehicle type name with other vehicle types (except the current vehicle type)
-                var isNameValid = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name ?? "");
-                if (!isNameValid.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                if (reqDto.Name is not null && !reqDto.Name.Trim().Equals(vehicleType.Data.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    return new Return<bool>
+                    var isExistVehicleType = await _vehicleRepository.GetVehicleTypeByName(reqDto.Name);
+                    if (!isExistVehicleType.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                     {
-                        InternalErrorMessage = isNameValid.InternalErrorMessage,
-                        Message = ErrorEnumApplication.OBJECT_EXISTED
-                    };
-                }
-
-                vehicleType.Data.Name = reqDto.Name ?? vehicleType.Data.Name;
+                        return new Return<bool>
+                        {
+                            Message = ErrorEnumApplication.OBJECT_EXISTED
+                        };
+                    }
+                    vehicleType.Data.Name = reqDto.Name;
+                }                
                 vehicleType.Data.Description = reqDto.Description ?? vehicleType.Data.Description;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
                 vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -414,7 +414,7 @@ namespace FUParkingService
 
                 // Check vehicle type is in any vehicle
                 var vehicles = await _vehicleRepository.GetNewestVehicleByVehicleTypeId(id);
-                if (!vehicles.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                if (!vehicles.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
                     return new Return<dynamic>
                     {

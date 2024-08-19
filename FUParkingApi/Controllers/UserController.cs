@@ -22,7 +22,7 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPost("staff")]
-        public async Task<IActionResult> CreateStaffAsync(CreateUserReqDto staff)
+        public async Task<IActionResult> CreateStaffAsync([FromBody] CreateUserReqDto staff)
         {
             if (!ModelState.IsValid)
             {
@@ -42,7 +42,7 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPost("supervisor")]
-        public async Task<IActionResult> CreateSupervisorAsync(CreateUserReqDto supervisor)
+        public async Task<IActionResult> CreateSupervisorAsync([FromBody] CreateUserReqDto supervisor)
         {
             if (!ModelState.IsValid)
             {
@@ -62,7 +62,7 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPost("manager")]
-        public async Task<IActionResult> CreateManagerAsync(CreateUserReqDto manager)
+        public async Task<IActionResult> CreateManagerAsync([FromBody] CreateUserReqDto manager)
         {
             if (!ModelState.IsValid)
             {
