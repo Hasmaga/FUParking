@@ -13,5 +13,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<GetCustomersWithFillerResDto>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req);
         Task<Return<dynamic>> CreateCustomerAsync(CustomerReqDto customer);
         Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
+        Task<Return<bool>> UpdateCustomerAccountAsync(UpdateCustomerAccountReqDto req);
     }
 }

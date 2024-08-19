@@ -275,5 +275,60 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<bool>> UpdateCustomerAccountAsync(UpdateCustomerAccountReqDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateCustomerAsync();
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // update account that are calling this medthod
+                var account = checkAuth.Data;
+
+                if (account.FullName.Equals(req.FullName))
+                {
+                    return new Return<bool>
+                    {
+                        Data = true,
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                    };
+                }
+
+                account.FullName = req.FullName;
+
+                var result = await _customerRepository.UpdateCustomerAsync(account);
+                if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<bool> 
+                { 
+                    Data = true,
+                    IsSuccess = true, 
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY 
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
