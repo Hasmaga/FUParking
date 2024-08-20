@@ -6,7 +6,7 @@ namespace FUParkingService.Interface
 {
     public interface IPaymentService
     {        
-        Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync();
+        Task<Return<StatisticPaymentByCustomerResDto>> StatisticPaymentByCustomerAsync();
         Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodByCustomerAsync();
         Task<Return<IEnumerable<StatisticSessionPaymentMethodResDto>>> StatisticSessionPaymentMethodAsync();
     }

@@ -18,14 +18,14 @@ namespace FUParkingService
             _helpperService = helpperService;            
         }   
 
-        public async Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync()
+        public async Task<Return<StatisticPaymentByCustomerResDto>> StatisticPaymentByCustomerAsync()
         {
             try
             {
                 var checkAuth = await _helpperService.ValidateCustomerAsync();
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
-                    return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
+                    return new Return<StatisticPaymentByCustomerResDto>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
@@ -35,7 +35,7 @@ namespace FUParkingService
                 var result = await _paymentRepository.StatisticPaymentByCustomerAsync(checkAuth.Data.Id);
                 if (!result.IsSuccess)
                 {
-                    return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
+                    return new Return<StatisticPaymentByCustomerResDto>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = result.Message
@@ -45,7 +45,7 @@ namespace FUParkingService
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
+                return new Return<StatisticPaymentByCustomerResDto>
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR

@@ -85,7 +85,11 @@ namespace FUParkingRepository
                             break;
                     }
                 }
-                var result = await query.Skip((req.PageIndex - 1) * req.PageSize).Take(req.PageSize).ToListAsync();
+                var result = await query 
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((req.PageIndex - 1) * req.PageSize)
+                    .Take(req.PageSize)
+                    .ToListAsync();
                 return new Return<IEnumerable<User>>
                 {
                     Data = result,

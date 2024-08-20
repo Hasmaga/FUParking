@@ -179,26 +179,26 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<StatisticPaymentByCustomerResDto>>> StatisticPaymentByCustomerAsync(Guid customerId)
+        public async Task<Return<StatisticPaymentByCustomerResDto>> StatisticPaymentByCustomerAsync(Guid customerId)
         {
             try
             {
-                var datetimeend = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                var datetimestart = datetimeend.AddDays(-30);
+                var datetimee = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                // Get TotalPaymentInThisMonth and TotalTimePakedInThisMonth 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var result = await _db.Payments
                     .Include(t => t.Session.Customer)
-                    .Where(t => t.Session.CustomerId == customerId && t.CreatedDate >= datetimestart && t.CreatedDate <= datetimeend)
-                    .GroupBy(t => new { t.CreatedDate.Date })
+                    .Where(t => t.Session.CustomerId == customerId && t.CreatedDate.Month == datetimee.Month && t.CreatedDate.Year == datetimee.Year)
+                    .GroupBy(t => t.Session.CustomerId)
                     .Select(t => new StatisticPaymentByCustomerResDto
-                    {
-                        Date = t.Key.Date,
-                        Amount = t.Sum(x => x.TotalPrice),
-                        TotalPayment = t.Count()
+                    {                        
+                        TotalPaymentInThisMonth = t.Sum(x => x.TotalPrice),
+                        TotalTimePakedInThisMonth = t.Count()
                     })
-                    .ToListAsync();
+                    .FirstOrDefaultAsync();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-                return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
+
+                return new Return<StatisticPaymentByCustomerResDto>
                 {
                     Message = SuccessfullyEnumServer.SUCCESSFULLY,
                     Data = result,
@@ -207,7 +207,7 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<StatisticPaymentByCustomerResDto>>
+                return new Return<StatisticPaymentByCustomerResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e

@@ -295,5 +295,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Transaction>> GetTransactionBySessionIdAsync(Guid sessionId)
+        {
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var result = await _db.Transactions
+                    .Include(t => t.Payment)
+                    .Where(t => t.Payment.SessionId.Equals(sessionId))
+                    .FirstOrDefaultAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                return new Return<Transaction>
+                {
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = result,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Transaction>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

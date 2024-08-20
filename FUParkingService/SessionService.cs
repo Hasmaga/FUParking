@@ -654,6 +654,33 @@ namespace FUParkingService
                             scope.Dispose();
                             return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
+
+                        // Create payment for session
+                        var payment = new Payment
+                        {
+                            PaymentMethodId = paymentMethod.Data.Id,
+                            SessionId = sessionCard.Data.Id,
+                            TotalPrice = price,
+                        };
+                        var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                        if (!createPayment.IsSuccess || createPayment.Data == null)
+                        {
+                            scope.Dispose();
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        }
+                        var transaction = new FUParkingModel.Object.Transaction
+                        {                            
+                            PaymentId = createPayment.Data.Id,
+                            Amount = price,
+                            TransactionDescription = "Pay for parking",
+                            TransactionStatus = StatusTransactionEnum.PENDING,
+                        };
+                        var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                        if (!createTransaction.IsSuccess || createTransaction.Data == null)
+                        {
+                            scope.Dispose();
+                            return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        }
                         scope.Complete();
                         return new Return<CheckOutResDto>
                         {
@@ -726,6 +753,32 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
+                    // Create payment for session
+                    var payment = new Payment
+                    {
+                        PaymentMethodId = paymentMethod.Data.Id,
+                        SessionId = sessionCard.Data.Id,
+                        TotalPrice = price,
+                    };
+                    var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                    if (!createPayment.IsSuccess || createPayment.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    }
+                    var transaction = new FUParkingModel.Object.Transaction
+                    {
+                        PaymentId = createPayment.Data.Id,
+                        Amount = price,
+                        TransactionDescription = "Pay for parking",
+                        TransactionStatus = StatusTransactionEnum.PENDING,
+                    };
+                    var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                    if (!createTransaction.IsSuccess || createTransaction.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    }
                     scope.Complete();
                     return new Return<CheckOutResDto>
                     {
@@ -752,11 +805,13 @@ namespace FUParkingService
 
         public async Task<Return<dynamic>> UpdatePaymentSessionAsync(string CardNumber)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
@@ -781,8 +836,26 @@ namespace FUParkingService
                 sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                 sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                if (!updateSession.IsSuccess)
+                {
+                    scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }                    
+                // Update transaction of that session to SUCCEED
+                var transaction = await _transactionRepository.GetTransactionBySessionIdAsync(sessionCard.Data.Id);
+                if (!transaction.IsSuccess || transaction.Data is null)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = transaction.InternalErrorMessage };
+                }                    
+                transaction.Data.TransactionStatus = StatusTransactionEnum.SUCCEED;
+                var updateTransaction = await _transactionRepository.UpdateTransactionAsync(transaction.Data);
+                if (!updateSession.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                scope.Complete();
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)

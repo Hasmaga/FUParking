@@ -413,8 +413,9 @@ namespace FUParkingRepository
         {
             try
             {
+                var dateTimeNow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var sessions = await _db.Sessions
-                    .Where(x => x.Status.Equals(SessionEnum.CLOSED))
+                    .Where(x => x.Status.Equals(SessionEnum.CLOSED) && x.CreatedDate.Date == dateTimeNow.Date && x.CreatedDate.Month == dateTimeNow.Month && x.CreatedDate.Year == dateTimeNow.Year)
                     .ToListAsync();
 
                 var result = sessions

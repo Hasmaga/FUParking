@@ -8,8 +8,7 @@ namespace FUParkingModel.ResponseObject.Statistic
 {
     public class StatisticPaymentByCustomerResDto
     {
-        public DateTime Date { get; set; }
-        public int TotalPayment { get; set; }
-        public int Amount { get; set; }
+        public int TotalPaymentInThisMonth { get; set; }
+        public int TotalTimePakedInThisMonth { get; set; }
     }
 }
