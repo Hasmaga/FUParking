@@ -418,6 +418,16 @@ namespace FUParkingRepository
                     .Where(x => x.Status.Equals(SessionEnum.CLOSED) && x.CreatedDate.Date == dateTimeNow.Date && x.CreatedDate.Month == dateTimeNow.Month && x.CreatedDate.Year == dateTimeNow.Year)
                     .ToListAsync();
 
+                if (sessions.Count == 0)
+                {
+                    return new Return<double>
+                    {
+                        Data = 0,
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                    };
+                }
+
                 var result = sessions
                     .GroupBy(x => x.CreatedDate.Date)
                     .Select(x => new

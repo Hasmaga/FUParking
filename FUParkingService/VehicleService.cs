@@ -424,6 +424,7 @@ namespace FUParkingService
                     };
                 }
 
+                vehicleType.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 vehicleType.Data.StatusVehicleType = StatusVehicleType.INACTIVE;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
                 vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
