@@ -14,12 +14,16 @@ namespace FUParkingService
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
         private readonly ISessionRepository _sessionRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly IVehicleRepository _vehicleRepository;
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository, ICustomerRepository customerRepository, IVehicleRepository vehicleRepository)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
+            _customerRepository = customerRepository;
+            _vehicleRepository = vehicleRepository;
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
@@ -455,6 +459,90 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<StatisticCardResDto>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<GetCardByCardNumberResDto>> GetCardByCardNumberAsync(string cardNumber)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                    return new Return<GetCardByCardNumberResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+
+                var card = await _cardRepository.GetCardByCardNumberAsync(cardNumber);
+                if (!card.IsSuccess)
+                    return new Return<GetCardByCardNumberResDto>
+                    {
+                        InternalErrorMessage = card.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+
+                if (card.Data == null)
+                    return new Return<GetCardByCardNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                    };
+
+                var session = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
+                if (!session.IsSuccess)
+                    return new Return<GetCardByCardNumberResDto>
+                    {
+                        InternalErrorMessage = session.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+
+                var responseDto = new GetCardByCardNumberResDto
+                {
+                    cardNumber = card.Data.CardNumber,
+                    plateNumber = card.Data.PlateNumber,
+                    status = card.Data.Status.ToString()
+                };
+
+                // If the session exists and is PARKED, populate session-related data
+                if (session.Data != null && session.Data.Status == SessionEnum.PARKED)
+                {
+                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
+
+                    responseDto.sessionId = session.Data.Id;
+                    responseDto.sessionPlateNumber = session.Data.PlateNumber;
+                    responseDto.sessionVehicleType = vehicleType.Data?.Name;
+                    responseDto.sessionTimeIn = session.Data.TimeIn.ToString();
+                    responseDto.sessionGateIn = session.Data.GateIn?.Name;
+
+                    if (session.Data.CustomerId.HasValue)
+                    {
+                        var customer = await _customerRepository.GetCustomerByIdAsync(session.Data.CustomerId.Value);
+                        if (!customer.IsSuccess)
+                            return new Return<GetCardByCardNumberResDto>
+                            {
+                                InternalErrorMessage = customer.InternalErrorMessage,
+                                Message = ErrorEnumApplication.SERVER_ERROR
+                            };
+
+                        responseDto.sessionCustomerName = customer.Data?.FullName;
+                        responseDto.sessionCustomerEmail = customer.Data?.Email;
+                    }
+                }
+
+                return new Return<GetCardByCardNumberResDto>
+                {
+                    IsSuccess = true,
+                    Data = responseDto,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetCardByCardNumberResDto>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
