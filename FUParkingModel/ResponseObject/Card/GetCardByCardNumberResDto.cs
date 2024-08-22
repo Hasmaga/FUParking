@@ -14,7 +14,7 @@ namespace FUParkingModel.ResponseObject.Card
         public Guid? sessionId { get; set; }
         public string? sessionPlateNumber { get; set; }
         public string? sessionVehicleType { get; set; }
-        public string? sessionTimeIn { get; set; }
+        public DateTime sessionTimeIn { get; set; }
         public string? sessionGateIn { get; set; }
         public string? sessionCustomerName { get; set; }
         public string? sessionCustomerEmail { get; set; }

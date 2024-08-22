@@ -6,6 +6,7 @@ using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Diagnostics.Metrics;
 
 namespace FUParkingService
 {
@@ -499,46 +500,40 @@ namespace FUParkingService
                         InternalErrorMessage = session.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-
-                var responseDto = new GetCardByCardNumberResDto
+                
+                if (session.Data is not null && session.Data.Status.Equals(SessionEnum.PARKED))
                 {
-                    cardNumber = card.Data.CardNumber,
-                    plateNumber = card.Data.PlateNumber,
-                    status = card.Data.Status.ToString()
-                };
-
-                // If the session exists and is PARKED, populate session-related data
-                if (session.Data != null && session.Data.Status == SessionEnum.PARKED)
-                {
-                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
-
-                    responseDto.sessionId = session.Data.Id;
-                    responseDto.sessionPlateNumber = session.Data.PlateNumber;
-                    responseDto.sessionVehicleType = vehicleType.Data?.Name;
-                    responseDto.sessionTimeIn = session.Data.TimeIn.ToString();
-                    responseDto.sessionGateIn = session.Data.GateIn?.Name;
-
-                    if (session.Data.CustomerId.HasValue)
+                    return new Return<GetCardByCardNumberResDto>
                     {
-                        var customer = await _customerRepository.GetCustomerByIdAsync(session.Data.CustomerId.Value);
-                        if (!customer.IsSuccess)
-                            return new Return<GetCardByCardNumberResDto>
-                            {
-                                InternalErrorMessage = customer.InternalErrorMessage,
-                                Message = ErrorEnumApplication.SERVER_ERROR
-                            };
-
-                        responseDto.sessionCustomerName = customer.Data?.FullName;
-                        responseDto.sessionCustomerEmail = customer.Data?.Email;
-                    }
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        IsSuccess = true,
+                        Data = new GetCardByCardNumberResDto
+                        {
+                            cardNumber = card.Data.CardNumber,
+                            status = card.Data.Status,
+                            plateNumber = card.Data.PlateNumber,
+                            sessionCustomerEmail = session.Data.Customer?.Email,
+                            sessionCustomerName = session.Data.Customer?.FullName,
+                            sessionGateIn = session.Data.GateIn?.Name,
+                            sessionId = session.Data.Id,
+                            sessionPlateNumber = session.Data.PlateNumber,
+                            sessionTimeIn = session.Data.TimeIn,
+                            sessionVehicleType = session.Data.VehicleType?.Name,                      
+                        }
+                    };
                 }
-
                 return new Return<GetCardByCardNumberResDto>
                 {
                     IsSuccess = true,
-                    Data = responseDto,
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                    Data = new GetCardByCardNumberResDto
+                    {
+                        cardNumber = card.Data.CardNumber,
+                        status = card.Data.Status,
+                        plateNumber = card.Data.PlateNumber,
+                    },
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
                 };
+
             }
             catch (Exception ex)
             {
