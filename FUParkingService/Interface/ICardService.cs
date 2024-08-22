@@ -14,5 +14,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> ChangeStatusCardToMissingAsync(Guid cardId);
         Task<Return<bool>> ChangeStatusCardAsync(Guid cardId, bool isActive);
         Task<Return<StatisticCardResDto>> GetStatisticCardAsync();
+        Task<Return<GetCardByCardNumberResDto>> GetCardByCardNumberAsync(string cardNumber);
     }
 }
