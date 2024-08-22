@@ -127,5 +127,21 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("{CardNumber}")]
+        [Authorize]
+        public async Task<IActionResult> GetCardByCardNumberAsync([FromRoute] string CardNumber)
+        {
+            var result = await _cardService.GetCardByCardNumberAsync(CardNumber);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get card by card number: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
