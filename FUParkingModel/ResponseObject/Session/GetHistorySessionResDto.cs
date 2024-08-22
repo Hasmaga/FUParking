@@ -13,5 +13,6 @@
         public string? PaymentMethod { get; set; }
         public string ParkingArea { get; set; } = null!;
         public bool IsFeedback { get; set; }
+        public int? MoneyEstimated { get; set; }
     }
 }

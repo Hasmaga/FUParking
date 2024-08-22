@@ -963,6 +963,167 @@ namespace FUParkingService
                             Message = payment.Message
                         };
                     }
+
+                    var moneyEstimatedNeedToPay = 0;
+                    if (item.Status.Equals(SessionEnum.PARKED))
+                    {
+                        var totalBlockTime = (int)(TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) - item.TimeIn).TotalMinutes / item.Block;
+                        switch (item.Mode)
+                        {
+                            case ModeEnum.MODE1:
+                                {
+                                    // Calculate price base on time in
+                                    // Check VehicleTypeId
+                                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(item.VehicleTypeId);
+                                    if (!vehicleType.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                                    if (!listPriceTable.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Check which package is have higher piority
+                                    var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                                    if (priceTable == null)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get list price item in price table
+                                    var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                                    if (!listPriceItem.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    if (priceItem == null)
+                                    {
+                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).LastOrDefault();
+                                        if (priceItem == null)
+                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    }
+                                    // Calculate price
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    break;
+                                }
+                            case ModeEnum.MODE2:
+                                {
+                                    // Calculate price base on time out
+                                    // Check VehicleTypeId
+                                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(item.VehicleTypeId);
+                                    if (!vehicleType.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                                    if (!listPriceTable.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Check which package is have higher piority
+                                    var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                                    if (priceTable == null)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get list price item in price table
+                                    var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                                    if (!listPriceItem.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    if (priceItem == null)
+                                    {
+                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).FirstOrDefault();
+                                        if (priceItem == null)
+                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    }
+                                    // Calculate price
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    break;
+                                }
+                            case ModeEnum.MODE3:
+                                {
+                                    // Calculate price base on time out
+                                    // Check VehicleTypeId
+                                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(item.VehicleTypeId);
+                                    if (!vehicleType.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                                    if (!listPriceTable.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Check which package is have higher piority
+                                    var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                                    if (priceTable == null)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get list price item in price table
+                                    var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                                    if (!listPriceItem.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    if (priceItem == null)
+                                    {
+                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                                        if (priceItem == null)
+                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    }
+                                    // Calculate price
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    break;
+                                }
+                            case ModeEnum.MODE4:
+                                {
+                                    // Calculate price base on time out
+                                    // Check VehicleTypeId
+                                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(item.VehicleTypeId);
+                                    if (!vehicleType.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                    if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                                    if (!listPriceTable.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                    if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Check which package is have higher piority
+                                    var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                                    if (priceTable == null)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get list price item in price table
+                                    var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                                    if (!listPriceItem.IsSuccess)
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                    if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    if (priceItem == null)
+                                    {
+                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                                        if (priceItem == null)
+                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    }
+                                    // Calculate price
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    break;
+                                }
+                            default:
+                                return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        }
+                    }
+
+
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                     listSessionData.Add(new GetHistorySessionResDto
                     {
@@ -976,7 +1137,8 @@ namespace FUParkingService
                         GateOut = item.GateOut?.Name,
                         PaymentMethod = item.PaymentMethod?.Name,
                         ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
-                        IsFeedback = item.Feedbacks.Count > 0
+                        IsFeedback = item.Feedbacks.Count > 0,
+                        MoneyEstimated = moneyEstimatedNeedToPay == 0 ? null : moneyEstimatedNeedToPay
                     });
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
