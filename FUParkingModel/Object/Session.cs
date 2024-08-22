@@ -23,14 +23,14 @@ namespace FUParkingModel.Object
         [Column("ImageInUrl")]
         public required string ImageInUrl { get; set; }
 
-        [Column("ImageBodyUrl")]
+        [Column("ImageInBodyUrl")]
         public string ImageInBodyUrl { get; set; } = null!;
 
         [Column("ImageOutUrl")]
         public string? ImageOutUrl { get; set; }
 
-        [Column("ImageOurBody")]
-        public string? ImageOutBody { get; set; }
+        [Column("ImageOutBodyUrl")]
+        public string? ImageOutBodyUrl { get; set; }
 
         [Column("TimeIn")]
         public required DateTime TimeIn { get; set; }

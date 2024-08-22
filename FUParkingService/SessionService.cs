@@ -346,7 +346,7 @@ namespace FUParkingService
 
                     sessionCard.Data.GateOutId = gateOut.Data.Id;
                     sessionCard.Data.ImageOutUrl = imageOutNonePaidUrl.Data.ObjUrl;
-                    sessionCard.Data.ImageOutBody = imageBodyNonePaidUrl.Data.ObjUrl;
+                    sessionCard.Data.ImageOutBodyUrl = imageBodyNonePaidUrl.Data.ObjUrl;
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -694,7 +694,7 @@ namespace FUParkingService
                             scope.Dispose();
                             return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                         }
-                        sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
+                        sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
                         sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                         sessionCard.Data.GateOutId = req.GateOutId;
                         sessionCard.Data.TimeOut = req.TimeOut;
@@ -756,7 +756,7 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodWallet.InternalErrorMessage };
                     }
-                    sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
+                    sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
                     sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
@@ -795,7 +795,7 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                     }
-                    sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
+                    sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
                     sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
