@@ -23,6 +23,10 @@ namespace FUParkingModel.RequestObject.Session
         public IFormFile ImageOut { get; set; } = null!;
 
         [FromForm]
+        [Required(ErrorMessage = "Must have ImageBody")]
+        public IFormFile ImageBody { get; set; } = null!;
+
+        [FromForm]
         [Required(ErrorMessage = "")]
         public string PlateNumber { get; set; } = null!;
     }

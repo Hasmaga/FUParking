@@ -128,7 +128,9 @@ namespace FUParkingService
                         }
                     };
                 // Object name = PlateNumber + TimeIn + extension file
-                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_PLate_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objBodyName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_IN" + Path.GetExtension(req.ImageBodyIn.FileName);
+
                 // Create new UploadObjectReqDto                
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
@@ -140,6 +142,17 @@ namespace FUParkingService
                 var imageInUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                 if (imageInUrl.IsSuccess == false || imageInUrl.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
+                UploadObjectReqDto uploadImageBody = new()
+                {
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
+                    ObjFile = req.ImageBodyIn,
+                    ObjName = objBodyName
+                };
+                var imageBodyUrl = await _minioService.UploadObjectAsync(uploadImageBody);
+                if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+                
                 // Create session
                 var newSession = new Session
                 {
@@ -148,6 +161,7 @@ namespace FUParkingService
                     PlateNumber = req.PlateNumber,
                     GateInId = req.GateInId,
                     ImageInUrl = imageInUrl.Data.ObjUrl,
+                    ImageInBodyUrl = imageBodyUrl.Data.ObjUrl,
                     TimeIn = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")),
                     Mode = parkingArea.Data.Mode,
                     Status = SessionEnum.PARKED,
@@ -222,7 +236,8 @@ namespace FUParkingService
                 if (parkingArea.Data == null || !parkingArea.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<bool> { Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST };
                 // Create new UploadObjectReqDto
-                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_In" + Path.GetExtension(req.ImageIn.FileName);
+                var objBodyName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_In" + Path.GetExtension(req.ImageBody.FileName);
                 UploadObjectReqDto uploadObjectReqDto = new()
                 {
                     BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -232,6 +247,16 @@ namespace FUParkingService
                 // Upload image to Minio server and get url image
                 var imageInUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                 if (imageInUrl.IsSuccess == false || imageInUrl.Data == null)
+                    return new Return<bool> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
+                UploadObjectReqDto uploadImageBody = new()
+                {
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
+                    ObjFile = req.ImageBody,
+                    ObjName = objBodyName
+                };
+                var imageBodyUrl = await _minioService.UploadObjectAsync(uploadImageBody);
+                if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
                     return new Return<bool> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
                 // Create session
                 var newSession = new Session
@@ -246,6 +271,7 @@ namespace FUParkingService
                     Status = SessionEnum.PARKED,
                     CreatedById = checkAuth.Data.Id,
                     VehicleTypeId = vehicleType.Data.Id,
+                    ImageInBodyUrl = imageBodyUrl.Data.ObjUrl,
                 };
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
@@ -295,7 +321,8 @@ namespace FUParkingService
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
                 if ((sessionCard.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.FREE))
                 {
-                    var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
+                    var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
+                    var objNameBodyNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_Out" + Path.GetExtension(req.ImageBody.FileName);
                     var uploadObjectNonePaidReqDto = new UploadObjectReqDto
                     {
                         BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -305,8 +332,21 @@ namespace FUParkingService
                     var imageOutNonePaidUrl = await _minioService.UploadObjectAsync(uploadObjectNonePaidReqDto);
                     if (imageOutNonePaidUrl.IsSuccess == false || imageOutNonePaidUrl.Data == null)
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
+                    var uploadObjectBodyNonePaidReqDto = new UploadObjectReqDto
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
+                        ObjFile = req.ImageBody,
+                        ObjName = objNameBodyNonePaid
+                    };
+
+                    var imageBodyNonePaidUrl = await _minioService.UploadObjectAsync(uploadObjectBodyNonePaidReqDto);
+                    if (imageBodyNonePaidUrl.IsSuccess == false || imageBodyNonePaidUrl.Data == null)
+                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
                     sessionCard.Data.GateOutId = gateOut.Data.Id;
                     sessionCard.Data.ImageOutUrl = imageOutNonePaidUrl.Data.ObjUrl;
+                    sessionCard.Data.ImageOutBody = imageBodyNonePaidUrl.Data.ObjUrl;
                     sessionCard.Data.TimeOut = req.TimeOut;
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -490,7 +530,8 @@ namespace FUParkingService
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 // Upload image out
-                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Out" + Path.GetExtension(req.ImageOut.FileName);
+                var objName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
+                var objBodyName = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_Out" + Path.GetExtension(req.ImageBody.FileName);
                 var uploadObjectReqDto = new UploadObjectReqDto
                 {
                     BucketName = BucketMinioEnum.BUCKET_PARKiNG,
@@ -500,6 +541,17 @@ namespace FUParkingService
                 var imageOutUrl = await _minioService.UploadObjectAsync(uploadObjectReqDto);
                 if (imageOutUrl.IsSuccess == false || imageOutUrl.Data == null)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
+                var uploadObjectBodyReqDto = new UploadObjectReqDto
+                {
+                    BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
+                    ObjFile = req.ImageBody,
+                    ObjName = objBodyName
+                };
+                var imageBodyUrl = await _minioService.UploadObjectAsync(uploadObjectBodyReqDto);
+                if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+
                 // Try minus balance of customer wallet
 
                 if (sessionCard.Data.CustomerId.HasValue)
@@ -642,6 +694,7 @@ namespace FUParkingService
                             scope.Dispose();
                             return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                         }
+                        sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
                         sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                         sessionCard.Data.GateOutId = req.GateOutId;
                         sessionCard.Data.TimeOut = req.TimeOut;
@@ -703,6 +756,7 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodWallet.InternalErrorMessage };
                     }
+                    sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
                     sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;
@@ -741,6 +795,7 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                     }
+                    sessionCard.Data.ImageOutBody = imageBodyUrl.Data.ObjUrl;
                     sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
                     sessionCard.Data.GateOutId = req.GateOutId;
                     sessionCard.Data.TimeOut = req.TimeOut;

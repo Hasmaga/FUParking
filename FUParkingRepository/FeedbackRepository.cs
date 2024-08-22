@@ -84,13 +84,15 @@ namespace FUParkingRepository
 
                 if(!string.IsNullOrEmpty(cusName))
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     query = query.Where(t => t.Customer.FullName.Contains(cusName));
+
                 }
                 if(!string.IsNullOrEmpty(parkName))
                 {
                     query = query.Where(t => t.ParkingArea.Name.Contains(parkName));
                 }
-
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 var result = await query                        
                         .Skip((pageIndex - 1) * pageSize)
                         .Take(pageSize)

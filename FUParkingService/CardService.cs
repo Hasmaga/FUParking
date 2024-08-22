@@ -14,17 +14,13 @@ namespace FUParkingService
     {
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
-        private readonly ISessionRepository _sessionRepository;
-        private readonly ICustomerRepository _customerRepository;
-        private readonly IVehicleRepository _vehicleRepository;
+        private readonly ISessionRepository _sessionRepository;        
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository, ICustomerRepository customerRepository, IVehicleRepository vehicleRepository)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
-            _sessionRepository = sessionRepository;
-            _customerRepository = customerRepository;
-            _vehicleRepository = vehicleRepository;
+            _sessionRepository = sessionRepository;            
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
@@ -509,16 +505,16 @@ namespace FUParkingService
                         IsSuccess = true,
                         Data = new GetCardByCardNumberResDto
                         {
-                            cardNumber = card.Data.CardNumber,
-                            status = card.Data.Status,
-                            plateNumber = card.Data.PlateNumber,
-                            sessionCustomerEmail = session.Data.Customer?.Email,
-                            sessionCustomerName = session.Data.Customer?.FullName,
-                            sessionGateIn = session.Data.GateIn?.Name,
-                            sessionId = session.Data.Id,
-                            sessionPlateNumber = session.Data.PlateNumber,
-                            sessionTimeIn = session.Data.TimeIn,
-                            sessionVehicleType = session.Data.VehicleType?.Name,                      
+                            CardNumber = card.Data.CardNumber,
+                            Status = card.Data.Status,
+                            PlateNumber = card.Data.PlateNumber,
+                            SessionCustomerEmail = session.Data.Customer?.Email,
+                            SessionCustomerName = session.Data.Customer?.FullName,
+                            SessionGateIn = session.Data.GateIn?.Name,
+                            SessionId = session.Data.Id,
+                            SessionPlateNumber = session.Data.PlateNumber,
+                            SessionTimeIn = session.Data.TimeIn,
+                            SessionVehicleType = session.Data.VehicleType?.Name,                      
                         }
                     };
                 }
@@ -527,9 +523,9 @@ namespace FUParkingService
                     IsSuccess = true,
                     Data = new GetCardByCardNumberResDto
                     {
-                        cardNumber = card.Data.CardNumber,
-                        status = card.Data.Status,
-                        plateNumber = card.Data.PlateNumber,
+                        CardNumber = card.Data.CardNumber,
+                        Status = card.Data.Status,
+                        PlateNumber = card.Data.PlateNumber,
                     },
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
                 };

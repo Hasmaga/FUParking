@@ -19,7 +19,11 @@ namespace FUParkingModel.RequestObject.Session
         public string PlateNumber { get; set; } = null!;
 
         [FromForm]
-        [Required(ErrorMessage = "Must have ImageInUrl")]
+        [Required(ErrorMessage = "Must have ImageIn")]
         public IFormFile ImageIn { get; set; } = null!;
+
+        [FromForm]
+        [Required(ErrorMessage = "Must have ImageBodyIn")]
+        public IFormFile ImageBodyIn { get; set; } = null!;
     }
 }

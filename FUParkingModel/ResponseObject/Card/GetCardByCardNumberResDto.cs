@@ -8,15 +8,15 @@ namespace FUParkingModel.ResponseObject.Card
 {
     public class GetCardByCardNumberResDto
     {
-        public required string cardNumber { get; set; }
-        public string? plateNumber { get; set; }
-        public required string status { get; set; }
-        public Guid? sessionId { get; set; }
-        public string? sessionPlateNumber { get; set; }
-        public string? sessionVehicleType { get; set; }
-        public DateTime sessionTimeIn { get; set; }
-        public string? sessionGateIn { get; set; }
-        public string? sessionCustomerName { get; set; }
-        public string? sessionCustomerEmail { get; set; }
+        public required string CardNumber { get; set; }
+        public string? PlateNumber { get; set; }
+        public required string Status { get; set; }
+        public Guid? SessionId { get; set; }
+        public string? SessionPlateNumber { get; set; }
+        public string? SessionVehicleType { get; set; }
+        public DateTime SessionTimeIn { get; set; }
+        public string? SessionGateIn { get; set; }
+        public string? SessionCustomerName { get; set; }
+        public string? SessionCustomerEmail { get; set; }
     }
 }

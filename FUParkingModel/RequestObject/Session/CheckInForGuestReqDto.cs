@@ -23,6 +23,10 @@ namespace FUParkingModel.RequestObject.Session
         public IFormFile ImageIn { get; set; } = null!;
 
         [FromForm]
+        [Required(ErrorMessage = "Must have ImageBody")]
+        public IFormFile ImageBody { get; set; } = null!;
+
+        [FromForm]
         [Required(ErrorMessage = "Must have VehicleTypeId")]
         public Guid VehicleTypeId { get; set; }
     }
