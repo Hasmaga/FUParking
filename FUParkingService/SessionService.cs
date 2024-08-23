@@ -1747,5 +1747,43 @@ namespace FUParkingService
                 };
             }
         }
+        public async Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<StatisticSessionTodayResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _sessionRepository.GetStatisticCheckInCheckOutInParkingAreaAsync(parkingId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<StatisticSessionTodayResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = result.Data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
