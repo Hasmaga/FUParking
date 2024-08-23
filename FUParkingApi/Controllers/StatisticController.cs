@@ -223,5 +223,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("parkingarea/{parkingId}/today")]
+        public async Task<IActionResult> StatisticCheckInCheckOutInParkingAreaAsync([FromRoute] Guid parkingId)
+        {
+            var result = await _sessionService.GetStatisticCheckInCheckOutInParkingAreaAsync(parkingId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

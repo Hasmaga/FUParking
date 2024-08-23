@@ -5,6 +5,7 @@ using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
@@ -483,6 +484,114 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
+            }
+        }
+
+        public async Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId)
+        {
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var totalCheckIn = await _db.Sessions
+                    .Include(p => p.GateIn)
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date 
+                        && x.Status.Equals(SessionEnum.PARKED)
+                        && x.GateIn != null
+                        && x.GateIn.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+
+                var totalCheckOut = await _db.Sessions
+                    .Include(p => p.GateOut)
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date 
+                        && x.Status.Equals(SessionEnum.CLOSED)
+                        && x.GateOut != null
+                        && x.GateOut.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+                var totalVehicleParked = await _db.Sessions
+                    .Include(p => p.GateIn)
+                    .Where(x => x.Status.Equals(SessionEnum.PARKED)
+                        && x.GateIn != null
+                        && x.GateIn.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+                var totalLot = await _db.ParkingAreas
+                    .Where(x => x.Id.Equals(parkingId))
+                    .Select(x => x.MaxCapacity)
+                    .FirstOrDefaultAsync();
+
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = new StatisticSessionTodayResDto
+                    {
+                        TotalCheckInToday = totalCheckIn,
+                        TotalCheckOutToday = totalCheckOut,
+                        TotalVehicleParked = totalVehicleParked,
+                        TotalLot = totalLot
+                    },
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Session>>> GetAllSessionTodayByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize)
+        {
+            Return<IEnumerable<Session>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var query = _db.Sessions
+                    .Include(t => t.GateIn)
+                    .Include(t => t.GateOut)
+                    .Include(t => t.PaymentMethod)
+                    .Include(t => t.VehicleType)
+                    .Include(t => t.Customer)
+                    .Include(t => t.Card)
+                    .Where(p => p.DeletedDate == null 
+                        && p.GateIn!.ParkingAreaId.Equals(parkingId) 
+                        && p.CreatedDate.Date == datetimenow.Date)
+                    .AsQueryable();
+
+                if(!string.IsNullOrEmpty(plateNum))
+                {
+                    query = query.Where(p => p.PlateNumber.Contains(plateNum));
+                }
+                if(!string.IsNullOrEmpty(cardNum))
+                {
+                    query = query.Where(p => p.Card!.CardNumber.Contains(cardNum));
+                }
+
+                var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<Session>>
+                {
+                    Data = result,
+                    TotalRecord = query.Count(),
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true,
+                };
+            }
+            catch (Exception ex)
+            {
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
 
