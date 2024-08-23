@@ -485,5 +485,62 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId)
+        {
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var totalCheckIn = await _db.Sessions
+                    .Include(p => p.GateIn)
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date 
+                        && x.Status.Equals(SessionEnum.PARKED)
+                        && x.GateIn != null
+                        && x.GateIn.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+
+                var totalCheckOut = await _db.Sessions
+                    .Include(p => p.GateOut)
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date 
+                        && x.Status.Equals(SessionEnum.CLOSED)
+                        && x.GateOut != null
+                        && x.GateOut.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+                var totalVehicleParked = await _db.Sessions
+                    .Include(p => p.GateIn)
+                    .Where(x => x.Status.Equals(SessionEnum.PARKED)
+                        && x.GateIn != null
+                        && x.GateIn.ParkingAreaId.Equals(parkingId))
+                    .CountAsync();
+
+                var totalLot = await _db.ParkingAreas
+                    .Where(x => x.Id.Equals(parkingId))
+                    .Select(x => x.MaxCapacity)
+                    .FirstOrDefaultAsync();
+
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = new StatisticSessionTodayResDto
+                    {
+                        TotalCheckInToday = totalCheckIn,
+                        TotalCheckOutToday = totalCheckOut,
+                        TotalVehicleParked = totalVehicleParked,
+                        TotalLot = totalLot
+                    },
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }
