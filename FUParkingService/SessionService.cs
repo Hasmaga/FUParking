@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
+using FUParkingModel.ResponseObject;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ResponseObject.Statistic;
@@ -1779,6 +1780,65 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<StatisticSessionTodayResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetAllSessionTodayResDto>>> GetAllSessionTodayByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetAllSessionTodayResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _sessionRepository.GetAllSessionTodayByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, pageIndex, pageSize);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetAllSessionTodayResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<IEnumerable<GetAllSessionTodayResDto>>
+                {
+                    IsSuccess = true,
+                    Data = result.Data?.Select(fb => new GetAllSessionTodayResDto
+                    {
+                        Id = fb.Id,
+                        PlateNumber = fb.PlateNumber,
+                        CardNumber = fb.Card?.CardNumber ?? "N/A",
+                        GateInName = fb.GateIn?.Name ?? "N/A",
+                        GateOutName = fb.GateOut?.Name ?? "N/A",
+                        ImageInUrl = fb.ImageInUrl,
+                        ImageOutUrl = fb.ImageOutUrl!,
+                        TimeIn = fb.TimeIn,
+                        TimeOut = fb.TimeOut,
+                        Status = fb.Status,
+                        Mode = fb.Mode,
+                        Block = fb.Block,
+                        VehicleTypeName = fb.VehicleType?.Name ?? "N/A",
+                        PaymentMethodName = fb.PaymentMethod?.Name ?? "N/A",
+                        CustomerEmail = fb.Customer?.Email ?? "N/A",
+                        ImageInBodyUrl = fb.ImageInBodyUrl,
+                        ImageOutBodyUrl = fb.ImageOutBodyUrl!,
+                    }),
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetAllSessionTodayResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex

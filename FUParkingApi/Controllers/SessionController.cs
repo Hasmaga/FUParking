@@ -1,4 +1,5 @@
 ﻿using FUParkingApi.HelperClass;
+using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
 using FUParkingService.Interface;
@@ -173,6 +174,25 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at Cancel Session By Session Id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("{parkingId}/today")]
+        public async Task<IActionResult> GetListSessionTodayAsync([FromRoute] Guid parkingId, [FromQuery] string? cardNum, [FromQuery] string? plateNum, [FromQuery] int pageIndex=Pagination.PAGE_INDEX, [FromQuery] int pageSize= Pagination.PAGE_SIZE)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _sessionService.GetAllSessionTodayByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, pageIndex, pageSize);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at today: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }
