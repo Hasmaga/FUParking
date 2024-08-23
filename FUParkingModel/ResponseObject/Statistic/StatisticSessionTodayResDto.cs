@@ -12,5 +12,7 @@ namespace FUParkingModel.ResponseObject.Statistic
         public int TotalCheckOutToday { get; set; }
 
         public int TotalVehicleParked { get; set; }
+
+        public int TotalLot { get; set; }
     }
 }
