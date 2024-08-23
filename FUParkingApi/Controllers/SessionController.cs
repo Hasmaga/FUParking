@@ -178,5 +178,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("card/{cardNumber}")]
+        public async Task<IActionResult> GetNewestSessionByCardNumberAsync(string cardNumber)
+        {
+            var result = await _sessionService.GetNewestSessionByCardNumberAsync(cardNumber);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Get Newest Session By Card Number: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

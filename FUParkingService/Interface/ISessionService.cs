@@ -22,5 +22,6 @@ namespace FUParkingService.Interface
         Task<Return<int>> GetTotalSessionParkingTodayAsync();
         Task<Return<double>> GetAverageSessionDurationPerDayAsync();
         Task<Return<StatisticCheckInCheckOutResDto>> GetStatisticCheckInCheckOutAsync();
+        Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber);
     }
 }
