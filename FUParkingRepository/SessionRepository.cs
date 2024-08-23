@@ -5,6 +5,7 @@ using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FUParkingRepository
@@ -540,6 +541,57 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
                 };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Session>>> GetAllSessionTodayByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize)
+        {
+            Return<IEnumerable<Session>> res = new()
+            {
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var query = _db.Sessions
+                    .Include(t => t.GateIn)
+                    .Include(t => t.GateOut)
+                    .Include(t => t.PaymentMethod)
+                    .Include(t => t.VehicleType)
+                    .Include(t => t.Customer)
+                    .Include(t => t.Card)
+                    .Where(p => p.DeletedDate == null 
+                        && p.GateIn!.ParkingAreaId.Equals(parkingId) 
+                        && p.CreatedDate.Date == datetimenow.Date)
+                    .AsQueryable();
+
+                if(!string.IsNullOrEmpty(plateNum))
+                {
+                    query = query.Where(p => p.PlateNumber.Contains(plateNum));
+                }
+                if(!string.IsNullOrEmpty(cardNum))
+                {
+                    query = query.Where(p => p.Card!.CardNumber.Contains(cardNum));
+                }
+
+                var result = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip((pageIndex - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return new Return<IEnumerable<Session>>
+                {
+                    Data = result,
+                    TotalRecord = query.Count(),
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true,
+                };
+            }
+            catch (Exception ex)
+            {
+                res.InternalErrorMessage = ex;
+                return res;
             }
         }
     }
