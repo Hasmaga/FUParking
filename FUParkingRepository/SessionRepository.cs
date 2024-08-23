@@ -515,6 +515,11 @@ namespace FUParkingRepository
                         && x.GateIn.ParkingAreaId.Equals(parkingId))
                     .CountAsync();
 
+                var totalLot = await _db.ParkingAreas
+                    .Where(x => x.Id.Equals(parkingId))
+                    .Select(x => x.MaxCapacity)
+                    .FirstOrDefaultAsync();
+
                 return new Return<StatisticSessionTodayResDto>
                 {
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
@@ -522,7 +527,8 @@ namespace FUParkingRepository
                     {
                         TotalCheckInToday = totalCheckIn,
                         TotalCheckOutToday = totalCheckOut,
-                        TotalVehicleParked = totalVehicleParked
+                        TotalVehicleParked = totalVehicleParked,
+                        TotalLot = totalLot
                     },
                     IsSuccess = true
                 };
