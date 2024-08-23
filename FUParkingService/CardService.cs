@@ -45,7 +45,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.CARD_IS_EXIST
                     };
                 }
-                if (req.PlateNumber is not null)
+                if (!string.IsNullOrEmpty(req.PlateNumber))
                 {
                     var isExistPlateNumber = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
                     if (!isExistPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
