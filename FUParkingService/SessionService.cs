@@ -311,10 +311,7 @@ namespace FUParkingService
                 if (sessionCard.Data == null || sessionCard.Data.GateOutId != null)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CLOSE };
                 if (sessionCard.Data.Status.Equals(SessionEnum.CANCELLED))
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CANCELLED };
-                // Check plate number
-                if (sessionCard.Data.PlateNumber != req.PlateNumber)
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH };
+                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SESSION_CANCELLED };         
                 var gateOut = await _gateRepository.GetGateByIdAsync(req.GateOutId);
                 if (!gateOut.IsSuccess)
                     return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateOut.InternalErrorMessage };
