@@ -1,11 +1,13 @@
 using Coravel;
 using FUParkingModel.DatabaseContext;
+using FUParkingModel.MailObject;
 using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService;
 using FUParkingService.BackgroundTask;
 using FUParkingService.Cloudflare;
 using FUParkingService.Interface;
+using FUParkingService.MailService;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,6 +58,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IZaloService, ZaloService>();
+#endregion
+
+#region MailService
+builder.Services.Configure<MailSetting>(builder.Configuration.GetSection("MailSetting"));
+builder.Services.AddTransient<IMailService, MailService>();
 #endregion
 
 #region Repositories
