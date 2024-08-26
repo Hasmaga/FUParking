@@ -180,14 +180,14 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("{parkingId}/today")]
-        public async Task<IActionResult> GetListSessionTodayAsync([FromRoute] Guid parkingId, [FromQuery] string? cardNum, [FromQuery] string? plateNum, [FromQuery] int pageIndex=Pagination.PAGE_INDEX, [FromQuery] int pageSize= Pagination.PAGE_SIZE)
+        [HttpGet("{parkingId}")]
+        public async Task<IActionResult> GetListSessionStaffAsync([FromRoute] Guid parkingId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] string? cardNum, [FromQuery] string? plateNum, [FromQuery] int pageIndex=Pagination.PAGE_INDEX, [FromQuery] int pageSize= Pagination.PAGE_SIZE)
         {
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            var result = await _sessionService.GetAllSessionTodayByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, pageIndex, pageSize);
+            var result = await _sessionService.GetAllSessionByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, pageIndex, pageSize, startDate, endDate);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
