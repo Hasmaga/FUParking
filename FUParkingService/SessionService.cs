@@ -1184,27 +1184,52 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<CheckOutResDto>> CheckOutSessionByPlateNumberAsync(string PlateNumber, DateTime timeOut)
+        public async Task<Return<dynamic>> CheckOutSessionByPlateNumberAsync(CheckOutSessionByPlateNumberReqDto req)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
                 }
+                // Check Gate
+                if (req.GateId != null)
+                {
+                    var isGateExist = await _gateRepository.GetGateByIdAsync(req.GateId ?? Guid.Empty);
+                    if (!isGateExist.IsSuccess || isGateExist.Data == null || isGateExist.Data.GateType == null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isGateExist.InternalErrorMessage,
+                            Message = ErrorEnumApplication.GATE_NOT_EXIST
+                        };
+                    }
+
+                    // Check Gate is gate out 
+                    if (!isGateExist.Data.GateType.Name.Equals(GateTypeEnum.OUT))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_GATE_OUT
+                        };
+                    }
+                }
+
                 // Check PlateNumber
-                var session = await _sessionRepository.GetNewestSessionByPlateNumberAsync(PlateNumber);
+                var session = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!session.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || session.Data is null) 
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         InternalErrorMessage = session.InternalErrorMessage,
                         Message = ErrorEnumApplication.NOT_FOUND_SESSION_WITH_PLATE_NUMBER
@@ -1213,7 +1238,7 @@ namespace FUParkingService
                 if (session.Data.Status.Equals(SessionEnum.CLOSED))
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         Message = ErrorEnumApplication.SESSION_CLOSE
                     };
@@ -1221,7 +1246,7 @@ namespace FUParkingService
                 if (session.Data.Status.Equals(SessionEnum.CANCELLED))
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
@@ -1231,39 +1256,70 @@ namespace FUParkingService
                 if (!gateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || gateOut.Data == null)
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         InternalErrorMessage = gateOut.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                var totalBlockTime = (int)(timeOut - session.Data.TimeIn).TotalMinutes / session.Data.Block;
+
+                string imagePlateOutUrl = "";
+                string imageBodyOutUrl = "";
+
+                // Upload image if have 
+                if (req.ImagePlate is not null && req.ImageBody is not null)
+                {
+                    var objNameImagePlateOut = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImagePlate.FileName);
+                    var objImagePlateOut = new UploadObjectReqDto()
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_PARKiNG,
+                        ObjFile = req.ImagePlate,
+                        ObjName = objNameImagePlateOut
+                    };
+                    var uploadImagePlateOut = await _minioService.UploadObjectAsync(objImagePlateOut);
+                    if (uploadImagePlateOut.IsSuccess == false || uploadImagePlateOut.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = uploadImagePlateOut.InternalErrorMessage };
+                    }
+
+                    var objNameImageBodyOut = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_Out" + Path.GetExtension(req.ImageBody.FileName);
+                    var objImageBodyOut = new UploadObjectReqDto()
+                    {
+                        BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
+                        ObjFile = req.ImageBody,
+                        ObjName = objNameImageBodyOut
+                    };
+                    var uploadImageBodyOut = await _minioService.UploadObjectAsync(objImageBodyOut);
+                    if (uploadImageBodyOut.IsSuccess == false || uploadImageBodyOut.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = uploadImageBodyOut.InternalErrorMessage };
+                    }
+                    imagePlateOutUrl = uploadImagePlateOut.Data.ObjUrl;
+                    imageBodyOutUrl = uploadImageBodyOut.Data.ObjUrl;
+                }
+
+                var totalBlockTime = (int)(req.CheckOutTime - session.Data.TimeIn).TotalMinutes / session.Data.Block;
                 int price = 0;
                 // check customer type is free
                 if ((session.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.FREE))
                 {
-                    session.Data.GateOutId = gateOut.Data.Id;                    
-                    session.Data.TimeOut = timeOut;
+                    session.Data.GateOutId = req.GateId is null ? gateOut.Data.Id : req.GateId;                    
+                    session.Data.TimeOut = req.CheckOutTime;
+                    session.Data.ImageOutUrl = imagePlateOutUrl;
+                    session.Data.ImageOutBodyUrl = imageBodyOutUrl;
                     session.Data.LastModifyById = checkAuth.Data.Id;
                     session.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                     session.Data.Status = SessionEnum.CLOSED;
                     var updateNonePaidSession = await _sessionRepository.UpdateSessionAsync(session.Data);
                     if (!updateNonePaidSession.IsSuccess)
-                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateNonePaidSession.InternalErrorMessage };
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateNonePaidSession.InternalErrorMessage };
                     scope.Complete();
-                    return new Return<CheckOutResDto>
+                    return new Return<dynamic>
                     {
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                        Data = new CheckOutResDto
-                        {
-                            TimeIn = session.Data.TimeIn,
-                            Amount = 0,
-                            ImageIn = session.Data.ImageInUrl,
-                            Message = "Check out successfully",
-                            PlateNumber = session.Data.PlateNumber,
-                            TypeOfCustomer = session.Data.Customer?.CustomerType?.Name ?? "",
-                        }
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,                        
                     };
                 }
                 
@@ -1275,24 +1331,24 @@ namespace FUParkingService
                             // Check VehicleTypeId
                             var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
                             if (!vehicleType.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                             if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                             if (!listPriceTable.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                             if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Check which package is have higher piority
                             var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                             if (priceTable == null)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get list price item in price table
                             var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                             if (!listPriceItem.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                             var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
                             if (priceItem == null)
@@ -1300,7 +1356,7 @@ namespace FUParkingService
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                 priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).LastOrDefault();
                                 if (priceItem == null)
-                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
                             price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
@@ -1312,24 +1368,24 @@ namespace FUParkingService
                             // Check VehicleTypeId
                             var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
                             if (!vehicleType.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                             if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                             if (!listPriceTable.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                             if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Check which package is have higher piority
                             var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                             if (priceTable == null)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get list price item in price table
                             var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                             if (!listPriceItem.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                             var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
                             if (priceItem == null)
@@ -1337,7 +1393,7 @@ namespace FUParkingService
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                 priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).FirstOrDefault();
                                 if (priceItem == null)
-                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
                             price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
@@ -1349,24 +1405,24 @@ namespace FUParkingService
                             // Check VehicleTypeId
                             var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
                             if (!vehicleType.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                             if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                             if (!listPriceTable.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                             if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Check which package is have higher piority
                             var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                             if (priceTable == null)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get list price item in price table
                             var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                             if (!listPriceItem.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                             var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
                             if (priceItem == null)
@@ -1374,7 +1430,7 @@ namespace FUParkingService
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                 priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
                                 if (priceItem == null)
-                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
                             price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
@@ -1386,24 +1442,24 @@ namespace FUParkingService
                             // Check VehicleTypeId
                             var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(session.Data.VehicleTypeId);
                             if (!vehicleType.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
                             if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
                             if (!listPriceTable.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                             if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Check which package is have higher piority
                             var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                             if (priceTable == null)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get list price item in price table
                             var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
                             if (!listPriceItem.IsSuccess)
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
                             var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
                             if (priceItem == null)
@@ -1411,51 +1467,76 @@ namespace FUParkingService
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
                                 priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
                                 if (priceItem == null)
-                                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
                             price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
                             break;
                         }
                     default:
-                        return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }                
+
                 var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
                 if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                 }
-                session.Data.GateOutId = gateOut.Data.Id;
-                session.Data.TimeOut = timeOut;
+                session.Data.GateOutId = req.GateId is null ? gateOut.Data.Id : req.GateId;
+                session.Data.TimeOut = req.CheckOutTime;
+                session.Data.ImageOutBodyUrl = imageBodyOutUrl;                
+                session.Data.ImageOutUrl = imagePlateOutUrl;
                 session.Data.LastModifyById = checkAuth.Data.Id;
                 session.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 session.Data.PaymentMethodId = paymentMethod.Data.Id;
+                session.Data.Status = SessionEnum.CLOSED;
                 var isUpdateSession = await _sessionRepository.UpdateSessionAsync(session.Data);
                 if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
                     scope.Dispose();
-                    return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                // Create payment 
+                Payment payment = new()
+                {
+                    PaymentMethodId = paymentMethod.Data.Id,
+                    TotalPrice = price,
+                    SessionId = session.Data.Id
+                };
+
+                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                if (!createPayment.IsSuccess || createPayment.Data is null)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createPayment.InternalErrorMessage };
+                }
+
+                // Create transaction
+                FUParkingModel.Object.Transaction transaction = new()
+                {
+                    TransactionDescription = "Pay for parking",
+                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                    PaymentId = createPayment.Data.Id,
+                    Amount = price
+                };
+
+                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                if (!createTransaction.IsSuccess || createTransaction.Data is null)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createTransaction.InternalErrorMessage };
                 }
                 scope.Complete();
-                return new Return<CheckOutResDto>
+                return new Return<dynamic>
                 {
                     IsSuccess = true,
-                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                    Data = new CheckOutResDto
-                    {
-                        Amount = price,
-                        Message = "Need to pay",
-                        ImageIn = session.Data.ImageInUrl,
-                        PlateNumber = session.Data.PlateNumber,
-                        TypeOfCustomer = CustomerTypeEnum.PAID,
-                        TimeIn = session.Data.TimeIn,
-                    }
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,                    
                 };
             }
             catch (Exception ex)
             {
-                return new Return<CheckOutResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
 
@@ -1745,6 +1826,7 @@ namespace FUParkingService
                 };
             }
         }
+
         public async Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId)
         {
             try
@@ -2109,6 +2191,235 @@ namespace FUParkingService
                     Message = ErrorEnumApplication.SERVER_ERROR, 
                     InternalErrorMessage = ex 
                 };
+            }
+        }
+
+        public async Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // Check newest session by plate number
+                var result = await _sessionRepository.GetNewestSessionByPlateNumberAsync(PlateNumber);
+                if (!result.IsSuccess)
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+
+                if (result.Data == null)
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_FOUND_SESSION_WITH_PLATENUMBER
+                    };
+                }
+
+                // if session close 
+                if (result.Data.Status.Equals(SessionEnum.CLOSED))
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.SESSION_CLOSE
+                    };
+                }
+
+                // if session cancelled
+                if (result.Data.Status.Equals(SessionEnum.CANCELLED))
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.SESSION_CANCELLED
+                    };
+                }
+                var amount = 0;
+                var totalBlockTime = (int)(TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) - result.Data.TimeIn).TotalMinutes / result.Data.Block;
+                switch (result.Data.Mode)
+                {
+                    case ModeEnum.MODE1:
+                        {
+                            // Calculate price base on time in
+                            // Check VehicleTypeId
+                            var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(result.Data.VehicleTypeId);
+                            if (!vehicleType.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                            if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                            if (!listPriceTable.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                            if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Check which package is have higher piority
+                            var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                            if (priceTable == null)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get list price item in price table
+                            var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                            if (!listPriceItem.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                            if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            if (priceItem == null)
+                            {
+                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).LastOrDefault();
+                                if (priceItem == null)
+                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            // Calculate price
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            break;
+                        }
+                    case ModeEnum.MODE2:
+                        {
+                            // Calculate price base on time out
+                            // Check VehicleTypeId
+                            var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(result.Data.VehicleTypeId);
+                            if (!vehicleType.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                            if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                            if (!listPriceTable.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                            if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Check which package is have higher piority
+                            var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                            if (priceTable == null)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get list price item in price table
+                            var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                            if (!listPriceItem.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                            if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            if (priceItem == null)
+                            {
+                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.ApplyFromHour).FirstOrDefault();
+                                if (priceItem == null)
+                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            // Calculate price
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            break;
+                        }
+                    case ModeEnum.MODE3:
+                        {
+                            // Calculate price base on time out
+                            // Check VehicleTypeId
+                            var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(result.Data.VehicleTypeId);
+                            if (!vehicleType.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                            if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                            if (!listPriceTable.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                            if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Check which package is have higher piority
+                            var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                            if (priceTable == null)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get list price item in price table
+                            var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                            if (!listPriceItem.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                            if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            if (priceItem == null)
+                            {
+                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                                if (priceItem == null)
+                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            // Calculate price
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            break;
+                        }
+                    case ModeEnum.MODE4:
+                        {
+                            // Calculate price base on time out
+                            // Check VehicleTypeId
+                            var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(result.Data.VehicleTypeId);
+                            if (!vehicleType.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicleType.InternalErrorMessage };
+                            if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            var listPriceTable = await _priceRepository.GetListPriceTableActiveByVehicleTypeAsync(vehicleType.Data.Id);
+                            if (!listPriceTable.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
+                            if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Check which package is have higher piority
+                            var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
+                            if (priceTable == null)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get list price item in price table
+                            var listPriceItem = await _priceRepository.GetAllPriceItemByPriceTableAsync(priceTable.Id);
+                            if (!listPriceItem.IsSuccess)
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
+                            if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            if (priceItem == null)
+                            {
+                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                                if (priceItem == null)
+                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            // Calculate price
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            break;
+                        }
+                    default:
+                        return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                return new Return<GetSessionByPlateNumberResDto>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    IsSuccess = true,
+                    Data = new GetSessionByPlateNumberResDto
+                    {
+                        Amount = amount,
+                        CustomerEmail = result.Data.Customer?.Email ?? "",
+                        GateIn = result.Data.GateIn?.Name ?? "",
+                        ImageInBodyUrl = result.Data.ImageInUrl,
+                        ImageInUrl = result.Data.ImageInUrl,
+                        StaffCheckInEmail = result.Data.CreateBy?.Email ?? "",
+                        TimeIn = result.Data.TimeIn,
+                        VehicleType = result.Data.VehicleType?.Name ?? ""
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }

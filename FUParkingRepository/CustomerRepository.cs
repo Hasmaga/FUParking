@@ -234,7 +234,7 @@ namespace FUParkingRepository
                     .Take(req.PageSize)
                     .ToListAsync();
                 res.Data = result;
-                res.TotalRecord = result.Count;
+                res.TotalRecord = await query.CountAsync();
                 res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
                 return res;

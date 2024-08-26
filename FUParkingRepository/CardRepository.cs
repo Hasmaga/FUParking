@@ -104,7 +104,7 @@ namespace FUParkingRepository
                 return new Return<IEnumerable<GetCardResDto>>
                 {
                     Data = result,
-                    TotalRecord = result.Count,
+                    TotalRecord = await query.CountAsync(),
                     IsSuccess = true,
                     Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
                 };

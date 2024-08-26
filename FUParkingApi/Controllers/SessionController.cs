@@ -116,10 +116,10 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpPost("user/checkout")]
-        public async Task<IActionResult> CheckOutSessionByPlateNumberAsync([FromBody] CheckOutSessionReqDto req)
+        [HttpPut("checkout/plateNumber")]
+        public async Task<IActionResult> CheckOutSessionByPlateNumberAsync([FromForm] CheckOutSessionByPlateNumberReqDto req)
         {
-            var result = await _sessionService.CheckOutSessionByPlateNumberAsync(req.PlateNumber, req.TimeOut);
+            var result = await _sessionService.CheckOutSessionByPlateNumberAsync(req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
@@ -208,6 +208,21 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at Get Newest Session By Card Number: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("platenumber/{platenumber}")]
+        public async Task<IActionResult> GetNewestSessionByPlateNumberAsync(string platenumber)
+        {
+            var result = await _sessionService.GetNewestSessionByPlateNumberAsync(platenumber);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Get Newest Session By Plate Number: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

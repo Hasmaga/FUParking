@@ -15,7 +15,7 @@ namespace FUParkingService.Interface
         Task<Return<CheckOutResDto>> CheckOutAsync(CheckOutAsyncReqDto req);
         Task<Return<IEnumerable<GetHistorySessionResDto>>> GetListSessionByCustomerAsync(GetListObjectWithFillerDateReqDto req);
         Task<Return<IEnumerable<StatisticSessionAppResDto>>> StatisticSessionAppAsync();
-        Task<Return<CheckOutResDto>> CheckOutSessionByPlateNumberAsync(string PlateNumber, DateTime timeOut);
+        Task<Return<dynamic>> CheckOutSessionByPlateNumberAsync(CheckOutSessionByPlateNumberReqDto req);
         Task<Return<IEnumerable<GetSessionByUserResDto>>> GetListSessionByUserAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
         Task<Return<GetSessionByUserResDto>> GetSessionBySessionIdAsync(Guid sessionId);
         Task<Return<bool>> CancleSessionByIdAsync(Guid sessionId);
@@ -25,5 +25,6 @@ namespace FUParkingService.Interface
         Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId);
         Task<Return<IEnumerable<GetAllSessionTodayResDto>>> GetAllSessionTodayByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize);
         Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber);
+        Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber);
     }
 }
