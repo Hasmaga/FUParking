@@ -6,7 +6,6 @@ using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using System.Diagnostics.Metrics;
 
 namespace FUParkingService
 {

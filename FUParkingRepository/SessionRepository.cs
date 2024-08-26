@@ -560,7 +560,7 @@ namespace FUParkingRepository
                 {
                     (startDate, endDate) = (endDate, startDate);
                 }
-
+                
                 var query = _db.Sessions
                     .Include(t => t.GateIn)
                     .Include(t => t.GateOut)
@@ -569,7 +569,6 @@ namespace FUParkingRepository
                     .Include(t => t.Customer)
                     .Include(t => t.Card)
                     .Where(p => p.DeletedDate == null 
-                        && p.GateIn!.ParkingAreaId.Equals(parkingId) 
                         && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
                         && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
                     .AsQueryable();
@@ -601,6 +600,42 @@ namespace FUParkingRepository
             {
                 res.InternalErrorMessage = ex;
                 return res;
+            }
+        }
+
+        public async Task<Return<Session>> GetNewestSessionByCardNumberAsync(string cardNumber)
+        {
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var result = await _db.Sessions
+                    .Include(x => x.Card)
+                    .Include(x => x.GateIn)
+                    .Include(x => x.GateOut)
+                    .Include(x => x.VehicleType)
+                    .Include(x => x.PaymentMethod)
+                    .Include(x => x.Customer)
+                    .Include(x => x.Customer.CustomerType)
+                    .Include(x => x.CreateBy)
+                    .Include(x => x.LastModifyBy)
+                    .Where(x => x.Card.CardNumber == cardNumber && x.DeletedDate == null)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .FirstOrDefaultAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                return new Return<Session>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Session>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
             }
         }
     }

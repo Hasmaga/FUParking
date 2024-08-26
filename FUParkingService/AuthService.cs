@@ -238,7 +238,9 @@ namespace FUParkingService
                 {
                     Data = new LoginResDto
                     {
-                        Role = accountLogged.Data.Role?.Name ?? ""
+                        Role = accountLogged.Data.Role?.Name ?? "",
+                        Email = accountLogged.Data.Email,
+                        Name = accountLogged.Data.FullName                        
                     },
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY

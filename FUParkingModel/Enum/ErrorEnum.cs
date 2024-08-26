@@ -68,6 +68,7 @@
         public const string CAN_NOT_DELETE_YOUR_ACCOUNT = "Can not delete your account";
         public const string PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD = "Plate number is existed in other card";        
         public const string CANNOT_UPDATE_STATUS_VIRTUAL_GATE = "Cannot update status virual gate";
+        public const string NOT_FOUND_SESSION_WITH_CARD_NUMBER = "Not found session with card number";
     }
 
     public class MinioErrorServerDefineEnum
