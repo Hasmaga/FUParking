@@ -47,6 +47,8 @@ namespace FUParkingRepository
             try
             {
 #pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8604 // Possible null reference argument.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var query = _db.Cards
                     .Include(x => x.Sessions)
                     .Where(x => x.DeletedDate == null)
@@ -57,17 +59,27 @@ namespace FUParkingRepository
                         PlateNumber = x.PlateNumber,
                         CreatedDate = x.CreatedDate,
                         Status = x.Status,
-                        SessionId = _db.Sessions
-                            .Where(s => s.CardId == x.Id && s.Status.Equals(SessionEnum.PARKED))
+                        IsInUse = x.Sessions
                             .OrderByDescending(s => s.CreatedDate)
-                            .Select(s => s.Id.ToString())
-                            .FirstOrDefault(),
-                        PlateNumberSession = _db.Sessions
-                            .Where(s => s.CardId == x.Id && s.Status.Equals(SessionEnum.PARKED))
-                            .OrderByDescending(s => s.CreatedDate)
-                            .Select(s => s.PlateNumber)
-                            .FirstOrDefault()
+                            .FirstOrDefault().Status == SessionEnum.PARKED,
+                        Session = x.Sessions
+                            .OrderByDescending(t => t.CreatedDate)
+                            .Where(x => x.Status.Equals(SessionEnum.PARKED))                            
+                            .Select(x => new GetSessionWithCard
+                            {
+                                SessionId = x.Id,
+                                CustomerEmail = x.Customer.Email,
+                                GateIn = x.GateIn.Name,
+                                ImageInBodyUrl = x.ImageInBodyUrl,
+                                ImageInUrl = x.ImageInUrl,
+                                PlateNumber = x.PlateNumber,
+                                StaffCheckInEmail = x.CreateBy.Email,
+                                TimeIn = x.TimeIn,
+                                VehicleType = x.VehicleType.Name
+                            }).FirstOrDefault()
                     });
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8604 // Possible null reference argument.
 #pragma warning restore CS8601 // Possible null reference assignment.
                 if (!string.IsNullOrEmpty(req.Attribute) && !string.IsNullOrEmpty(req.SearchInput))
                 {
@@ -78,10 +90,7 @@ namespace FUParkingRepository
                             break;
                         case "platenumber":
                             query = query.Where(x => (x.PlateNumber ?? "").Contains(req.SearchInput));
-                            break;
-                        case "platenumbersession":
-                            query = query.Where(x => (x.PlateNumberSession ?? "").Contains(req.SearchInput));
-                            break;
+                            break;                       
                         case "status":
                             query = query.Where(x => x.Status.Equals(req.SearchInput));
                             break;
