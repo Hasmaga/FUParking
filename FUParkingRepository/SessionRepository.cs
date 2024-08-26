@@ -544,7 +544,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<Session>>> GetAllSessionTodayByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize)
+        public async Task<Return<IEnumerable<Session>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate)
         {
             Return<IEnumerable<Session>> res = new()
             {
@@ -553,6 +553,14 @@ namespace FUParkingRepository
             try
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                startDate ??= datetimenow;
+                endDate ??= datetimenow;
+
+                if (startDate > endDate)
+                {
+                    (startDate, endDate) = (endDate, startDate);
+                }
+
                 var query = _db.Sessions
                     .Include(t => t.GateIn)
                     .Include(t => t.GateOut)
@@ -562,7 +570,8 @@ namespace FUParkingRepository
                     .Include(t => t.Card)
                     .Where(p => p.DeletedDate == null 
                         && p.GateIn!.ParkingAreaId.Equals(parkingId) 
-                        && p.CreatedDate.Date == datetimenow.Date)
+                        && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
+                        && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
                     .AsQueryable();
 
                 if(!string.IsNullOrEmpty(plateNum))
