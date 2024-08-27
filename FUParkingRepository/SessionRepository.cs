@@ -506,7 +506,6 @@ namespace FUParkingRepository
                 var totalCheckIn = await _db.Sessions
                     .Include(p => p.GateIn)
                     .Where(x => x.CreatedDate.Date == datetimenow.Date 
-                        && x.Status.Equals(SessionEnum.PARKED)
                         && x.GateIn != null
                         && x.GateIn.ParkingAreaId.Equals(parkingId))
                     .CountAsync();
@@ -515,7 +514,6 @@ namespace FUParkingRepository
                 var totalCheckOut = await _db.Sessions
                     .Include(p => p.GateOut)
                     .Where(x => x.CreatedDate.Date == datetimenow.Date 
-                        && x.Status.Equals(SessionEnum.CLOSED)
                         && x.GateOut != null
                         && x.GateOut.ParkingAreaId.Equals(parkingId))
                     .CountAsync();
