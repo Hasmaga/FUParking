@@ -505,9 +505,10 @@ namespace FUParkingRepository
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var totalCheckIn = await _db.Sessions
                     .Include(p => p.GateIn)
-                    .Where(x => x.CreatedDate.Date == datetimenow.Date 
-                        && x.GateIn != null
-                        && x.GateIn.ParkingAreaId.Equals(parkingId))
+                    .Where(x => x.CreatedDate.Date == datetimenow.Date
+                                && x.Status != SessionEnum.CANCELLED
+                                && x.GateIn != null
+                                && x.GateIn.ParkingAreaId == parkingId)
                     .CountAsync();
 
 
