@@ -2247,7 +2247,7 @@ namespace FUParkingService
                 {
                     return new Return<GetSessionByPlateNumberResDto>
                     {
-                        Message = ErrorEnumApplication.NOT_FOUND_SESSION_WITH_PLATENUMBER
+                        Message = ErrorEnumApplication.NOT_FOUND_SESSION_WITH_PLATE_NUMBER
                     };
                 }
 

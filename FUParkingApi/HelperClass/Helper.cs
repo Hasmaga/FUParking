@@ -94,6 +94,8 @@ namespace FUParkingApi.HelperClass
                 ErrorEnumApplication.PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.CANNOT_UPDATE_STATUS_VIRTUAL_GATE => new ObjectResult(result) { StatusCode = 409 },
                 ErrorEnumApplication.NOT_FOUND_SESSION_WITH_CARD_NUMBER => new ObjectResult(result) { StatusCode = 404 },
+                ErrorEnumApplication.NOT_GATE_OUT => new ObjectResult(result) { StatusCode = 409 },                
+                ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION => new ObjectResult(result) { StatusCode = 409 },
                 _ => new ObjectResult(result) { StatusCode = 500 },
             };
         }

@@ -69,8 +69,7 @@
         public const string PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD = "Plate number is existed in other card";        
         public const string CANNOT_UPDATE_STATUS_VIRTUAL_GATE = "Cannot update status virual gate";
         public const string NOT_FOUND_SESSION_WITH_CARD_NUMBER = "Not found session with card number";
-        public const string NOT_GATE_OUT = "Not gate out";
-        public const string NOT_FOUND_SESSION_WITH_PLATENUMBER = "Not found session with plate number";
+        public const string NOT_GATE_OUT = "Not gate out";        
         public const string PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION = "Plate number is belong to anther session";
     }
 
