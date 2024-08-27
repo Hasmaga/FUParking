@@ -20,7 +20,7 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<GetSessionByUserResDto>>> GetListSessionByUserAsync(GetListObjectWithFillerAttributeAndDateReqDto req);
         Task<Return<GetSessionByUserResDto>> GetSessionBySessionIdAsync(Guid sessionId);
         Task<Return<bool>> CancleSessionByIdAsync(Guid sessionId);
-        Task<Return<int>> GetTotalSessionParkingTodayAsync();
+        Task<Return<int>> GetTotalSessionParkedAsync();
         Task<Return<double>> GetAverageSessionDurationPerDayAsync();
         Task<Return<StatisticCheckInCheckOutResDto>> GetStatisticCheckInCheckOutAsync();
         Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId);

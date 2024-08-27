@@ -25,7 +25,7 @@ namespace FUParkingModel.Object
         public required string StatusUser { get; set; }
 
         [Column("CreateById")]
-        public Guid? CreatedById { get; set; }
+        public Guid? CreatedById { get; set; }  
         public User? CreateBy { get; set; }
 
         [Column("LastModifyById")]
@@ -66,5 +66,7 @@ namespace FUParkingModel.Object
         public ICollection<VehicleType>? VehicleTypeLastModifyBy { get; set; }
         public ICollection<Session>? SessionCreateBy { get; set; }
         public ICollection<Session>? SessionLastModifyBy { get; set; }
+        public ICollection<User>? CreatedBys { get; set; }
+        public ICollection<User>? LastModifyBys { get; set; }
     }
 }

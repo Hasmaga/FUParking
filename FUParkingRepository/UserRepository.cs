@@ -68,6 +68,7 @@ namespace FUParkingRepository
             try
             {
                 var query = _db.Users
+                    .Where(u => u.DeletedDate == null)
                     .Include(r => r.Role)
                     .AsQueryable();
 

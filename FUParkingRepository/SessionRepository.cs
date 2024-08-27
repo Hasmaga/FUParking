@@ -396,13 +396,13 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<int>> GetTotalSessionParkingTodayAsync()
+        public async Task<Return<int>> GetTotalSessionParkedAsync()
         {
             try
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _db.Sessions
-                    .Where(x => x.CreatedDate.Date == datetimenow.Date && x.Status.Equals(SessionEnum.CLOSED))
+                    .Where(x => x.Status.Equals(SessionEnum.PARKED))
                     .CountAsync();
                 return new Return<int>
                 {

@@ -119,10 +119,10 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("session/today")]
-        public async Task<IActionResult> StatisticSessionTodayAsync()
+        [HttpGet("session/parked")]
+        public async Task<IActionResult> StatisticSessionParkedAsync()
         {            
-            var result = await _sessionService.GetTotalSessionParkingTodayAsync();
+            var result = await _sessionService.GetTotalSessionParkedAsync();
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

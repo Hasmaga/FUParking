@@ -1709,7 +1709,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<int>> GetTotalSessionParkingTodayAsync()
+        public async Task<Return<int>> GetTotalSessionParkedAsync()
         {
             try
             {
@@ -1722,7 +1722,7 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _sessionRepository.GetTotalSessionParkingTodayAsync();
+                var result = await _sessionRepository.GetTotalSessionParkedAsync();
                 if (!result.IsSuccess)
                 {
                     return new Return<int>

@@ -605,16 +605,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.USER_NOT_EXIST,
                         InternalErrorMessage = user.InternalErrorMessage
                     };
-                }
-
-                // if user is manager, can not change status
-                if (user.Data.Role == null || user.Data.Role.Name == RoleEnum.MANAGER)
-                {
-                    return new Return<bool>
-                    {
-                        Message = ErrorEnumApplication.NOT_AUTHORITY
-                    };
-                }
+                }                
 
                 user.Data.StatusUser = StatusUserEnum.INACTIVE;
                 user.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
