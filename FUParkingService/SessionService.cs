@@ -3,7 +3,6 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Session;
-using FUParkingModel.ResponseObject;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ResponseObject.Statistic;
@@ -66,6 +65,13 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
+                if (card.Data.PlateNumber is not null)
+                {
+                    if (!card.Data.PlateNumber.Equals(req.PlateNumber))
+                    {
+                        return new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH };
+                    }
+                }
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
