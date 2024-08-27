@@ -65,7 +65,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
-                if (card.Data.PlateNumber is not null)
+                if (!string.IsNullOrEmpty(card.Data.PlateNumber))
                 {
                     if (!card.Data.PlateNumber.Equals(req.PlateNumber))
                     {
