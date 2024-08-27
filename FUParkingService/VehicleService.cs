@@ -56,6 +56,8 @@ namespace FUParkingService
                     {
                         Id = x.Id,
                         Name = x.Name,
+                        Description = x.Description ?? "",
+                        Status = x.StatusVehicleType,
                         CreateByEmail = x.CreateBy?.Email ?? "",
                         CreateDatetime = x.CreatedDate,
                         LastModifyByEmail = x.LastModifyBy?.Email ?? "",

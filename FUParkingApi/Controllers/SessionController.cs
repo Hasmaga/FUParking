@@ -228,5 +228,24 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpPut("session/platenumber")]
+        public async Task<IActionResult> UpdatePlateNumberInSessionAsync([FromForm] UpdatePlateNumberInSessionReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _sessionService.UpdatePlateNumberInSessionAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Update Plate Number In Session: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

@@ -59,7 +59,7 @@ namespace FUParkingService
                 Card newCard = new()
                 {
                     PlateNumber = req.PlateNumber,
-                    CardNumber = req.CardNumber,
+                    CardNumber = req.CardNumber.ToUpper(),
                     CreatedById = checkAuth.Data.Id,
                     Status = StatusCustomerEnum.ACTIVE
                 };
@@ -153,18 +153,7 @@ namespace FUParkingService
                         InternalErrorMessage = isCardInUse.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                }
-                if (isCardInUse.Data is not null)
-                {
-                    if (isCardInUse.Data?.GateOutId is null)
-                    {
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
-                            Message = ErrorEnumApplication.CARD_IN_USE
-                        };
-                    }
-                }
+                }                
                 if (isCardInUse.Data != null)
                 {
                     if (isCardInUse.Data.Status.Equals(SessionEnum.PARKED))
@@ -235,13 +224,12 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (isCardInUse.Data is not null)
+                if (isCardInUse.Data != null)
                 {
-                    if (isCardInUse.Data?.GateOutId is null)
+                    if (isCardInUse.Data.Status.Equals(SessionEnum.PARKED))
                     {
                         return new Return<dynamic>
                         {
-                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
                             Message = ErrorEnumApplication.CARD_IN_USE
                         };
                     }
@@ -316,17 +304,16 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                if (isCardInUse.Data is not null)
+                if (isCardInUse.Data != null)
                 {
-                    if (isCardInUse.Data?.GateOutId is null)
+                    if (isCardInUse.Data.Status.Equals(SessionEnum.PARKED))
                     {
                         return new Return<bool>
                         {
-                            InternalErrorMessage = isCardInUse.InternalErrorMessage,
                             Message = ErrorEnumApplication.CARD_IN_USE
                         };
                     }
-                }          
+                }
 
                 if (isActive)
                 {                    

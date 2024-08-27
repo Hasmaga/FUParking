@@ -4,6 +4,8 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
+        public string Description { get; set; } = null!;
+        public string Status { get; set; } = null!;
         public string CreateByEmail { get; set; } = null!;
         public string? LastModifyByEmail { get; set; }
         public DateTime CreateDatetime { get; set; }

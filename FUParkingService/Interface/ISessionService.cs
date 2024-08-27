@@ -27,5 +27,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<GetAllSessionTodayResDto>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate);
         Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber);
         Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber);
+        Task<Return<dynamic>> UpdatePlateNumberInSessionAsync(UpdatePlateNumberInSessionReqDto req);
     }
 }

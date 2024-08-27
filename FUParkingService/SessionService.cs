@@ -1533,6 +1533,24 @@ namespace FUParkingService
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createTransaction.InternalErrorMessage };
                 }
+
+                // Update Card to missing 
+                if (session.Data.Card?.Id is not null)
+                {
+                    var card = await _cardRepository.GetCardByIdAsync(session.Data.Card.Id);
+                    if (!card.IsSuccess || card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
+                    }
+                    card.Data.Status = CardStatusEnum.MISSING;
+                    var updateCard = await _cardRepository.UpdateCardAsync(card.Data);
+                    if (!updateCard.IsSuccess)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
+                    }
+                }
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -2426,6 +2444,100 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
+
+        public async Task<Return<dynamic>> UpdatePlateNumberInSessionAsync(UpdatePlateNumberInSessionReqDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var session = await _sessionRepository.GetSessionByIdAsync(req.SessionId);
+                if (!session.IsSuccess || session.Data == null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = session.InternalErrorMessage,
+                        Message = session.Message
+                    };
+                }
+                if (session.Data.Status.Equals(SessionEnum.CLOSED))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SESSION_CLOSE
+                    };
+                }
+                if (session.Data.Status.Equals(SessionEnum.CANCELLED))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.SESSION_CANCELLED
+                    };
+                }
+                // Check Plate Number is belong to another session
+                var checkPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
+                if (!checkPlateNumber.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkPlateNumber.InternalErrorMessage,
+                        Message = checkPlateNumber.Message
+                    };
+                }
+                if (checkPlateNumber.Data != null && checkPlateNumber.Data.Id != req.SessionId)
+                {
+                    if (checkPlateNumber.Data.Status.Equals(SessionEnum.PARKED)) 
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
+                        };
+                    }
+                }
+
+                // Check Plate Number is belong to any user
+                var checkPlateNumberIsBelongToUser = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
+                if (!checkPlateNumberIsBelongToUser.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkPlateNumberIsBelongToUser.InternalErrorMessage,
+                        Message = checkPlateNumberIsBelongToUser.Message
+                    };
+                }
+                // Update Plate Number
+                session.Data.PlateNumber = req.PlateNumber;
+                session.Data.CustomerId = checkPlateNumberIsBelongToUser.Data?.Id;
+                session.Data.LastModifyById = checkAuth.Data.Id;
+                session.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _sessionRepository.UpdateSessionAsync(session.Data);
+                if (!result.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }
