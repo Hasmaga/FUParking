@@ -12,5 +12,7 @@
         public string? SessionGateIn { get; set; }
         public string? SessionCustomerName { get; set; }
         public string? SessionCustomerEmail { get; set; }
+        public string? imageInUrl { get; set; }
+        public string? imageInBodyUrl { get; set; }
     }
 }
