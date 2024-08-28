@@ -45,7 +45,7 @@ namespace FUParkingModel.Object
         public required int Block { get; set; }
 
         [Column("VehicleTypeId")]
-        public Guid VehicleTypeId { get; set; }
+        public Guid? VehicleTypeId { get; set; }
         public VehicleType? VehicleType { get; set; }
 
         [Column("PaymentMethodId")]

@@ -9,7 +9,7 @@ namespace FUParkingModel.Object
         public required string PlateNumber { get; set; }
 
         [Column("CustomerId")]
-        public Guid CustomerId { get; set; }
+        public Guid? CustomerId { get; set; }
         public Customer? Customer { get; set; }
 
         [Column("VehicleTypeId")]

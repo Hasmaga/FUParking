@@ -71,6 +71,7 @@
         public const string NOT_FOUND_SESSION_WITH_CARD_NUMBER = "Not found session with card number";
         public const string NOT_GATE_OUT = "Not gate out";        
         public const string PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION = "Plate number is belong to anther session";
+        public const string THIS_PLATE_NUMBER_IS_NOT_REGISTERED = "This plate number is not registered";
     }
 
     public class MinioErrorServerDefineEnum

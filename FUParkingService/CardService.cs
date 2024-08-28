@@ -13,13 +13,15 @@ namespace FUParkingService
     {
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
-        private readonly ISessionRepository _sessionRepository;        
+        private readonly ISessionRepository _sessionRepository;
+        private readonly IVehicleRepository _vehicleRepository;
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IVehicleRepository vehicleRepository)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
-            _sessionRepository = sessionRepository;            
+            _sessionRepository = sessionRepository;
+            _vehicleRepository = vehicleRepository;
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
@@ -47,19 +49,30 @@ namespace FUParkingService
                 if (!string.IsNullOrEmpty(req.PlateNumber))
                 {
                     var isExistPlateNumber = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
-                    if (!isExistPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    if (!isExistPlateNumber.IsSuccess)
                     {
                         return new Return<dynamic>
                         {
                             InternalErrorMessage = isExistPlateNumber.InternalErrorMessage,
-                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }                    
+                    // Check PlateNumber is in anthor card
+                    var isExistPlateNumberInCard = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
+                    if (!isExistPlateNumberInCard.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isExistPlateNumberInCard.InternalErrorMessage,
+                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD
                         };
                     }
                 }
+                
                 Card newCard = new()
                 {
-                    PlateNumber = req.PlateNumber,
-                    CardNumber = req.CardNumber.ToUpper(),
+                    PlateNumber = string.IsNullOrEmpty(req.PlateNumber) ? null : req.PlateNumber?.ToUpper(),
+                    CardNumber = req.CardNumber,
                     CreatedById = checkAuth.Data.Id,
                     Status = StatusCustomerEnum.ACTIVE
                 };
