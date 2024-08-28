@@ -468,67 +468,69 @@ namespace FUParkingService
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
                     return new Return<GetCardByCardNumberResDto>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
                         Message = checkAuth.Message
                     };
+                }
 
                 var card = await _cardRepository.GetCardByCardNumberAsync(cardNumber);
                 if (!card.IsSuccess)
+                {
                     return new Return<GetCardByCardNumberResDto>
                     {
                         InternalErrorMessage = card.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
+                }
 
                 if (card.Data == null)
+                {
                     return new Return<GetCardByCardNumberResDto>
                     {
                         Message = ErrorEnumApplication.NOT_FOUND_OBJECT
                     };
+                }
 
                 var session = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!session.IsSuccess)
+                {
                     return new Return<GetCardByCardNumberResDto>
                     {
                         InternalErrorMessage = session.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                
-                if (session.Data is not null && session.Data.Status.Equals(SessionEnum.PARKED))
-                {
-                    return new Return<GetCardByCardNumberResDto>
-                    {
-                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
-                        IsSuccess = true,
-                        Data = new GetCardByCardNumberResDto
-                        {
-                            CardNumber = card.Data.CardNumber,
-                            Status = card.Data.Status,
-                            PlateNumber = card.Data.PlateNumber,
-                            SessionCustomerEmail = session.Data.Customer?.Email,
-                            SessionCustomerName = session.Data.Customer?.FullName,
-                            SessionGateIn = session.Data.GateIn?.Name,
-                            SessionId = session.Data.Id,
-                            SessionPlateNumber = session.Data.PlateNumber,
-                            SessionTimeIn = session.Data.TimeIn,
-                            SessionVehicleType = session.Data.VehicleType?.Name,                      
-                        }
-                    };
                 }
-                return new Return<GetCardByCardNumberResDto>
+
+                var response = new Return<GetCardByCardNumberResDto>
                 {
                     IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                     Data = new GetCardByCardNumberResDto
                     {
                         CardNumber = card.Data.CardNumber,
                         Status = card.Data.Status,
-                        PlateNumber = card.Data.PlateNumber,
-                    },
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                        PlateNumber = card.Data.PlateNumber
+                    }
                 };
 
+                if (session.Data is not null &&
+                    (session.Data.Status.Equals(SessionEnum.PARKED) || session.Data.Status.Equals(SessionEnum.CLOSED)))
+                {
+                    response.Data.SessionCustomerEmail = session.Data.Customer?.Email;
+                    response.Data.SessionCustomerName = session.Data.Customer?.FullName;
+                    response.Data.SessionGateIn = session.Data.GateIn?.Name;
+                    response.Data.SessionId = session.Data.Id;
+                    response.Data.SessionPlateNumber = session.Data.PlateNumber;
+                    response.Data.SessionTimeIn = session.Data.TimeIn;
+                    response.Data.SessionVehicleType = session.Data.VehicleType?.Name;
+                    response.Data.imageInUrl = session.Data.ImageInUrl;
+                    response.Data.imageInBodyUrl = session.Data.ImageInBodyUrl;
+                }
+
+                return response;
             }
             catch (Exception ex)
             {
@@ -539,5 +541,6 @@ namespace FUParkingService
                 };
             }
         }
+
     }
 }
