@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.ResponseObject.Payment;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -303,6 +304,50 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<StatisticPaymentTodayResDto>> GetStatisticPaymentTodayForGateAsync(Guid gateId)
+        {
+            try
+            {
+                var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var totalWalletPayment = await _db.Payments
+                    .Include(x => x.PaymentMethod)
+                    .Include(x => x.Session)
+                    .Where(p => p.Session != null
+                        && p.Session.GateOutId.Equals(gateId)
+                        && p.Session.CreatedDate.Date == datetimenow.Date
+                        && p.PaymentMethod!.Name == PaymentMethods.WALLET)
+                    .SumAsync(p => p.TotalPrice);
+
+                var totalCashPayment = await _db.Payments
+                    .Include(x => x.PaymentMethod)
+                    .Include(x => x.Session)
+                    .Where(p => p.Session != null
+                        && p.Session.GateOutId.Equals(gateId)
+                        && p.Session.CreatedDate.Date == datetimenow.Date
+                        && p.PaymentMethod!.Name == PaymentMethods.CASH)
+                    .SumAsync(p => p.TotalPrice);
+
+                return new Return<StatisticPaymentTodayResDto>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = new StatisticPaymentTodayResDto
+                    {
+                        TotalWalletPayment = totalWalletPayment,
+                        TotalCashPayment = totalCashPayment,
+                    },
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<StatisticPaymentTodayResDto>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
