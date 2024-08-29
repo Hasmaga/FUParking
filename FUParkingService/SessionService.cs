@@ -830,6 +830,7 @@ namespace FUParkingService
                     sessionCard.Data.LastModifyById = checkAuth.Data.Id;
                     sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                     sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                    sessionCard.Data.Status = SessionEnum.CLOSED;
                     var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                     if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     {
