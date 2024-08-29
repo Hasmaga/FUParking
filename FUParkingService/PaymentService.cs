@@ -1,6 +1,8 @@
 ﻿using FUParkingModel.Enum;
+using FUParkingModel.ResponseObject.Payment;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
+using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 
@@ -117,6 +119,45 @@ namespace FUParkingService
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<StatisticPaymentTodayResDto>> GetStatisticPaymentTodayForGateAsync(Guid gateId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<StatisticPaymentTodayResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _paymentRepository.GetStatisticPaymentTodayForGateAsync(gateId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<StatisticPaymentTodayResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<StatisticPaymentTodayResDto>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = result.Data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<StatisticPaymentTodayResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }

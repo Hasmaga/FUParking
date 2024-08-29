@@ -238,5 +238,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("payment/{gateId}/today")]
+        public async Task<IActionResult> StatisticPaymentTodayForGateAsync([FromRoute] Guid gateId)
+        {
+            var result = await _paymentService.GetStatisticPaymentTodayForGateAsync(gateId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
