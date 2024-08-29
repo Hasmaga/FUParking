@@ -14,5 +14,6 @@
         public string? SessionCustomerEmail { get; set; }
         public string? imageInUrl { get; set; }
         public string? imageInBodyUrl { get; set; }
+        public string? sessionStatus { get; set; } 
     }
 }
