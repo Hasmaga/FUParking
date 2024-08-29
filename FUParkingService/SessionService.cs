@@ -412,16 +412,7 @@ namespace FUParkingService
                     return new Return<dynamic>
                     {
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                        Data = new CheckOutResDto
-                        {
-                            TimeIn = sessionCard.Data.TimeIn,
-                            Amount = 0,
-                            ImageIn = sessionCard.Data.ImageInUrl,
-                            Message = "Check out successfully",
-                            PlateNumber = sessionCard.Data.PlateNumber,
-                            TypeOfCustomer = "Non-paid",
-                        }
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY                        
                     };
                 }
                 // Calculate total block time in minutes
@@ -780,7 +771,7 @@ namespace FUParkingService
                             PaymentId = createPayment.Data.Id,
                             Amount = price,
                             TransactionDescription = "Pay for parking",
-                            TransactionStatus = StatusTransactionEnum.PENDING,
+                            TransactionStatus = StatusTransactionEnum.SUCCEED,
                         };
                         var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                         if (!createTransaction.IsSuccess || createTransaction.Data == null)
@@ -792,15 +783,7 @@ namespace FUParkingService
                         return new Return<dynamic>
                         {
                             IsSuccess = true,
-                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                            Data = new CheckOutResDto
-                            {
-                                Amount = price,
-                                Message = "Need to pay",
-                                ImageIn = sessionCard.Data.ImageInUrl,
-                                PlateNumber = sessionCard.Data.PlateNumber,
-                                TimeIn = sessionCard.Data.TimeIn,
-                            }
+                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY                            
                         };
                     }
                     // GetPaymentMethod wallet
@@ -828,16 +811,7 @@ namespace FUParkingService
                     return new Return<dynamic>
                     {
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                        Data = new CheckOutResDto
-                        {
-                            ImageIn = sessionCard.Data.ImageInUrl,
-                            Message = "Check out successfully",
-                            PlateNumber = sessionCard.Data.PlateNumber,
-                            Amount = price,
-                            TimeIn = sessionCard.Data.TimeIn,
-                            TypeOfCustomer = sessionCard.Data.Customer?.CustomerType?.Name ?? "",
-                        }
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY                        
                     };
                 }
                 // For guest 
@@ -880,7 +854,7 @@ namespace FUParkingService
                         PaymentId = createPayment.Data.Id,
                         Amount = price,
                         TransactionDescription = "Pay for parking",
-                        TransactionStatus = StatusTransactionEnum.PENDING,
+                        TransactionStatus = StatusTransactionEnum.SUCCEED,
                     };
                     var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                     if (!createTransaction.IsSuccess || createTransaction.Data == null)
@@ -892,16 +866,7 @@ namespace FUParkingService
                     return new Return<dynamic>
                     {
                         IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                        Data = new CheckOutResDto
-                        {
-                            Amount = price,
-                            Message = "Need to pay",
-                            ImageIn = sessionCard.Data.ImageInUrl,
-                            PlateNumber = sessionCard.Data.PlateNumber,
-                            TypeOfCustomer = CustomerTypeEnum.PAID,
-                            TimeIn = sessionCard.Data.TimeIn,
-                        }
+                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,                        
                     };
                 }
             }
@@ -1176,8 +1141,6 @@ namespace FUParkingService
                                 return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
                     }
-
-
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                     listSessionData.Add(new GetHistorySessionResDto
                     {
@@ -1999,7 +1962,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber)
+        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut)
         {
             try
             {
@@ -2044,8 +2007,17 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
                 }
+                // Check timeOut is greater than TimeIn
+                if (TimeOut < result.Data.TimeIn)
+                {
+                    return new Return<GetSessionByCardNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
+                    };
+                }
+
                 var amount = 0;
-                var totalBlockTime = (int)(TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) - result.Data.TimeIn).TotalMinutes / result.Data.Block;
+                var totalBlockTime = (int)(TimeOut - result.Data.TimeIn).TotalMinutes / result.Data.Block;
                 switch (result.Data.Mode)
                 {
                     case ModeEnum.MODE1:
@@ -2268,7 +2240,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber)
+        public async Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber, DateTime TimeOut)
         {
             try
             {
@@ -2318,8 +2290,16 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
                 }
+                // Check timeOut is greater than TimeIn
+                if (TimeOut < result.Data.TimeIn)
+                {
+                    return new Return<GetSessionByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
+                    };
+                }
                 var amount = 0;
-                var totalBlockTime = (int)(TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) - result.Data.TimeIn).TotalMinutes / result.Data.Block;
+                var totalBlockTime = (int)(TimeOut - result.Data.TimeIn).TotalMinutes / result.Data.Block;
                 switch (result.Data.Mode)
                 {
                     case ModeEnum.MODE1:

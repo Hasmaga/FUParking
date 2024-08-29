@@ -72,6 +72,7 @@
         public const string NOT_GATE_OUT = "Not gate out";        
         public const string PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION = "Plate number is belong to anther session";
         public const string THIS_PLATE_NUMBER_IS_NOT_REGISTERED = "This plate number is not registered";
+        public const string TIME_OUT_IS_MUST_BE_GREATER_TIME_IN = "Time out is must be greater than time in";
     }
 
     public class MinioErrorServerDefineEnum

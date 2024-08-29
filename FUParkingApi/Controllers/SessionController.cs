@@ -199,10 +199,10 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("card/{cardNumber}")]
-        public async Task<IActionResult> GetNewestSessionByCardNumberAsync(string cardNumber)
+        [HttpGet("card/{cardNumber}&{timeOut}")]
+        public async Task<IActionResult> GetNewestSessionByCardNumberAsync(string cardNumber, DateTime timeOut)
         {
-            var result = await _sessionService.GetNewestSessionByCardNumberAsync(cardNumber);
+            var result = await _sessionService.GetNewestSessionByCardNumberAsync(cardNumber, timeOut);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
@@ -214,10 +214,10 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("platenumber/{platenumber}")]
-        public async Task<IActionResult> GetNewestSessionByPlateNumberAsync(string platenumber)
+        [HttpGet("platenumber/{platenumber}&{timeOut}")]
+        public async Task<IActionResult> GetNewestSessionByPlateNumberAsync(string platenumber, DateTime timeOut)
         {
-            var result = await _sessionService.GetNewestSessionByPlateNumberAsync(platenumber);
+            var result = await _sessionService.GetNewestSessionByPlateNumberAsync(platenumber, timeOut);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
