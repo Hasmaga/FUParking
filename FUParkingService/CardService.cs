@@ -528,6 +528,7 @@ namespace FUParkingService
                     response.Data.SessionVehicleType = session.Data.VehicleType?.Name;
                     response.Data.imageInUrl = session.Data.ImageInUrl;
                     response.Data.imageInBodyUrl = session.Data.ImageInBodyUrl;
+                    response.Data.sessionStatus = session.Data.Status;
                 }
 
                 return response;
