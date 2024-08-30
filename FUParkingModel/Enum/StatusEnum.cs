@@ -143,4 +143,11 @@
         public const string INACTIVE = "INACTIVE";
         public const string MISSING = "MISSING";
     }
+    public enum WalletBalanceCondition
+    {
+        WalletExtraSufficient,
+        WalletMainSufficient,
+        CombinedSufficient,
+        Insufficient
+    }
 }
