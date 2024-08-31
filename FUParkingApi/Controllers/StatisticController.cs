@@ -1,4 +1,5 @@
 ﻿using FUParkingApi.HelperClass;
+using FUParkingModel.RequestObject.Common;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -248,6 +249,21 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at GetSessionInOneMonthByParkingAreaAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("areas/revenue")]
+        public async Task<IActionResult> GetListStatisticRevenueParkingAreasDetailsAsync([FromQuery] GetListObjectWithFillerDateAndSearchInputResDto req)
+        {
+            var result = await _transactionService.GetListStatisticRevenueParkingAreasDetailsAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetListStatisticRevenueParkingAreasDetailsAsync: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

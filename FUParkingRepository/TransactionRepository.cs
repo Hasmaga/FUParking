@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.DatabaseContext;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
@@ -316,6 +317,60 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Transaction>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req)
+        {
+            try
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                var revenueData = await _db.Transactions
+                    .Where(t => t.TransactionStatus == StatusTransactionEnum.SUCCEED && t.Payment.Session.GateOut != null)
+                    .GroupBy(t => t.Payment.Session.GateOut.ParkingAreaId)
+                    .Select(g => new
+                    {
+                        ParkingAreaId = g.Key,
+                        RevenueApp = g.Where(t => t.WalletId != null).Sum(t => t.Amount),
+                        RevenueOther = g.Where(t => t.WalletId == null).Sum(t => t.Amount),
+                        RevenueTotal = g.Sum(t => t.Amount),
+                    })
+                    .ToListAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+                // Get all parking areas
+                var parkingAreas = await _db.ParkingAreas
+                    .Where(p => p.DeletedDate == null)
+                    .ToListAsync();
+
+                var result = parkingAreas
+                    .GroupJoin(
+                        revenueData,
+                        p => p.Id,
+                        r => r.ParkingAreaId,
+                        (p, r) => new StatisticRevenueParkingAreasDetailsResDto
+                        {
+                            ParkingAreaId = p.Id,
+                            ParkingAreaName = p.Name,
+                            RevenueTotal = r.FirstOrDefault()?.RevenueTotal ?? 0,
+                            RevenueApp = r.FirstOrDefault()?.RevenueApp ?? 0,
+                            RevenueOther = r.FirstOrDefault()?.RevenueOther ?? 0
+                        })
+                    .ToList();
+                return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e

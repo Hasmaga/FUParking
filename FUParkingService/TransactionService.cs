@@ -144,5 +144,41 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req)
+        {
+            try
+            {
+                // Check auth 
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _transactionRepository.GetListStatisticRevenueParkingAreasDetailsAsync(req);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

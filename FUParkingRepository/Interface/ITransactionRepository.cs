@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
@@ -15,5 +16,6 @@ namespace FUParkingRepository.Interface
         Task<Return<int>> GetRevenueTodayAsync();
         Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync();
         Task<Return<Transaction>> GetTransactionBySessionIdAsync(Guid sessionId);
+        Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req);
     }
 }
