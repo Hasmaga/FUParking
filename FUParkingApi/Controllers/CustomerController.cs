@@ -99,5 +99,25 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpPost("nonpaid")]
+        [Authorize]
+        public async Task<IActionResult> CreateNonPaidCustomerAsync([FromBody] CreateNonPaidCustomerReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _customerService.CreateNonPaidCustomerAsync(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when create non-paid customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }

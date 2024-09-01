@@ -14,5 +14,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> CreateCustomerAsync(CustomerReqDto customer);
         Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
         Task<Return<bool>> UpdateCustomerAccountAsync(UpdateCustomerAccountReqDto req);
+        Task<Return<dynamic>> CreateNonPaidCustomerAsync(CreateNonPaidCustomerReqDto req);
     }
 }

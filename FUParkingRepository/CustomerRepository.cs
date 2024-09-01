@@ -26,6 +26,7 @@ namespace FUParkingRepository
                 await _db.SaveChangesAsync();
                 return new Return<Customer>
                 {
+                    IsSuccess = true,
                     Data = customer,
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };

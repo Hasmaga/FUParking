@@ -363,9 +363,9 @@ namespace FUParkingService
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 var sessionCard = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
-                if (!sessionCard.IsSuccess)
+                if (!sessionCard.IsSuccess || sessionCard.Data is null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = sessionCard.InternalErrorMessage };
-                if (sessionCard.Data == null || sessionCard.Data.GateOutId != null)
+                if (sessionCard.Data.Status.Equals(SessionEnum.CLOSED))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SESSION_CLOSE };
                 if (sessionCard.Data.Status.Equals(SessionEnum.CANCELLED))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SESSION_CANCELLED };
@@ -374,7 +374,10 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateOut.InternalErrorMessage };
                 if (gateOut.Data == null || !gateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
-                if (!string.IsNullOrEmpty(sessionCard.Data.Card?.PlateNumber) && sessionCard.Data.VehicleTypeId is null)
+                // Check time out 
+                if (req.TimeOut < sessionCard.Data.TimeIn)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.INVALID_INPUT };
+                if (!string.IsNullOrEmpty(sessionCard.Data.Card?.PlateNumber) && sessionCard.Data.Customer?.CustomerType is not null && sessionCard.Data.Customer.CustomerType.Name.Equals(CustomerTypeEnum.FREE))
                 {
                     var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
                     var objNameBodyNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_Out" + Path.GetExtension(req.ImageBody.FileName);
@@ -597,11 +600,10 @@ namespace FUParkingService
                 var imageBodyUrl = await _minioService.UploadObjectAsync(uploadObjectBodyReqDto);
                 if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
-
-                // Try minus balance of customer wallet
-
-                if (sessionCard.Data.CustomerId.HasValue)
+                
+                if (sessionCard.Data.CustomerId is not null) 
                 {
+                    // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
                         return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletMain.InternalErrorMessage };
@@ -633,315 +635,341 @@ namespace FUParkingService
                     switch (balanceCondition)
                     {
                         case WalletBalanceCondition.WalletExtraSufficient:
+                        {
+                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+
+                            var payment = new Payment
                             {
-                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-
-                                var payment = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = price,
-                                };
-                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                                if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var transaction = new FUParkingModel.Object.Transaction
-                                {
-                                    WalletId = walletExtra.Data.Id,
-                                    PaymentId = createPayment.Data.Id,
-                                    Amount = price,
-                                    TransactionDescription = "Pay for parking",
-                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
-                                };
-                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                                if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                walletExtra.Data.Balance -= price;
-                                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
-                                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-                                break;
+                                PaymentMethodId = paymentMethod.Data.Id,
+                                SessionId = sessionCard.Data.Id,
+                                TotalPrice = price,
+                            };
+                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                            if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
+
+                            var transaction = new FUParkingModel.Object.Transaction
+                            {
+                                WalletId = walletExtra.Data.Id,
+                                PaymentId = createPayment.Data.Id,
+                                Amount = price,
+                                TransactionDescription = "Pay for parking",
+                                TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            };
+                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                            if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            walletExtra.Data.Balance -= price;
+                            var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                            if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                            sessionCard.Data.GateOutId = req.GateOutId;
+                            sessionCard.Data.TimeOut = req.TimeOut;
+                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                            sessionCard.Data.Status = SessionEnum.CLOSED;
+                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            scope.Complete();
+                            return new Return<dynamic>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                            };
+                        }
 
                         case WalletBalanceCondition.WalletMainSufficient:
+                        {
+                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+
+                            var payment = new Payment
                             {
-                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-
-                                var payment = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = price,
-                                };
-                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                                if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var transaction = new FUParkingModel.Object.Transaction
-                                {
-                                    WalletId = walletMain.Data.Id,
-                                    PaymentId = createPayment.Data.Id,
-                                    Amount = price,
-                                    TransactionDescription = "Pay for parking",
-                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
-                                };
-                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                                if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                walletMain.Data.Balance -= price;
-                                var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
-                                if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-                                break;
+                                PaymentMethodId = paymentMethod.Data.Id,
+                                SessionId = sessionCard.Data.Id,
+                                TotalPrice = price,
+                            };
+                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                            if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
+
+                            var transaction = new FUParkingModel.Object.Transaction
+                            {
+                                WalletId = walletMain.Data.Id,
+                                PaymentId = createPayment.Data.Id,
+                                Amount = price,
+                                TransactionDescription = "Pay for parking",
+                                TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            };
+                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                            if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            walletMain.Data.Balance -= price;
+                            var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
+                            if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                            sessionCard.Data.GateOutId = req.GateOutId;
+                            sessionCard.Data.TimeOut = req.TimeOut;
+                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                            sessionCard.Data.Status = SessionEnum.CLOSED;
+                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            scope.Complete();
+                            return new Return<dynamic>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                            };
+                        }
 
                         case WalletBalanceCondition.CombinedSufficient:
+                        {
+                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+
+                            var paymentMain = new Payment
                             {
-                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-
-                                var paymentMain = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = price - walletExtra.Data.Balance,
-                                };
-                                var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
-                                if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var paymentExtra = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = walletExtra.Data.Balance,
-                                };
-                                var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
-                                if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var transactionMain = new FUParkingModel.Object.Transaction
-                                {
-                                    WalletId = walletMain.Data.Id,
-                                    PaymentId = createPaymentMain.Data.Id,
-                                    Amount = price - walletExtra.Data.Balance,
-                                    TransactionDescription = "Pay for parking",
-                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
-                                };
-                                var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
-                                if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var transactionExtra = new FUParkingModel.Object.Transaction
-                                {
-                                    WalletId = walletExtra.Data.Id,
-                                    PaymentId = createPaymentExtra.Data.Id,
-                                    Amount = walletExtra.Data.Balance,
-                                    TransactionDescription = "Pay for parking",
-                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
-                                };
-                                var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
-                                if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                walletExtra.Data.Balance = 0;
-                                walletMain.Data.Balance -= price - walletExtra.Data.Balance;
-                                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
-                                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-                                var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
-                                if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-                                break;
+                                PaymentMethodId = paymentMethod.Data.Id,
+                                SessionId = sessionCard.Data.Id,
+                                TotalPrice = price - walletExtra.Data.Balance,
+                            };
+                            var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
+                            if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
+
+                            var paymentExtra = new Payment
+                            {
+                                PaymentMethodId = paymentMethod.Data.Id,
+                                SessionId = sessionCard.Data.Id,
+                                TotalPrice = walletExtra.Data.Balance,
+                            };
+                            var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
+                            if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            var transactionMain = new FUParkingModel.Object.Transaction
+                            {
+                                WalletId = walletMain.Data.Id,
+                                PaymentId = createPaymentMain.Data.Id,
+                                Amount = price - walletExtra.Data.Balance,
+                                TransactionDescription = "Pay for parking",
+                                TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            };
+                            var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
+                            if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            var transactionExtra = new FUParkingModel.Object.Transaction
+                            {
+                                WalletId = walletExtra.Data.Id,
+                                PaymentId = createPaymentExtra.Data.Id,
+                                Amount = walletExtra.Data.Balance,
+                                TransactionDescription = "Pay for parking",
+                                TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            };
+                            var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
+                            if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            walletExtra.Data.Balance = 0;
+                            walletMain.Data.Balance -= price - walletExtra.Data.Balance;
+                            var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                            if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
+                            if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                            sessionCard.Data.GateOutId = req.GateOutId;
+                            sessionCard.Data.TimeOut = req.TimeOut;
+                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                            sessionCard.Data.Status = SessionEnum.CLOSED;
+                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+                            scope.Complete();
+                            return new Return<dynamic>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                            };
+                        }
 
                         case WalletBalanceCondition.Insufficient:
+                        {
+                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
+                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                             {
-                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
-                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-                                }
-
-                                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                                sessionCard.Data.GateOutId = req.GateOutId;
-                                sessionCard.Data.TimeOut = req.TimeOut;
-                                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                                sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                                sessionCard.Data.Status = SessionEnum.CLOSED;
-                                var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                                if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var payment = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = price,
-                                };
-                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                                if (!createPayment.IsSuccess || createPayment.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                var transaction = new FUParkingModel.Object.Transaction
-                                {
-                                    PaymentId = createPayment.Data.Id,
-                                    Amount = price,
-                                    TransactionDescription = "Pay for parking",
-                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
-                                };
-                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                                if (!createTransaction.IsSuccess || createTransaction.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
-
-                                scope.Complete();
-                                return new Return<dynamic>
-                                {
-                                    IsSuccess = true,
-                                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                                };
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                             }
+
+                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                            sessionCard.Data.GateOutId = req.GateOutId;
+                            sessionCard.Data.TimeOut = req.TimeOut;
+                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                            sessionCard.Data.Status = SessionEnum.CLOSED;
+                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            var payment = new Payment
+                            {
+                                PaymentMethodId = paymentMethod.Data.Id,
+                                SessionId = sessionCard.Data.Id,
+                                TotalPrice = price,
+                            };
+                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                            if (!createPayment.IsSuccess || createPayment.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            var transaction = new FUParkingModel.Object.Transaction
+                            {
+                                PaymentId = createPayment.Data.Id,
+                                Amount = price,
+                                TransactionDescription = "Pay for parking",
+                                TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            };
+                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                            if (!createTransaction.IsSuccess || createTransaction.Data == null)
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
+
+                            scope.Complete();
+                            return new Return<dynamic>
+                            {
+                                IsSuccess = true,
+                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                            };
+                        }
+                        default:
+                        {
+                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        }
                     }
-                    // GetPaymentMethod wallet
-                    var paymentMethodWallet = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                    if (!paymentMethodWallet.IsSuccess || paymentMethodWallet.Data == null || !paymentMethodWallet.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodWallet.InternalErrorMessage };
-                    }
-                    sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                    sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                    sessionCard.Data.GateOutId = req.GateOutId;
-                    sessionCard.Data.TimeOut = req.TimeOut;
-                    sessionCard.Data.Status = SessionEnum.CLOSED;
-                    sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                    sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                    sessionCard.Data.PaymentMethodId = paymentMethodWallet.Data.Id;
-                    var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                    if (!updateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    }
-                    scope.Complete();
-                    return new Return<dynamic>
-                    {
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                    };
                 }
-                // For guest 
-                else
+                var paymentMethodCash = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
+                if (!paymentMethodCash.IsSuccess || paymentMethodCash.Data == null || !paymentMethodCash.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethodCash.InternalErrorMessage };
+                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                sessionCard.Data.GateOutId = req.GateOutId;
+                sessionCard.Data.TimeOut = req.TimeOut;
+                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                sessionCard.Data.PaymentMethodId = paymentMethodCash.Data.Id;
+                sessionCard.Data.Status = SessionEnum.CLOSED;
+                var isUpdateSessionCash = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                if (!isUpdateSessionCash.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
-                    var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
-                    if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-                    }
-                    sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                    sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                    sessionCard.Data.GateOutId = req.GateOutId;
-                    sessionCard.Data.TimeOut = req.TimeOut;
-                    sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                    sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                    sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                    sessionCard.Data.Status = SessionEnum.CLOSED;
-                    var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                    if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    }
-                    // Create payment for session
-                    var payment = new Payment
-                    {
-                        PaymentMethodId = paymentMethod.Data.Id,
-                        SessionId = sessionCard.Data.Id,
-                        TotalPrice = price,
-                    };
-                    var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                    if (!createPayment.IsSuccess || createPayment.Data == null)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    }
-                    var transaction = new FUParkingModel.Object.Transaction
-                    {
-                        PaymentId = createPayment.Data.Id,
-                        Amount = price,
-                        TransactionDescription = "Pay for parking",
-                        TransactionStatus = StatusTransactionEnum.SUCCEED,
-                    };
-                    var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                    if (!createTransaction.IsSuccess || createTransaction.Data == null)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    }
-                    scope.Complete();
-                    return new Return<dynamic>
-                    {
-                        IsSuccess = true,
-                        Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                    };
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
+                var paymentCash = new Payment
+                {
+                    PaymentMethodId = paymentMethodCash.Data.Id,
+                    SessionId = sessionCard.Data.Id,
+                    TotalPrice = price,
+                };
+                var createPaymentCash = await _paymentRepository.CreatePaymentAsync(paymentCash);
+                if (!createPaymentCash.IsSuccess || createPaymentCash.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                var transactionCash = new FUParkingModel.Object.Transaction
+                {
+                    PaymentId = createPaymentCash.Data.Id,
+                    Amount = price,
+                    TransactionDescription = "Pay for parking",
+                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                };
+                var createTransactionCash = await _transactionRepository.CreateTransactionAsync(transactionCash);
+                if (!createTransactionCash.IsSuccess || createTransactionCash.Data == null)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
             }
             catch (Exception ex)
             {
@@ -2672,7 +2700,7 @@ namespace FUParkingService
                 if (!regex.IsMatch(PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {                        
+                    {
                         Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
                     };
                 }
@@ -2719,7 +2747,7 @@ namespace FUParkingService
                         CustomerType = CustomerTypeEnum.FREE
                     },
                     IsSuccess = true
-                };                
+                };
             }
             catch (Exception ex)
             {
