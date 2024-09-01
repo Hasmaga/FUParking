@@ -22,7 +22,7 @@ namespace FUParkingRepository.Interface
         Task<Return<double>> GetAverageSessionDurationPerDayAsync();
         Task<Return<StatisticCheckInCheckOutResDto>> GetStatisticCheckInCheckOutAsync();
         Task<Return<StatisticSessionTodayResDto>> GetStatisticCheckInCheckOutInParkingAreaAsync(Guid parkingId);
-        Task<Return<IEnumerable<Session>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate);
+        Task<Return<IEnumerable<Session>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, string? statusFilter, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate);
         Task<Return<Session>> GetNewestSessionByCardNumberAsync(string cardNumber);
     }
 }

@@ -554,7 +554,7 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<Session>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate)
+        public async Task<Return<IEnumerable<Session>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, string? statusFilter, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate)
         {
             Return<IEnumerable<Session>> res = new()
             {
@@ -591,9 +591,14 @@ namespace FUParkingRepository
                 {
                     query = query.Where(p => p.Card!.CardNumber.Contains(cardNum));
                 }
+                if (!string.IsNullOrEmpty(statusFilter))
+                {
+                    query = query.Where(p => p.Status.Contains(statusFilter));
+                }
 
                 var result = await query
-                    .OrderByDescending(t => t.CreatedDate)
+                    .OrderByDescending(t => t.Status == SessionEnum.PARKED)
+                    .ThenByDescending(t => t.CreatedDate)
                     .Skip((pageIndex - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
