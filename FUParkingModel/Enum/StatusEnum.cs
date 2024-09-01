@@ -117,6 +117,7 @@
         public const string CASH = "CASH";
         public const string WALLET = "WALLET";
         public const string ZALOPAY = "ZALOPAY";
+        public const string VNPAY = "VNPAY";
     }
 
     public class SessionEnum

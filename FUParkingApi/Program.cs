@@ -8,6 +8,7 @@ using FUParkingService.BackgroundTask;
 using FUParkingService.Cloudflare;
 using FUParkingService.Interface;
 using FUParkingService.MailService;
+using FUParkingService.VnPayService;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -58,6 +59,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IZaloService, ZaloService>();
+builder.Services.AddTransient<IVnPayService, VnPayService>();
 #endregion
 
 #region MailService

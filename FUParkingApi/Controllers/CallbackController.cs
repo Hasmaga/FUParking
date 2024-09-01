@@ -3,6 +3,8 @@ using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
+using FUParkingService.VnPayService;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -12,11 +14,13 @@ namespace FUParkingApi.Controllers
     public class CallbackController : Controller
     {
         private readonly IZaloService _zaloService;
+        private readonly IVnPayService _vnpayService;
         private readonly ILogger<CallbackController> _logger;
 
-        public CallbackController(IZaloService zaloService, ILogger<CallbackController> logger)
+        public CallbackController(IZaloService zaloService, IVnPayService vnpayService, ILogger<CallbackController> logger)
         {
             _zaloService = zaloService;
+            _vnpayService = vnpayService;
             _logger = logger;
         }
 
@@ -70,6 +74,21 @@ namespace FUParkingApi.Controllers
             }
             result["return_code"] = 1;
             result["return_message"] = "success";
+            return Ok(result);
+        }
+
+        [HttpGet("vnpay")]
+        public async Task<IActionResult> CallbackVnPayAsync([FromQuery] string vnp_TmnCode, string vnp_Amount, string vnp_BankCode, string vnp_OrderInfo, string vnp_TransactionNo, string vnp_ResponseCode, string vnp_TransactionStatus, Guid vnp_TxnRef, string vnp_SecureHash)
+        {
+            Return<bool> result = await _vnpayService.CallbackVnPayIPNUrl(vnp_TmnCode, vnp_Amount, vnp_BankCode, vnp_OrderInfo, vnp_TransactionNo, vnp_ResponseCode, vnp_TransactionStatus, vnp_TxnRef, vnp_SecureHash);
+            if(!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogInformation("Error at Callback VnPay: {result.InternalErrorMessage}", result.InternalErrorMessage);
+                }
+            }
+
             return Ok(result);
         }
     }
