@@ -2004,7 +2004,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<IEnumerable<GetAllSessionTodayResDto>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate)
+        public async Task<Return<IEnumerable<GetAllSessionTodayResDto>>> GetAllSessionByCardNumberAndPlateNumberAsync(Guid parkingId, string? plateNum, string? cardNum, string? statusFilter, int pageIndex, int pageSize, DateTime? startDate, DateTime? endDate)
         {
             try
             {
@@ -2017,7 +2017,7 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _sessionRepository.GetAllSessionByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, pageIndex, pageSize, startDate, endDate);
+                var result = await _sessionRepository.GetAllSessionByCardNumberAndPlateNumberAsync(parkingId, plateNum, cardNum, statusFilter, pageIndex, pageSize, startDate, endDate);
                 if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetAllSessionTodayResDto>>
