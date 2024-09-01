@@ -250,12 +250,13 @@ namespace FUParkingRepository
         {
             try
             {
-                var query = await (
-                    from c in _db.Customers
-                    join u in _db.Vehicles on c.Id equals u.CustomerId
-                    where u.PlateNumber == plateNumber && c.StatusCustomer == StatusCustomerEnum.ACTIVE && c.DeletedDate == null
-                    select c
-                ).FirstOrDefaultAsync();
+#pragma warning disable CS8604 // Possible null reference argument.
+                var query = await _db.Customers
+                    .Include(c => c.CustomerType)
+                    .Include(c => c.Vehicles)
+                    .Where(c => c.Vehicles.Any(v => v.PlateNumber == plateNumber))
+                    .FirstOrDefaultAsync();
+#pragma warning restore CS8604 // Possible null reference argument.
                 return new Return<Customer>
                 {
                     Data = query,

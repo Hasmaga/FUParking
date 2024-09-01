@@ -247,5 +247,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("customerType/{plateNumber}")]
+        public async Task<IActionResult> GetCustomerTypeByPlateNumberAsync(string plateNumber)
+        {
+            var result = await _sessionService.GetCustomerTypeByPlateNumberAsync(plateNumber);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at Get Customer Type By Plate Number: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

@@ -68,6 +68,7 @@
     {
         public const string PAID = "PAID";
         public const string FREE = "FREE";
+        public const string GUEST = "GUEST";
     }
 
     public class GateTypeEnum

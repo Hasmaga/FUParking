@@ -2642,5 +2642,71 @@ namespace FUParkingService
                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
+
+        public async Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(string PlateNumber)
+        {
+            try
+            {
+                // Check Auth
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // Get Customer Type By Plate Number
+                var result = await _customerRepository.GetCustomerByPlateNumberAsync(PlateNumber);
+                if (!result.IsSuccess)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                if (result.Data == null)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.GUEST
+                        },
+                        IsSuccess = true
+                    };
+                }
+
+                if (result.Data.CustomerType?.Name.Equals(CustomerTypeEnum.PAID) ?? false)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.PAID
+                        },
+                        IsSuccess = true
+                    };
+                }
+                return new Return<GetCustomerTypeByPlateNumberResDto>
+                {
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = new GetCustomerTypeByPlateNumberResDto
+                    {
+                        CustomerType = CustomerTypeEnum.FREE
+                    },
+                    IsSuccess = true
+                };                
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetCustomerTypeByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+            }
+        }
     }
 }
