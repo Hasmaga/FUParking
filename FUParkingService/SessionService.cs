@@ -9,6 +9,7 @@ using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Text.RegularExpressions;
 using System.Transactions;
 
 namespace FUParkingService
@@ -2657,7 +2658,24 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-
+                // Check Input Plate Number
+                if (string.IsNullOrEmpty(PlateNumber) && PlateNumber == null)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                    };
+                }
+                // Check Plate Number is valid
+                PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+                var regex = new Regex(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+                if (!regex.IsMatch(PlateNumber))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {                        
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                    };
+                }
                 // Get Customer Type By Plate Number
                 var result = await _customerRepository.GetCustomerByPlateNumberAsync(PlateNumber);
                 if (!result.IsSuccess)
