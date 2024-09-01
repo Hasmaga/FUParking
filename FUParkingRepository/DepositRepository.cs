@@ -60,5 +60,62 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<Deposit>> GetDepositByIdAsync(Guid depositId)
+        {
+            try
+            {
+                var result = await _db.Deposits.Where(d => d.Id.Equals(depositId)).FirstOrDefaultAsync();
+                return new Return<Deposit>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Deposit>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<Deposit>> UpdateDepositAppTranIdAsync(Guid id, string newTran)
+        {
+            try
+            {
+                var deposit = await _db.Deposits.FindAsync(id);
+                if (deposit == null)
+                {
+                    return new Return<Deposit>
+                    {
+                        Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                    };
+                }
+
+                deposit.AppTranId = newTran;
+                _db.Deposits.Update(deposit);
+                await _db.SaveChangesAsync();
+
+                return new Return<Deposit>
+                {
+                    Data = deposit,
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<Deposit>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
     }
 }
