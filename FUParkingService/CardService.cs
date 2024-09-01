@@ -543,5 +543,40 @@ namespace FUParkingService
             }
         }
 
+        public async Task<Return<IEnumerable<GetCardOptionsResDto>>> GetCardOptionAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetCardOptionsResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _cardRepository.GetCardOptionAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetCardOptionsResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetCardOptionsResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

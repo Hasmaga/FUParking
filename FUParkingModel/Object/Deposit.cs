@@ -21,7 +21,7 @@ namespace FUParkingModel.Object
         public int Amount { get; set; }
 
         [Column("AppTranId")]
-        public string AppTranId { get; set; } = null!;
+        public string? AppTranId { get; set; }
 
         public ICollection<Transaction>? Transactions { get; set; }
     }

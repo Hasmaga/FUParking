@@ -17,7 +17,7 @@ namespace FUParkingModel.Object
         public VehicleType? VehicleType { get; set; }
 
         [Column("PlateImage")]
-        public required string PlateImage { get; set; }
+        public string? PlateImage { get; set; }
 
         [Column("StatusVehicle")]
         public required string StatusVehicle { get; set; }

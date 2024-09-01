@@ -185,7 +185,7 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }
+        }        
 
         public async Task<Return<StatisticCardResDto>> GetStatisticCardAsync()
         {
@@ -230,6 +230,44 @@ namespace FUParkingRepository
             catch (Exception e)
             {
                 return new Return<Card>
+                {
+                    InternalErrorMessage = e,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetCardOptionsResDto>>> GetCardOptionAsync()
+        {
+            try
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                var result = await _db.Cards
+                    .Include(x => x.Sessions)
+                    .Where(
+                        x => x.DeletedDate == null && 
+                        x.Sessions.All(p => p.Status != SessionEnum.PARKED) && 
+                        x.Status == CardStatusEnum.ACTIVE
+                    )
+                    .OrderByDescending(r => r.CreatedDate)
+                    .Select(x => new GetCardOptionsResDto
+                    {
+                        CardNumber = x.CardNumber,
+                        Id = x.Id
+                    })                    
+                    .ToListAsync();
+#pragma warning restore CS8604 // Possible null reference argument.
+                return new Return<IEnumerable<GetCardOptionsResDto>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.Count
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<GetCardOptionsResDto>>
                 {
                     InternalErrorMessage = e,
                     Message = ErrorEnumApplication.SERVER_ERROR

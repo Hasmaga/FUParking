@@ -2668,7 +2668,7 @@ namespace FUParkingService
                 }
                 // Check Plate Number is valid
                 PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
-                var regex = new Regex(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
                 if (!regex.IsMatch(PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
