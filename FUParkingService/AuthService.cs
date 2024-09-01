@@ -42,12 +42,7 @@ namespace FUParkingService
                 if (login.IsAuthentication == false)
                 {
                     return new Return<LoginResDto> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
-                }
-                // Check the email is @fpt.edu.vn only
-                if (!login.Email.Contains("@fpt.edu.vn"))
-                {
-                    return new Return<LoginResDto> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY };
-                }
+                }                
                 // Check if the user is already registered
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(login.Email);
                 // If the user is not registered, create a new user
@@ -271,11 +266,7 @@ namespace FUParkingService
                 if (payload == null)
                 {
                     return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
-                }
-                if (!payload.HostedDomain.Equals("fpt.edu.vn"))
-                {
-                    return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.NOT_EMAIL_FPT_UNIVERSITY };
-                }
+                }                
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(payload.Email);
                 if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
