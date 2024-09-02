@@ -1,6 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.RequestObject.Session;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -248,10 +249,14 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("customerType/{plateNumber}")]
-        public async Task<IActionResult> GetCustomerTypeByPlateNumberAsync(string plateNumber)
+        [HttpGet("checkin/info")]
+        public async Task<IActionResult> GetCheckInInformationReqDto(GetCheckInInformationReqDto req)
         {
-            var result = await _sessionService.GetCustomerTypeByPlateNumberAsync(plateNumber);
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _sessionService.GetCustomerTypeByPlateNumberAsync(req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

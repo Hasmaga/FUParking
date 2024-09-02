@@ -1,6 +1,7 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ResponseObject.Customer;
+using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 
@@ -15,5 +16,6 @@ namespace FUParkingService.Interface
         Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
         Task<Return<bool>> UpdateCustomerAccountAsync(UpdateCustomerAccountReqDto req);
         Task<Return<dynamic>> CreateNonPaidCustomerAsync(CreateNonPaidCustomerReqDto req);
+        Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(string PlateNumber);
     }
 }

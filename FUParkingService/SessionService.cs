@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
@@ -2672,7 +2673,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(string PlateNumber)
+        public async Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(GetCheckInInformationReqDto req)
         {
             try
             {
@@ -2687,7 +2688,7 @@ namespace FUParkingService
                     };
                 }
                 // Check Input Plate Number
-                if (string.IsNullOrEmpty(PlateNumber) && PlateNumber == null)
+                if (string.IsNullOrEmpty(req.PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {
@@ -2695,17 +2696,121 @@ namespace FUParkingService
                     };
                 }
                 // Check Plate Number is valid
-                PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+                req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "").ToUpper();
                 Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
-                if (!regex.IsMatch(PlateNumber))
+                if (!regex.IsMatch(req.PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {
                         Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
                     };
+                }    
+
+                // Check card previour sessoion
+                var checkCardPreviousSession = await _sessionRepository.GetNewestSessionByCardNumberAsync(req.CardNumber);
+                if (!checkCardPreviousSession.IsSuccess)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = checkCardPreviousSession.InternalErrorMessage,
+                        Message = checkCardPreviousSession.Message
+                    };
                 }
+                if (checkCardPreviousSession.Data != null && checkCardPreviousSession.Data.Status.Equals(SessionEnum.PARKED))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            PreviousSessionInfo = new PreviousSessionInfo
+                            {
+                                CustomerEmail = checkCardPreviousSession.Data.Customer?.Email ?? "",
+                                CustomerType = checkCardPreviousSession.Data.Customer?.CustomerType?.Name ??
+                                                (checkCardPreviousSession.Data.Card?.PlateNumber != null ? "FREE" : "Guest"),
+                                GateIn = checkCardPreviousSession.Data.GateIn?.Name ?? "",
+                                ImageInUrl = checkCardPreviousSession.Data.ImageInUrl,
+                                TimeIn = checkCardPreviousSession.Data.TimeIn,
+                                Id = checkCardPreviousSession.Data.Id,
+                                ImageInBodyUrl = checkCardPreviousSession.Data.ImageInBodyUrl,
+                                PlateNumber = checkCardPreviousSession.Data.PlateNumber,
+                                Status = checkCardPreviousSession.Data.Status,
+                                VehicleyType = checkCardPreviousSession.Data.VehicleType?.Name ?? "",
+                                CardOrPlateNumber = "CARD"
+                            }
+                        },
+                    };
+                }
+
+                // Check plate number previous session
+                var checkPlateNumberPreviousSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
+                if (!checkPlateNumberPreviousSession.IsSuccess)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = checkPlateNumberPreviousSession.InternalErrorMessage,
+                        Message = checkPlateNumberPreviousSession.Message
+                    };
+                }
+                if (checkPlateNumberPreviousSession.Data != null && checkPlateNumberPreviousSession.Data.Status.Equals(SessionEnum.PARKED))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            PreviousSessionInfo = new PreviousSessionInfo
+                            {
+                                CustomerEmail = checkPlateNumberPreviousSession.Data.Customer?.Email ?? "",
+                                CustomerType = checkPlateNumberPreviousSession.Data.Customer?.CustomerType?.Name ??
+                                                (checkPlateNumberPreviousSession.Data.Card?.PlateNumber != null ? "FREE" : "Guest"),
+                                GateIn = checkPlateNumberPreviousSession.Data.GateIn?.Name ?? "",
+                                ImageInUrl = checkPlateNumberPreviousSession.Data.ImageInUrl,
+                                TimeIn = checkPlateNumberPreviousSession.Data.TimeIn,
+                                Id = checkPlateNumberPreviousSession.Data.Id,
+                                ImageInBodyUrl = checkPlateNumberPreviousSession.Data.ImageInBodyUrl,
+                                PlateNumber = checkPlateNumberPreviousSession.Data.PlateNumber,
+                                Status = checkPlateNumberPreviousSession.Data.Status,
+                                VehicleyType = checkPlateNumberPreviousSession.Data.VehicleType?.Name ?? "",
+                                CardOrPlateNumber = "PLATENUMBER"
+                            }
+                        },
+                    };
+                }
+                
+                // Get card
+                var card = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
+                if (!card.IsSuccess)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = card.InternalErrorMessage,
+                        Message = card.Message
+                    };
+                }
+
+                // Check card have plate number
+                if (card.Data?.PlateNumber is not null && card.Data.PlateNumber.Equals(req.PlateNumber))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.FREE
+                        },
+                        IsSuccess = true
+                    };
+                } else if (card.Data?.PlateNumber is not null && !card.Data.PlateNumber.Equals(req.PlateNumber))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH
+                    };
+                }
+
                 // Get Customer Type By Plate Number
-                var result = await _customerRepository.GetCustomerByPlateNumberAsync(PlateNumber);
+                var result = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
                 if (!result.IsSuccess)
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
@@ -2713,41 +2818,17 @@ namespace FUParkingService
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = result.Message
                     };
-                }
-                if (result.Data == null)
-                {
-                    return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {
-                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
-                        Data = new GetCustomerTypeByPlateNumberResDto
-                        {
-                            CustomerType = CustomerTypeEnum.GUEST
-                        },
-                        IsSuccess = true
-                    };
-                }
+                }                
 
-                if (result.Data.CustomerType?.Name.Equals(CustomerTypeEnum.PAID) ?? false)
-                {
-                    return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {
-                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
-                        Data = new GetCustomerTypeByPlateNumberResDto
-                        {
-                            CustomerType = CustomerTypeEnum.PAID
-                        },
-                        IsSuccess = true
-                    };
-                }
                 return new Return<GetCustomerTypeByPlateNumberResDto>
                 {
-                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                     Data = new GetCustomerTypeByPlateNumberResDto
                     {
-                        CustomerType = CustomerTypeEnum.FREE
+                        CustomerType = result.Data?.CustomerType?.Name ?? CustomerTypeEnum.GUEST
                     },
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                     IsSuccess = true
-                };
+                };               
             }
             catch (Exception ex)
             {

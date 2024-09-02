@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.SessionCheckOut;
@@ -28,6 +29,7 @@ namespace FUParkingService.Interface
         Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut);
         Task<Return<GetSessionByPlateNumberResDto>> GetNewestSessionByPlateNumberAsync(string PlateNumber, DateTime TimeOut);
         Task<Return<dynamic>> UpdatePlateNumberInSessionAsync(UpdatePlateNumberInSessionReqDto req);
-        Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(string PlateNumber);
+        Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(GetCheckInInformationReqDto req);
     }
 }
+ 
