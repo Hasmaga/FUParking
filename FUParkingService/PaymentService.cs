@@ -123,7 +123,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<StatisticPaymentTodayResDto>> GetStatisticPaymentTodayForGateAsync(Guid gateId)
+        public async Task<Return<StatisticPaymentTodayResDto>> GetStatisticPaymentTodayForGateAsync(Guid gateId, DateTime? startDate, DateTime? endDate)
         {
             try
             {
@@ -136,7 +136,7 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var result = await _paymentRepository.GetStatisticPaymentTodayForGateAsync(gateId);
+                var result = await _paymentRepository.GetStatisticPaymentTodayForGateAsync(gateId, startDate, endDate);
                 if (!result.IsSuccess)
                 {
                     return new Return<StatisticPaymentTodayResDto>

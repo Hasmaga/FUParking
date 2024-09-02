@@ -241,9 +241,9 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("payment/{gateId}/today")]
-        public async Task<IActionResult> StatisticPaymentTodayForGateAsync([FromRoute] Guid gateId)
+        public async Task<IActionResult> StatisticPaymentTodayForGateAsync([FromRoute] Guid gateId,[FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
-            var result = await _paymentService.GetStatisticPaymentTodayForGateAsync(gateId);
+            var result = await _paymentService.GetStatisticPaymentTodayForGateAsync(gateId, startDate, endDate);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
