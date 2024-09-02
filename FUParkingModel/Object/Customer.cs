@@ -29,6 +29,9 @@ namespace FUParkingModel.Object
         [Column("LastModifyDate")]
         public DateTime? LastModifyDate { get; set; }
 
+        [Column("FCMToken")]
+        public string? FCMToken { get; set; }
+
         public ICollection<Vehicle>? Vehicles { get; set; }
         public ICollection<Feedback>? Feedbacks { get; set; }
         public ICollection<Wallet>? Wallets { get; set; }

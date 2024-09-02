@@ -180,7 +180,7 @@ namespace FUParkingService
                         Data = new GetVehicleInformationByStaffResDto
                         {
                             CreateDate = vehicle.Data.CreatedDate,
-                            PlateImage = vehicle.Data.PlateImage,
+                            PlateImage = vehicle.Data.PlateImage ?? "",
                             PlateNumber = vehicle.Data.PlateNumber,
                             StatusVehicle = vehicle.Data.StatusVehicle,
                             VehicleType = vehicle.Data.VehicleTypeId,
@@ -2697,7 +2697,9 @@ namespace FUParkingService
                 }
                 // Check Plate Number is valid
                 req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "").ToUpper();
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
                 Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
                 if (!regex.IsMatch(req.PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>

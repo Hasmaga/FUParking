@@ -9,8 +9,8 @@ namespace FUParkingService.VnPayService
     public class VnPayLibrary
     {
         public const string VERSION = "2.1.0";
-        private SortedList<String, String> _requestData = new SortedList<String, String>(new VnPayCompare());
-        private SortedList<String, String> _responseData = new SortedList<String, String>(new VnPayCompare());
+        private readonly SortedList<String, String> _requestData = new(new VnPayCompare());
+        private readonly SortedList<String, String> _responseData = new(new VnPayCompare());
 
         public void AddRequestData(string key, string value)
         {
@@ -30,8 +30,8 @@ namespace FUParkingService.VnPayService
 
         public string GetResponseData(string key)
         {
-            string retValue;
-            if (_responseData.TryGetValue(key, out retValue))
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+            if (_responseData.TryGetValue(key, out string retValue))
             {
                 return retValue;
             }
@@ -39,13 +39,14 @@ namespace FUParkingService.VnPayService
             {
                 return string.Empty;
             }
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
 
         #region Request
 
         public string CreateRequestUrl(string baseUrl, string vnp_HashSecret)
         {
-            StringBuilder data = new StringBuilder();
+            StringBuilder data = new();
             foreach (KeyValuePair<string, string> kv in _requestData)
             {
                 if (!String.IsNullOrEmpty(kv.Value))
@@ -81,7 +82,7 @@ namespace FUParkingService.VnPayService
         private string GetResponseData()
         {
 
-            StringBuilder data = new StringBuilder();
+            StringBuilder data = new();
             if (_responseData.ContainsKey("vnp_SecureHashType"))
             {
                 _responseData.Remove("vnp_SecureHashType");
@@ -130,7 +131,9 @@ namespace FUParkingService.VnPayService
 
     public class VnPayCompare : IComparer<string>
     {
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
         public int Compare(string x, string y)
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
         {
             if (x == y) return 0;
             if (x == null) return -1;
