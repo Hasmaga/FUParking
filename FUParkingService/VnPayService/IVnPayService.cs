@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.ReturnCommon;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,6 @@ namespace FUParkingService.VnPayService
     public interface IVnPayService
     {
         Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, IPAddress ipAddress);
-        Task<Return<bool>> CallbackVnPayIPNUrl(string vnp_TmnCode, string vnp_Amount, string vnp_BankCode, string vnp_OrderInfo, string vnp_TransactionNo, string vnp_ResponseCode, string vnp_TransactionStatus, Guid vnp_TxnRef, string vnp_SecureHash);
+        Task<Return<bool>> CallbackVnPayIPNUrl(IQueryCollection queryStringParameters);
     }
 }

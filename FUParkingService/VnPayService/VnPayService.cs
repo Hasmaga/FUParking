@@ -4,6 +4,7 @@ using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -145,14 +146,38 @@ namespace FUParkingService.VnPayService
             }
         }
 
-        public async Task<Return<bool>> CallbackVnPayIPNUrl(string vnp_TmnCode, string vnp_Amount, string vnp_BankCode, string vnp_OrderInfo, string vnp_TransactionNo, string vnp_ResponseCode, string vnp_TransactionStatus, Guid vnp_TxnRef, string vnp_SecureHash)
+        public async Task<Return<bool>> CallbackVnPayIPNUrl(IQueryCollection queryStringParameters)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                var deposit = await _depositRepository.GetDepositByIdAsync(vnp_TxnRef);
+                VnPayLibrary vnpay = new VnPayLibrary();
+                foreach (var key in queryStringParameters.Keys)
+                {
+                    var value = queryStringParameters[key];
+                    if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_") && !string.IsNullOrEmpty(value))
+                    {
+                        vnpay.AddResponseData(key, value);
+                    }
+                }
+
+                Guid depositId = Guid.Parse(vnpay.GetResponseData("vnp_TxnRef"));
+                int vnp_Amount = int.Parse(vnpay.GetResponseData("vnp_Amount")) / 100;
+                string vnpayTranId = vnpay.GetResponseData("vnp_TransactionNo");
+                string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+                string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+                string? vnp_SecureHash = queryStringParameters["vnp_SecureHash"];
+
+                if(vnp_SecureHash is null)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var deposit = await _depositRepository.GetDepositByIdAsync(depositId);
                 if (!deposit.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || deposit.Data == null)
                 {
+                    scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
@@ -170,38 +195,35 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                var vnpay = new VnPayLibrary();
-
-                // checksum
                 string vnp_HashSecret = _configuration.GetSection("VnPay:vnp_HashSecret").Value ?? "";
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (!checkSignature)
                 {
+                    scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                if(transaction.Data.Amount != int.Parse(vnp_Amount))
+                if (transaction.Data.Amount != vnp_Amount)
                 {
+                    scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                // update transaction 
-                transaction.Data.TransactionStatus = (vnp_TransactionStatus.Equals("00") && vnp_TransactionStatus == "00")  ? StatusTransactionEnum.SUCCEED : StatusTransactionEnum.FAILED;
+                transaction.Data.TransactionStatus = vnp_TransactionStatus.Equals("00") ? StatusTransactionEnum.SUCCEED : StatusTransactionEnum.FAILED;
                 var updateTransaction = await _transactionRepository.UpdateTransactionAsync(transaction.Data);
-                if (updateTransaction != null) {
+                if (updateTransaction == null)
+                {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                // update deposit appTranId
-                var updateDeposit = await _depositRepository.UpdateDepositAppTranIdAsync(deposit.Data.Id, vnp_TransactionNo);
-                if (updateDeposit != null) {
+                var updateDeposit = await _depositRepository.UpdateDepositAppTranIdAsync(deposit.Data.Id, vnpayTranId);
+                if (updateDeposit == null)
+                {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-
-                // wallet
                 var walletMain = await _walletRepository.GetMainWalletByCustomerId(deposit.Data.CustomerId);
                 if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data == null)
                 {
@@ -210,7 +232,6 @@ namespace FUParkingService.VnPayService
                 }
                 walletMain.Data.Balance += package.Data.CoinAmount;
 
-                // Create transaction for wallet main
                 FUParkingModel.Object.Transaction newTransactionMain = new()
                 {
                     Amount = package.Data.CoinAmount,
@@ -219,7 +240,7 @@ namespace FUParkingService.VnPayService
                     WalletId = walletMain.Data.Id
                 };
                 var transactionMain = await _transactionRepository.CreateTransactionAsync(newTransactionMain);
-                if (transactionMain.IsSuccess == false || transactionMain.Data == null)
+                if (!transactionMain.IsSuccess || transactionMain.Data == null)
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -239,8 +260,8 @@ namespace FUParkingService.VnPayService
                 }
                 walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
                 walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
-                // Create transaction for wallet extra
-                if (package.Data.ExtraCoin is not null)
+
+                if (package.Data.ExtraCoin != null)
                 {
                     FUParkingModel.Object.Transaction newTransactionExtra = new()
                     {
@@ -250,7 +271,7 @@ namespace FUParkingService.VnPayService
                         WalletId = walletExtra.Data.Id
                     };
                     var transactionExtra = await _transactionRepository.CreateTransactionAsync(newTransactionExtra);
-                    if (transactionExtra.IsSuccess == false || transactionExtra.Data == null)
+                    if (!transactionExtra.IsSuccess || transactionExtra.Data == null)
                     {
                         scope.Dispose();
                         return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -262,13 +283,15 @@ namespace FUParkingService.VnPayService
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
+
                 scope.Complete();
-                return new Return<bool> { Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
+                return new Return<bool> { Data = true, Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
 
             }
             catch (Exception ex)
             {
-                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
+                scope.Dispose();
+                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex};
             }
         }
     }
