@@ -78,9 +78,10 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("vnpay")]
-        public async Task<IActionResult> CallbackVnPayAsync([FromQuery] string vnp_TmnCode, string vnp_Amount, string vnp_BankCode, string vnp_OrderInfo, string vnp_TransactionNo, string vnp_ResponseCode, string vnp_TransactionStatus, Guid vnp_TxnRef, string vnp_SecureHash)
+        public async Task<IActionResult> CallbackVnPayAsync()
         {
-            Return<bool> result = await _vnpayService.CallbackVnPayIPNUrl(vnp_TmnCode, vnp_Amount, vnp_BankCode, vnp_OrderInfo, vnp_TransactionNo, vnp_ResponseCode, vnp_TransactionStatus, vnp_TxnRef, vnp_SecureHash);
+            var queryStringParameters = HttpContext.Request.Query;
+            Return<bool> result = await _vnpayService.CallbackVnPayIPNUrl(queryStringParameters);
             if(!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
