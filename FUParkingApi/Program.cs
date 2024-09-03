@@ -1,4 +1,6 @@
 using Coravel;
+using FirebaseAdmin;
+using FirebaseService;
 using FUParkingModel.DatabaseContext;
 using FUParkingModel.MailObject;
 using FUParkingRepository;
@@ -9,6 +11,7 @@ using FUParkingService.Cloudflare;
 using FUParkingService.Interface;
 using FUParkingService.MailService;
 using FUParkingService.VnPayService;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -60,6 +63,7 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IZaloService, ZaloService>();
 builder.Services.AddTransient<IVnPayService, VnPayService>();
+builder.Services.AddScoped<IFirebaseService, FirebaseService.FirebaseService>();
 #endregion
 
 #region MailService
@@ -146,6 +150,13 @@ builder.Services.AddControllers()
             };
         }
     );
+#endregion
+
+#region FCM
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("FirebaseConfig/firebase-adminsdk.json")
+});
 #endregion
 
 var app = builder.Build();
