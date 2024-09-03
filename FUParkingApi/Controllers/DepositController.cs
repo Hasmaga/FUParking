@@ -40,7 +40,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpPost("vnpay/{packageId}")]
-        public async Task<IActionResult> CustomerBuyPackageViaVnPayAsync([FromRoute] Guid packageId)
+        public async Task<IActionResult> CustomerBuyPackageViaVnPayAsync([FromRoute] Guid packageId, [FromQuery] string vnp_BankCode)
         {
             var ipAddress = HttpContext.Connection.RemoteIpAddress;
             if (ipAddress == null)
@@ -49,7 +49,7 @@ namespace FUParkingApi.Controllers
                 return BadRequest("IP address is required.");
             }
 
-            var result = await _vnpayService.CustomerCreateRequestBuyPackageByVnPayAsync(packageId, ipAddress);
+            var result = await _vnpayService.CustomerCreateRequestBuyPackageByVnPayAsync(packageId, vnp_BankCode, ipAddress);
             if (!result.Message.Equals(SuccessfullyEnumServer.SUCCESSFULLY))
             {
                 if (result.InternalErrorMessage is not null)
