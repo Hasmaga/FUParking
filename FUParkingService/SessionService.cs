@@ -66,24 +66,14 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
                 if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
-                if (!string.IsNullOrEmpty(card.Data.PlateNumber))
-                {
-                    if (!card.Data.PlateNumber.Equals(req.PlateNumber))
-                    {
-                        return new Return<dynamic> { Message = ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH };
-                    }
-                }
+                if (!card.Data.Status.Equals(CardStatusEnum.MISSING))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_MISSING };                
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
-                if (isSessionClosed.Data != null && isSessionClosed.Data.GateOutId == null)
-                {
-                    // Close this session
-                    isSessionClosed.Data.Status = SessionEnum.CANCELLED;
-                    isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
-                    isSessionClosed.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                }
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };      
+                if (isSessionClosed.Data != null && isSessionClosed.Data.Status.Equals(SessionEnum.PARKED))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_EXIST };
                 // Check this plate number is in another session
                 var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!sessionPlate.IsSuccess)
@@ -210,7 +200,7 @@ namespace FUParkingService
                 };
                 var imageBodyUrl = await _minioService.UploadObjectAsync(uploadImageBody);
                 if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };           
 
                 // Create session
                 var newSession = new Session
@@ -232,7 +222,7 @@ namespace FUParkingService
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };                
             }
             catch (Exception ex)
             {
@@ -262,14 +252,9 @@ namespace FUParkingService
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
-                if (isSessionClosed.Data != null && isSessionClosed.Data.GateOutId == null)
-                {
-                    // Close this session
-                    isSessionClosed.Data.Status = SessionEnum.CANCELLED;
-                    isSessionClosed.Data.LastModifyById = checkAuth.Data.Id;
-                    isSessionClosed.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                }
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };  
+                if (isSessionClosed.Data != null && isSessionClosed.Data.Status.Equals(SessionEnum.PARKED))
+                    return new Return<bool> { Message = ErrorEnumApplication.CARD_IS_EXIST };
                 // Check this plate number is in another session
                 var sessionPlate = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!sessionPlate.IsSuccess)
@@ -604,6 +589,24 @@ namespace FUParkingService
                 
                 if (sessionCard.Data.CustomerId is not null) 
                 {
+                    if (sessionCard.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE))
+                    {
+                        sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                        sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                        sessionCard.Data.TimeOut = req.TimeOut;
+                        sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                        sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                        sessionCard.Data.Status = SessionEnum.CLOSED;
+                        var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                        if (!updateSession.IsSuccess)
+                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateSession.InternalErrorMessage };
+                        scope.Complete();
+                        return new Return<dynamic>
+                        {
+                            IsSuccess = true,
+                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                        };
+                    }
                     // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
@@ -2706,7 +2709,40 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
                     };
-                }    
+                }
+
+                // Check card in system                
+                var card = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
+                if (!card.IsSuccess)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        InternalErrorMessage = card.InternalErrorMessage,
+                        Message = card.Message
+                    };
+                }
+                if (card.Data == null)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.CARD_NOT_EXIST
+                    };
+                }
+                if (card.Data.Status.Equals(CardStatusEnum.INACTIVE))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.CARD_IS_INACTIVE
+                    };
+                }
+                if (card.Data.Status.Equals(CardStatusEnum.MISSING))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.CARD_IS_MISSING
+                    };
+                }
+                
 
                 // Check card previour sessoion
                 var checkCardPreviousSession = await _sessionRepository.GetNewestSessionByCardNumberAsync(req.CardNumber);
@@ -2722,6 +2758,7 @@ namespace FUParkingService
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {
+                        IsSuccess = true,
                         Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                         Data = new GetCustomerTypeByPlateNumberResDto
                         {
@@ -2743,6 +2780,38 @@ namespace FUParkingService
                         },
                     };
                 }
+
+                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                if (!vehicle.IsSuccess)
+                    return new Return<GetCustomerTypeByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+                if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.REJECTED))
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.GUEST
+                        },
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        IsSuccess = true
+                    };
+                if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
+                    // show information vehicle 
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        IsSuccess = true,
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            InformationVehicle = new GetVehicleInformationByStaffResDto
+                            {
+                                CreateDate = vehicle.Data.CreatedDate,
+                                PlateImage = vehicle.Data.PlateImage ?? "",
+                                PlateNumber = vehicle.Data.PlateNumber,
+                                StatusVehicle = vehicle.Data.StatusVehicle,
+                                VehicleType = vehicle.Data.VehicleTypeId,
+                            }
+                        }
+                    };
 
                 // Check plate number previous session
                 var checkPlateNumberPreviousSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
@@ -2778,38 +2847,7 @@ namespace FUParkingService
                             }
                         },
                     };
-                }
-                
-                // Get card
-                var card = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
-                if (!card.IsSuccess)
-                {
-                    return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {
-                        InternalErrorMessage = card.InternalErrorMessage,
-                        Message = card.Message
-                    };
-                }
-
-                // Check card have plate number
-                if (card.Data?.PlateNumber is not null && card.Data.PlateNumber.Equals(req.PlateNumber))
-                {
-                    return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {
-                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
-                        Data = new GetCustomerTypeByPlateNumberResDto
-                        {
-                            CustomerType = CustomerTypeEnum.FREE
-                        },
-                        IsSuccess = true
-                    };
-                } else if (card.Data?.PlateNumber is not null && !card.Data.PlateNumber.Equals(req.PlateNumber))
-                {
-                    return new Return<GetCustomerTypeByPlateNumberResDto>
-                    {
-                        Message = ErrorEnumApplication.PLATE_NUMBER_NOT_MATCH
-                    };
-                }
+                }                    
 
                 // Get Customer Type By Plate Number
                 var result = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);

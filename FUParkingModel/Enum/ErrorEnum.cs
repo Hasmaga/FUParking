@@ -73,6 +73,10 @@
         public const string PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION = "Plate number is belong to anther session";
         public const string THIS_PLATE_NUMBER_IS_NOT_REGISTERED = "This plate number is not registered";
         public const string TIME_OUT_IS_MUST_BE_GREATER_TIME_IN = "Time out is must be greater than time in";
+        public const string VEHICLE_REJECTED = "This vehicle is rejected";
+        public const string MUST_HAVE_VEHICLE_TYPE = "Must have vehicle type";
+        public const string PLATE_NUMBER_INVALID = "Plate number is invalid";
+        public const string CARD_IS_MISSING = "Card is missing";
     }
 
     public class MinioErrorServerDefineEnum
