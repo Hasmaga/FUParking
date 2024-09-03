@@ -1257,6 +1257,8 @@ namespace FUParkingService
                         PaymentMethod = item.PaymentMethod?.Name,
                         ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
                         IsFeedback = item.Feedbacks.Count > 0,
+                        FeedbackTitle = item.Feedbacks.FirstOrDefault().Title,
+                        FeedbackDescription = item.Feedbacks.FirstOrDefault().Description,
                         MoneyEstimated = moneyEstimatedNeedToPay == 0 ? null : moneyEstimatedNeedToPay
                     });
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
