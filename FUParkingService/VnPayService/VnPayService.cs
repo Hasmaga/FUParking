@@ -44,7 +44,7 @@ namespace FUParkingService.VnPayService
             _walletRepository = walletRepository;
         }
 
-        public async Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, IPAddress ipAddress)
+        public async Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, string vnp_BankCode, IPAddress ipAddress)
         {
             var now = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
@@ -97,6 +97,7 @@ namespace FUParkingService.VnPayService
                 vnpay.AddRequestData("vnp_Version", VnPayLibrary.VERSION);
                 vnpay.AddRequestData("vnp_Command", "pay");
                 vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode ?? "");
+                vnpay.AddRequestData("vnp_BankCode", vnp_BankCode);
                 vnpay.AddRequestData("vnp_Amount", (package.Data.Price * 100).ToString());
                 vnpay.AddRequestData("vnp_CreateDate", now.ToString("yyyyMMddHHmmss"));
                 vnpay.AddRequestData("vnp_CurrCode", "VND");
