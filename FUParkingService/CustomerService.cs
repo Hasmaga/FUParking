@@ -394,38 +394,28 @@ namespace FUParkingService
                     };
                 }
 
-                if (req.PlateNumber != null)
+                foreach (var vehicle in req.Vehicles ?? [])
                 {
-                    req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
-                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
-                    if (!regex.IsMatch(req.PlateNumber))
-                    {
-                        return new Return<dynamic>
-                        {
-                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
-                        };
-                    }
-
                     // Check plate number is exist
-                    var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                    var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(vehicle.PlateNumber);
                     if (isPlateNumberExist.Data != null && isPlateNumberExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
+                        scope.Dispose();
                         return new Return<dynamic>
                         {
                             Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
                         };
                     }
 
-                    var vehicle = new Vehicle
+                    var newVehicle = new Vehicle
                     {
-                        PlateNumber = req.PlateNumber,
+                        PlateNumber = vehicle.PlateNumber,
+                        VehicleTypeId = vehicle.VehicleTypeId,
                         CustomerId = customer.Id,
                         StatusVehicle = StatusVehicleEnum.ACTIVE,
-                        VehicleTypeId = req.VehicleTypeId ?? Guid.Empty,
-                        LastModifyById = checkAuth.Data.Id,                        
                     };
 
-                    var vehicleResult = await _vehicleRepository.CreateVehicleAsync(vehicle);
+                    var vehicleResult = await _vehicleRepository.CreateVehicleAsync(newVehicle);
                     if (!vehicleResult.IsSuccess)
                     {
                         scope.Dispose();
@@ -436,54 +426,7 @@ namespace FUParkingService
                         };
                     }
                 }
-
-                if (req.CardNumber != null)
-                {
-                    var card = new Card
-                    {
-                        CardNumber = req.CardNumber,
-                        PlateNumber = req.PlateNumber,
-                    };
-
-                    var cardResult = await _cardRepository.CreateCardAsync(card);
-                    if (!cardResult.IsSuccess)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = cardResult.InternalErrorMessage,
-                            Message = cardResult.Message
-                        };
-                    }
-                }
-                else if (req.CardId != null)
-                {
-                    var card = await _cardRepository.GetCardByIdAsync(req.CardId.Value);
-                    if (card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = card.InternalErrorMessage,
-                            Message = card.Message
-                        };
-                    }
-
-                    card.Data.PlateNumber = req.PlateNumber;
-                    card.Data.LastModifyById = checkAuth.Data.Id;
-                    card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-
-                    var cardResult = await _cardRepository.UpdateCardAsync(card.Data);
-                    if (cardResult.Data == null || !cardResult.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = cardResult.InternalErrorMessage,
-                            Message = cardResult.Message
-                        };
-                    }
-                }
+                
                 scope.Complete();
                 return new Return<dynamic>
                 {
