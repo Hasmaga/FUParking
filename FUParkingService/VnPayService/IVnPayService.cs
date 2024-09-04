@@ -11,7 +11,7 @@ namespace FUParkingService.VnPayService
 {
     public interface IVnPayService
     {
-        Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, IPAddress ipAddress);
+        Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, string vnp_BankCode, IPAddress ipAddress);
         Task<Return<bool>> CallbackVnPayIPNUrl(IQueryCollection queryStringParameters);
     }
 }
