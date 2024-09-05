@@ -13,7 +13,7 @@ namespace FUParkingApi.Controllers
     [Route("api/mail")]
     public class MailController : Controller
     {
-        private IMailService _mailService;
+        private readonly IMailService _mailService;
 
         public MailController(IMailService mailService)
         {
@@ -27,10 +27,10 @@ namespace FUParkingApi.Controllers
             {
                 MailRequest mailRequest = new()
                 {
-                    toEmail = "phucbhse160537@fpt.edu.vn",
-                    toUsername = "Phuc Bui",
-                    subject = "Test mail",
-                    body = "Hello! Welcome back,"
+                    ToEmail = "phucbhse160537@fpt.edu.vn",
+                    ToUsername = "Phuc Bui",
+                    Subject = "Test mail",
+                    Body = "Hello! Welcome back,"
                 };
 
                 await _mailService.SendEmailAsync(mailRequest);

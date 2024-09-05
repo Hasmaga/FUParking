@@ -102,59 +102,10 @@ namespace FUParkingService
                 // Check plateNumber is belong to any customer
                 var customer = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
                 if (!customer.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
-                if (string.IsNullOrEmpty(card.Data.PlateNumber))
-                {
-                    if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
-                        return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
-                }
-                else if (!string.IsNullOrEmpty(card.Data.PlateNumber))
-                {
-                    var objNameNonPaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_PLate_In" + Path.GetExtension(req.ImageIn.FileName);
-                    var objBodyNameNonPaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_IN" + Path.GetExtension(req.ImageBodyIn.FileName);
-
-                    // Create new UploadObjectReqDto                
-                    UploadObjectReqDto uploadObjectNonPaidReqDto = new()
-                    {
-                        BucketName = BucketMinioEnum.BUCKET_PARKiNG,
-                        ObjFile = req.ImageIn,
-                        ObjName = objNameNonPaid
-                    };
-                    // Upload image to Minio server and get url image
-                    var imageInNonPaidUrl = await _minioService.UploadObjectAsync(uploadObjectNonPaidReqDto);
-                    if (imageInNonPaidUrl.IsSuccess == false || imageInNonPaidUrl.Data == null)
-                        return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
-
-                    UploadObjectReqDto uploadImageNonPaidBody = new()
-                    {
-                        BucketName = BucketMinioEnum.BUCKET_IMAGE_BODY,
-                        ObjFile = req.ImageBodyIn,
-                        ObjName = objBodyNameNonPaid
-                    };
-                    var imageNonPaidBodyUrl = await _minioService.UploadObjectAsync(uploadImageNonPaidBody);
-                    if (imageNonPaidBodyUrl.IsSuccess == false || imageNonPaidBodyUrl.Data == null)
-                        return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
-
-                    // Create session
-                    var newSessionNonPaid = new Session
-                    {
-                        CardId = card.Data.Id,
-                        Block = parkingArea.Data.Block,
-                        PlateNumber = req.PlateNumber,
-                        GateInId = req.GateInId,
-                        ImageInUrl = imageInNonPaidUrl.Data.ObjUrl,
-                        ImageInBodyUrl = imageNonPaidBodyUrl.Data.ObjUrl,
-                        TimeIn = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")),
-                        Mode = parkingArea.Data.Mode,
-                        Status = SessionEnum.PARKED,
-                        CreatedById = checkAuth.Data.Id,
-                    };
-                    // Create session
-                    var newsessionNonPaid = await _sessionRepository.CreateSessionAsync(newSessionNonPaid);
-                    if (!newsessionNonPaid.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                    return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
-                }
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };               
+                
+                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };               
                 // Check vehicle type of plate number
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
                 if (!vehicle.IsSuccess)
@@ -365,7 +316,7 @@ namespace FUParkingService
                 // Check time out 
                 if (req.TimeOut < sessionCard.Data.TimeIn)
                     return new Return<dynamic> { Message = ErrorEnumApplication.INVALID_INPUT };
-                if (!string.IsNullOrEmpty(sessionCard.Data.Card?.PlateNumber) && sessionCard.Data.Customer?.CustomerType is not null && sessionCard.Data.Customer.CustomerType.Name.Equals(CustomerTypeEnum.FREE))
+                if (sessionCard.Data.Customer?.CustomerType is not null && sessionCard.Data.Customer.CustomerType.Name.Equals(CustomerTypeEnum.FREE))
                 {
                     var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
                     var objNameBodyNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Body_Out" + Path.GetExtension(req.ImageBody.FileName);
@@ -2770,8 +2721,7 @@ namespace FUParkingService
                             PreviousSessionInfo = new PreviousSessionInfo
                             {
                                 CustomerEmail = checkCardPreviousSession.Data.Customer?.Email ?? "",
-                                CustomerType = checkCardPreviousSession.Data.Customer?.CustomerType?.Name ??
-                                                (checkCardPreviousSession.Data.Card?.PlateNumber != null ? "FREE" : "Guest"),
+                                CustomerType = checkCardPreviousSession.Data.Customer?.CustomerType?.Name ?? "GUEST",
                                 GateIn = checkCardPreviousSession.Data.GateIn?.Name ?? "",
                                 ImageInUrl = checkCardPreviousSession.Data.ImageInUrl,
                                 TimeIn = checkCardPreviousSession.Data.TimeIn,
@@ -2838,8 +2788,7 @@ namespace FUParkingService
                             PreviousSessionInfo = new PreviousSessionInfo
                             {
                                 CustomerEmail = checkPlateNumberPreviousSession.Data.Customer?.Email ?? "",
-                                CustomerType = checkPlateNumberPreviousSession.Data.Customer?.CustomerType?.Name ??
-                                                (checkPlateNumberPreviousSession.Data.Card?.PlateNumber != null ? "FREE" : "Guest"),
+                                CustomerType = checkPlateNumberPreviousSession.Data.Customer?.CustomerType?.Name ?? "GUEST",
                                 GateIn = checkPlateNumberPreviousSession.Data.GateIn?.Name ?? "",
                                 ImageInUrl = checkPlateNumberPreviousSession.Data.ImageInUrl,
                                 TimeIn = checkPlateNumberPreviousSession.Data.TimeIn,

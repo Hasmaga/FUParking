@@ -23,13 +23,17 @@ namespace FUParkingService.MailService
 
         public async Task SendEmailAsync(MailRequest mailRequest)
         {
-            var email = new MimeMessage();
-            email.Sender = new MailboxAddress(mailSetting.DisplayName, mailSetting.Email);
-            email.To.Add(MailboxAddress.Parse(mailRequest.toEmail));
-            email.Subject = mailRequest.subject;
-            
-            var builder = new BodyBuilder();
-            builder.HtmlBody = emailTemplate(mailRequest.toUsername, mailRequest.body);
+            var email = new MimeMessage
+            {
+                Sender = new MailboxAddress(mailSetting.DisplayName, mailSetting.Email)
+            };
+            email.To.Add(MailboxAddress.Parse(mailRequest.ToEmail));
+            email.Subject = mailRequest.Subject;
+
+            var builder = new BodyBuilder
+            {
+                HtmlBody = EmailTemplate(mailRequest.ToUsername, mailRequest.Body)
+            };
             email.Body = builder.ToMessageBody();
 
             using var smtp = new MailKit.Net.Smtp.SmtpClient();
@@ -40,7 +44,7 @@ namespace FUParkingService.MailService
         }
 
         #region Private Methods
-        private string emailTemplate(string username, string body)
+        private static string EmailTemplate(string username, string body)
         {
             return $@"
                 <!DOCTYPE html>

@@ -17,7 +17,7 @@ namespace FUParkingModel.RequestObject.Common
         [FromQuery]
         public string? Attribute { get; set; }
 
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        public IEnumerable<ValidationResult> Validate(ValidationContext _)
         {
             if (string.IsNullOrWhiteSpace(SearchInput) && string.IsNullOrEmpty(Attribute))
             {

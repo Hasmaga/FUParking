@@ -33,7 +33,7 @@ namespace FUParkingModel.RequestObject
             {
                 if (ApplyFromDate > ApplyToDate)
                 {
-                    yield return new ValidationResult("ApplyFromDate must be less than ApplyToDate", new[] { nameof(ApplyFromDate), nameof(ApplyToDate) });
+                    yield return new ValidationResult("ApplyFromDate must be less than ApplyToDate", [nameof(ApplyFromDate), nameof(ApplyToDate)]);
                 }
             }
         }

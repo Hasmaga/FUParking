@@ -8,9 +8,9 @@ namespace FUParkingService.MailObject
 {
     public class MailRequest
     {
-        public required string toEmail { get; set; }
-        public required string toUsername { get; set; }
-        public required string subject { get; set; }
-        public required string body { get; set; }
+        public required string ToEmail { get; set; }
+        public required string ToUsername { get; set; }
+        public required string Subject { get; set; }
+        public required string Body { get; set; }
     }
 }

@@ -152,13 +152,15 @@ namespace FUParkingService.VnPayService
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                VnPayLibrary vnpay = new VnPayLibrary();
+                VnPayLibrary vnpay = new();
                 foreach (var key in queryStringParameters.Keys)
                 {
                     var value = queryStringParameters[key];
                     if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_") && !string.IsNullOrEmpty(value))
                     {
+#pragma warning disable CS8604 // Possible null reference argument.
                         vnpay.AddResponseData(key, value);
+#pragma warning restore CS8604 // Possible null reference argument.
                     }
                 }
 

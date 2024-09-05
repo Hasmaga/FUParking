@@ -12,8 +12,7 @@ namespace FUParkingRepository.Interface
         Task<Return<Card>> GetCardByIdAsync(Guid cardId);
         Task<Return<IEnumerable<GetCardResDto>>> GetAllCardsAsync(GetCardsWithFillerReqDto req);
         Task<Return<Card>> GetCardByCardNumberAsync(string cardNumber);
-        Task<Return<Card>> UpdateCardAsync(Card card);
-        Task<Return<Card>> GetCardByPlateNumberAsync(string plateNumber);
+        Task<Return<Card>> UpdateCardAsync(Card card);        
         Task<Return<StatisticCardResDto>> GetStatisticCardAsync();
         Task<Return<IEnumerable<GetCardOptionsResDto>>> GetCardOptionAsync();
     }

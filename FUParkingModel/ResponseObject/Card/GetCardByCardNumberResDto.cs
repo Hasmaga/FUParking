@@ -2,8 +2,7 @@
 {
     public class GetCardByCardNumberResDto
     {
-        public required string CardNumber { get; set; }
-        public string? PlateNumber { get; set; }
+        public required string CardNumber { get; set; }       
         public required string Status { get; set; }
         public Guid? SessionId { get; set; }
         public string? SessionPlateNumber { get; set; }
@@ -12,8 +11,8 @@
         public string? SessionGateIn { get; set; }
         public string? SessionCustomerName { get; set; }
         public string? SessionCustomerEmail { get; set; }
-        public string? imageInUrl { get; set; }
-        public string? imageInBodyUrl { get; set; }
-        public string? sessionStatus { get; set; } 
+        public string? ImageInUrl { get; set; }
+        public string? ImageInBodyUrl { get; set; }
+        public string? SessionStatus { get; set; } 
     }
 }

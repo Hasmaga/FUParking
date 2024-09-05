@@ -17,15 +17,13 @@ namespace FUParkingService
     {
         private readonly ICustomerRepository _customerRepository;        
         private readonly IHelpperService _helpperService;
-        private readonly IVehicleRepository _vehicleRepository;
-        private readonly ICardRepository _cardRepository;
+        private readonly IVehicleRepository _vehicleRepository;        
 
-        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository, ICardRepository cardRepository)
+        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository)
         {
             _customerRepository = customerRepository;
             _helpperService = helpperService;
-            _vehicleRepository = vehicleRepository;
-            _cardRepository = cardRepository;
+            _vehicleRepository = vehicleRepository;            
         }
 
         public async Task<Return<dynamic>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)
@@ -413,6 +411,7 @@ namespace FUParkingService
                         VehicleTypeId = vehicle.VehicleTypeId,
                         CustomerId = customer.Id,
                         StatusVehicle = StatusVehicleEnum.ACTIVE,
+                        StaffId = checkAuth.Data.Id
                     };
 
                     var vehicleResult = await _vehicleRepository.CreateVehicleAsync(newVehicle);
@@ -470,7 +469,9 @@ namespace FUParkingService
                 }
                 // Check Plate Number is valid
                 PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
                 Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
                 if (!regex.IsMatch(PlateNumber))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>

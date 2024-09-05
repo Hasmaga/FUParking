@@ -55,8 +55,7 @@ namespace FUParkingRepository
                     .Select(x => new GetCardResDto
                     {
                         Id = x.Id,
-                        CardNumber = x.CardNumber,
-                        PlateNumber = x.PlateNumber,
+                        CardNumber = x.CardNumber,                        
                         CreatedDate = x.CreatedDate,
                         Status = x.Status,
                         IsInUse = x.Sessions
@@ -87,10 +86,7 @@ namespace FUParkingRepository
                     {
                         case "cardnumber":
                             query = query.Where(x => x.CardNumber.Contains(req.SearchInput));
-                            break;
-                        case "platenumber":
-                            query = query.Where(x => (x.PlateNumber ?? "").Contains(req.SearchInput));
-                            break;                       
+                            break;                                            
                         case "status":
                             query = query.Where(x => x.Status.Equals(req.SearchInput));
                             break;
@@ -146,30 +142,6 @@ namespace FUParkingRepository
             try
             {
                 var result = await _db.Cards.Where(x => x.DeletedDate == null).FirstOrDefaultAsync(x => x.Id == cardId);
-                return new Return<Card>
-                {
-                    Data = result,
-                    IsSuccess = true,
-                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
-                };
-            }
-            catch (Exception e)
-            {
-                return new Return<Card>
-                {
-                    InternalErrorMessage = e,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                };
-            }
-        }
-
-        public async Task<Return<Card>> GetCardByPlateNumberAsync(string plateNumber)
-        {
-            try
-            {
-                var result = await _db.Cards
-                    .Where(x => x.DeletedDate == null)
-                    .FirstOrDefaultAsync(x => x.PlateNumber == plateNumber);
                 return new Return<Card>
                 {
                     Data = result,

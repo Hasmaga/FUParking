@@ -19,13 +19,15 @@ namespace FUParkingService
         private readonly IHelpperService _helpperService;
         private readonly ISessionRepository _sessionRepository;
         private readonly IMinioService _minioService;
+        private readonly ICustomerRepository _customerRepository;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
             _minioService = minioService;
+            _customerRepository = customerRepository;
         }
 
         public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
@@ -995,6 +997,85 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<IEnumerable<GetVehicleForUserResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> CreateListVehicleForCustomerByUserAsync(CreateListVehicleForCustomerByUserReqDto req)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var customer = await _customerRepository.GetCustomerByIdAsync(req.CustomerId);
+                if (!customer.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
+                if (customer.Data is null)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
+
+                foreach (var item in req.Vehicles)
+                {
+                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(item.VehicleTypeId);
+                    if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                        };
+                    }
+                    // Check plate number exists
+                    var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(item.PlateNumber);
+                    if (!vehicle.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = vehicle.InternalErrorMessage,
+                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                        };
+                    }
+                    var newVehicle = new Vehicle
+                    {
+                        PlateNumber = item.PlateNumber,
+                        VehicleTypeId = item.VehicleTypeId,
+                        CustomerId = req.CustomerId,                        
+                        StatusVehicle = StatusVehicleEnum.ACTIVE,
+                        StaffId = checkAuth.Data.Id,
+                    };
+                    var result = await _vehicleRepository.CreateVehicleAsync(newVehicle);
+                    if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || result.Data == null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = result.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

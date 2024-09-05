@@ -13,15 +13,13 @@ namespace FUParkingService
     {
         private readonly ICardRepository _cardRepository;
         private readonly IHelpperService _helpperService;
-        private readonly ISessionRepository _sessionRepository;
-        private readonly IVehicleRepository _vehicleRepository;
+        private readonly ISessionRepository _sessionRepository;        
 
-        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IVehicleRepository vehicleRepository)
+        public CardService(ICardRepository cardRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
         {
             _cardRepository = cardRepository;
             _helpperService = helpperService;
-            _sessionRepository = sessionRepository;
-            _vehicleRepository = vehicleRepository;
+            _sessionRepository = sessionRepository;            
         }
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
@@ -45,33 +43,10 @@ namespace FUParkingService
                         InternalErrorMessage = isExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.CARD_IS_EXIST
                     };
-                }
-                if (!string.IsNullOrEmpty(req.PlateNumber))
-                {
-                    var isExistPlateNumber = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
-                    if (!isExistPlateNumber.IsSuccess)
-                    {
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = isExistPlateNumber.InternalErrorMessage,
-                            Message = ErrorEnumApplication.SERVER_ERROR
-                        };
-                    }                    
-                    // Check PlateNumber is in anthor card
-                    var isExistPlateNumberInCard = await _cardRepository.GetCardByPlateNumberAsync(req.PlateNumber);
-                    if (!isExistPlateNumberInCard.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
-                    {
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = isExistPlateNumberInCard.InternalErrorMessage,
-                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD
-                        };
-                    }
-                }
+                }               
                 
                 Card newCard = new()
-                {
-                    PlateNumber = string.IsNullOrEmpty(req.PlateNumber) ? null : req.PlateNumber?.ToUpper(),
+                {                    
                     CardNumber = req.CardNumber,
                     CreatedById = checkAuth.Data.Id,
                     Status = StatusCustomerEnum.ACTIVE
@@ -246,18 +221,7 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.CARD_IN_USE
                         };
                     }
-                }
-                // Check plate number is exist in other card
-                var isExist = await _cardRepository.GetCardByPlateNumberAsync(PlateNumber);
-                if (!isExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = isExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST_IN_OTHER_CARD
-                    };
-                }
-                card.Data.PlateNumber = PlateNumber;
+                }                
                 card.Data.LastModifyById = checkAuth.Data.Id;
                 card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var res = await _cardRepository.UpdateCardAsync(card.Data);
@@ -511,8 +475,7 @@ namespace FUParkingService
                     Data = new GetCardByCardNumberResDto
                     {
                         CardNumber = card.Data.CardNumber,
-                        Status = card.Data.Status,
-                        PlateNumber = card.Data.PlateNumber
+                        Status = card.Data.Status,                        
                     }
                 };
 
@@ -526,9 +489,9 @@ namespace FUParkingService
                     response.Data.SessionPlateNumber = session.Data.PlateNumber;
                     response.Data.SessionTimeIn = session.Data.TimeIn;
                     response.Data.SessionVehicleType = session.Data.VehicleType?.Name;
-                    response.Data.imageInUrl = session.Data.ImageInUrl;
-                    response.Data.imageInBodyUrl = session.Data.ImageInBodyUrl;
-                    response.Data.sessionStatus = session.Data.Status;
+                    response.Data.ImageInUrl = session.Data.ImageInUrl;
+                    response.Data.ImageInBodyUrl = session.Data.ImageInBodyUrl;
+                    response.Data.SessionStatus = session.Data.Status;
                 }
 
                 return response;

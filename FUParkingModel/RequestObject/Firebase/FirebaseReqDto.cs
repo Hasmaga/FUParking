@@ -8,8 +8,8 @@ namespace FUParkingModel.RequestObject.Firebase
 {
     public class FirebaseReqDto
     {
-        public List<string> ClientTokens { get; set; }
-        public string Title { get; set; }
-        public string Body { get; set; }
+        public List<string> ClientTokens { get; set; } = null!;
+        public string Title { get; set; } = null!;
+        public string Body { get; set; } = null!;
     }
 }

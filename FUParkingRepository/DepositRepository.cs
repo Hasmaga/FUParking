@@ -43,7 +43,9 @@ namespace FUParkingRepository
         {
             try
             {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var result = await _db.Deposits.Where(d => d.AppTranId.Equals(appTransId)).FirstOrDefaultAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 return new Return<Deposit>
                 {
                     Data = result,
