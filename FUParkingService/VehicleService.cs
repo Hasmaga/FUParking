@@ -266,7 +266,7 @@ namespace FUParkingService
                         Id = x.Id,
                         PlateNumber = x.PlateNumber,
                         VehicleType = x.VehicleType?.Name ?? "",
-                        PlateImage = x.PlateImage,
+                        PlateImage = x.PlateImage ?? "",
                         StatusVehicle = x.StatusVehicle,
                         CreatedDate = x.CreatedDate,
                         Email = x.Customer?.Email ?? "",
@@ -316,7 +316,7 @@ namespace FUParkingService
                     Id = x.Id,
                     PlateNumber = x.PlateNumber,
                     VehicleTypeName = x.VehicleType?.Name ?? "",
-                    PlateImage = x.PlateImage,
+                    PlateImage = x.PlateImage ?? "",
                     StatusVehicle = x.StatusVehicle,
                     CreateDate = x.CreatedDate
                 });
@@ -525,7 +525,7 @@ namespace FUParkingService
                         VehicleId = result.Data.Id,
                         PlateNumber = result.Data.PlateNumber,
                         VehicleTypeName = result.Data.VehicleType?.Name ?? "",
-                        ImagePlateNumber = result.Data.PlateImage
+                        ImagePlateNumber = result.Data.PlateImage ?? ""
                     },
                     Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
                 };
@@ -828,7 +828,7 @@ namespace FUParkingService
                         Id = vehicle.Data.Id,
                         PlateNumber = vehicle.Data.PlateNumber,
                         VehicleTypeName = vehicle.Data.VehicleType?.Name ?? "",
-                        PlateImage = vehicle.Data.PlateImage,
+                        PlateImage = vehicle.Data.PlateImage ?? "",
                         StatusVehicle = vehicle.Data.StatusVehicle,
                         CreateDate = vehicle.Data.CreatedDate
                     },

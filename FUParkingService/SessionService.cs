@@ -2326,6 +2326,7 @@ namespace FUParkingService
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     Data = new GetSessionByCardNumberResDto
                     {
+                        Id = result.Data.Id,
                         CardId = result.Data.CardId,
                         GateIn = result.Data.GateIn?.Name ?? "",
                         GateOut = result.Data.GateOut?.Name ?? "",
