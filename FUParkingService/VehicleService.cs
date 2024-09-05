@@ -948,5 +948,58 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetVehicleForUserResDto>>> GetListVehicleByCustomerIdForUserAsync(Guid customerId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetVehicleForUserResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(customerId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetVehicleForUserResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetVehicleForUserResDto>>
+                {
+                    Data = result.Data?.Select(x => new GetVehicleForUserResDto
+                    {
+                        Id = x.Id,
+                        PlateNumber = x.PlateNumber,
+                        VehicleType = x.VehicleType?.Name ?? "",
+                        PlateImage = x.PlateImage ?? "",
+                        StatusVehicle = x.StatusVehicle,
+                        CreatedDate = x.CreatedDate,
+                        Email = x.Customer?.Email ?? "",
+                        LastModifyBy = x.LastModifyBy?.Email ?? "",
+                        LastModifyDate = x.LastModifyDate,
+                        StaffApproval = x.Staff?.Email ?? ""
+                    }),
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetVehicleForUserResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

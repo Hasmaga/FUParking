@@ -64,10 +64,12 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 if (!card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || card.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_NOT_EXIST };
+                if (card.Data.Status.Equals(CardStatusEnum.MISSING))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_MISSING };
+                if (card.Data.Status.Equals(CardStatusEnum.INACTIVE))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };   
                 if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
-                if (!card.Data.Status.Equals(CardStatusEnum.MISSING))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_MISSING };                
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)

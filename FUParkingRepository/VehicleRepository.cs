@@ -26,7 +26,13 @@ namespace FUParkingRepository
             };
             try
             {
-                IEnumerable<Vehicle> vehicles = await _db.Vehicles.Where(v => v.CustomerId.Equals(customerGuid) && v.DeletedDate == null).Include(v => v.VehicleType).ToListAsync();
+                IEnumerable<Vehicle> vehicles = await _db.Vehicles
+                    .Where(v => v.CustomerId.Equals(customerGuid) && v.DeletedDate == null)
+                    .Include(v => v.VehicleType)
+                    .Include(v => v.Customer)
+                    .Include(v => v.Staff)
+                    .Include(v => v.LastModifyBy)
+                    .ToListAsync();
                 res.Data = vehicles;
                 res.IsSuccess = true;
                 res.TotalRecord = vehicles.Count();

@@ -286,5 +286,20 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpGet("customers/{customerId}")]
+        public async Task<IActionResult> GetVehicleByCustomerId([FromRoute] Guid customerId)
+        {
+            var result = await _vehicleService.GetListVehicleByCustomerIdForUserAsync(customerId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get vehicle by customer id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
