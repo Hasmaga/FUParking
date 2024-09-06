@@ -2270,8 +2270,7 @@ namespace FUParkingService
                     {
                         Id = result.Data.Id,
                         CardId = result.Data.CardId,
-                        GateIn = result.Data.GateIn?.Name ?? "",
-                        GateOut = result.Data.GateOut?.Name ?? "",
+                        GateIn = result.Data.GateIn?.Name ?? "",                        
                         ImageInBodyUrl = result.Data.ImageInBodyUrl,
                         ImageInUrl = result.Data.ImageInUrl,
                         PlateNumber = result.Data.PlateNumber,
