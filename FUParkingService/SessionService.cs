@@ -2709,17 +2709,7 @@ namespace FUParkingService
                         Data = new GetCustomerTypeByPlateNumberResDto
                         {
                             PreviousSessionInfo = new PreviousSessionInfo
-                            {
-                                CustomerEmail = checkCardPreviousSession.Data.Customer?.Email ?? "",
-                                CustomerType = checkCardPreviousSession.Data.Customer?.CustomerType?.Name ?? "GUEST",
-                                GateIn = checkCardPreviousSession.Data.GateIn?.Name ?? "",
-                                ImageInUrl = checkCardPreviousSession.Data.ImageInUrl,
-                                TimeIn = checkCardPreviousSession.Data.TimeIn,
-                                Id = checkCardPreviousSession.Data.Id,
-                                ImageInBodyUrl = checkCardPreviousSession.Data.ImageInBodyUrl,
-                                PlateNumber = checkCardPreviousSession.Data.PlateNumber,
-                                Status = checkCardPreviousSession.Data.Status,
-                                VehicleyType = checkCardPreviousSession.Data.VehicleType?.Name ?? "",
+                            {                                
                                 CardOrPlateNumber = "CARD"
                             }
                         },
@@ -2776,17 +2766,7 @@ namespace FUParkingService
                         Data = new GetCustomerTypeByPlateNumberResDto
                         {
                             PreviousSessionInfo = new PreviousSessionInfo
-                            {
-                                CustomerEmail = checkPlateNumberPreviousSession.Data.Customer?.Email ?? "",
-                                CustomerType = checkPlateNumberPreviousSession.Data.Customer?.CustomerType?.Name ?? "GUEST",
-                                GateIn = checkPlateNumberPreviousSession.Data.GateIn?.Name ?? "",
-                                ImageInUrl = checkPlateNumberPreviousSession.Data.ImageInUrl,
-                                TimeIn = checkPlateNumberPreviousSession.Data.TimeIn,
-                                Id = checkPlateNumberPreviousSession.Data.Id,
-                                ImageInBodyUrl = checkPlateNumberPreviousSession.Data.ImageInBodyUrl,
-                                PlateNumber = checkPlateNumberPreviousSession.Data.PlateNumber,
-                                Status = checkPlateNumberPreviousSession.Data.Status,
-                                VehicleyType = checkPlateNumberPreviousSession.Data.VehicleType?.Name ?? "",
+                            {                                
                                 CardOrPlateNumber = "PLATENUMBER"
                             }
                         },
