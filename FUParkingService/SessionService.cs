@@ -1200,7 +1200,6 @@ namespace FUParkingService
                                 return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                         }
                     }
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     listSessionData.Add(new GetHistorySessionResDto
                     {
                         Id = item.Id,
@@ -1213,12 +1212,11 @@ namespace FUParkingService
                         GateOut = item.GateOut?.Name,
                         PaymentMethod = item.PaymentMethod?.Name,
                         ParkingArea = item.GateIn?.ParkingArea?.Name ?? "",
-                        IsFeedback = item.Feedbacks.Count > 0,
-                        FeedbackTitle = item.Feedbacks.FirstOrDefault().Title,
-                        FeedbackDescription = item.Feedbacks.FirstOrDefault().Description,
+                        IsFeedback = item.Feedbacks?.Count > 0,
+                        FeedbackTitle = item.Feedbacks?.FirstOrDefault()?.Title,
+                        FeedbackDescription = item.Feedbacks?.FirstOrDefault()?.Description,
                         MoneyEstimated = moneyEstimatedNeedToPay == 0 ? null : moneyEstimatedNeedToPay
                     });
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>
                 {

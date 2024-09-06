@@ -315,5 +315,20 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpDelete("{vehicleId}")]
+        public async Task<IActionResult> DeleteVehicleByUserAsync([FromRoute] Guid vehicleId)
+        {
+            var result = await _vehicleService.DeleteVehicleByUserAsync(vehicleId);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at delete vehicle by user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }

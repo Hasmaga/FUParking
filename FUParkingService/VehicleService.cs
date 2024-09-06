@@ -1082,5 +1082,43 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<dynamic>> DeleteVehicleByUserAsync(Guid vehicleId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(vehicleId);
+                if (!vehicle.IsSuccess)
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+                if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
+                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                vehicle.Data.StatusVehicle = StatusVehicleEnum.INACTIVE;
+                vehicle.Data.LastModifyById = checkAuth.Data.Id;
+                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
+                if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }
