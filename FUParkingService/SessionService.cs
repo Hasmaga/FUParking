@@ -2789,6 +2789,7 @@ namespace FUParkingService
                                 CardOrPlateNumber = "PLATENUMBER"
                             }
                         },
+                        IsSuccess = true
                     };
                 }                    
 
