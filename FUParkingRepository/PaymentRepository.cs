@@ -330,8 +330,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.WALLET
-                        && p.CreatedDate <= endDate.GetValueOrDefault()
-                        && p.CreatedDate >= startDate.GetValueOrDefault())
+                        && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
+                        && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
                     .SumAsync(p => p.TotalPrice);
 
                 var totalCashPayment = await _db.Payments
@@ -340,8 +340,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.CASH
-                        && p.CreatedDate <= endDate.GetValueOrDefault()
-                        && p.CreatedDate >= startDate.GetValueOrDefault())
+                        && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
+                        && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
                     .SumAsync(p => p.TotalPrice);
 
                 return new Return<StatisticPaymentTodayResDto>
