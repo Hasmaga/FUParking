@@ -2276,7 +2276,8 @@ namespace FUParkingService
                         PlateNumber = result.Data.PlateNumber,
                         TimeIn = result.Data.TimeIn,
                         VehicleType = result.Data.VehicleType?.Name ?? "",
-                        Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,                        
+                        Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,        
+                        customerType = result.Data.Customer?.CustomerType?.Name ?? "",
                     }
                 };
             }
