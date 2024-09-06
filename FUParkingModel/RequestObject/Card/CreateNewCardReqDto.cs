@@ -5,6 +5,6 @@ namespace FUParkingModel.RequestObject.Card
     public class CreateNewCardReqDto
     {
         [Required(ErrorMessage = "Must have card Number")]
-        public string CardNumber { get; set; } = null!;        
-    }
+        public string[] CardNumbers { get; set; } = null!;
+    }    
 }

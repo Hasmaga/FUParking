@@ -6,6 +6,7 @@ using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -24,6 +25,7 @@ namespace FUParkingService
 
         public async Task<Return<dynamic>> CreateNewCardAsync(CreateNewCardReqDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
@@ -35,31 +37,36 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var isExist = await _cardRepository.GetCardByCardNumberAsync(req.CardNumber);
-                if (!isExist.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                foreach (var item in req.CardNumbers)
                 {
-                    return new Return<dynamic>
+                    var card = await _cardRepository.GetCardByCardNumberAsync(item);
+                    if (!card.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                     {
-                        InternalErrorMessage = isExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.CARD_IS_EXIST
-                    };
-                }               
-                
-                Card newCard = new()
-                {                    
-                    CardNumber = req.CardNumber,
-                    CreatedById = checkAuth.Data.Id,
-                    Status = StatusCustomerEnum.ACTIVE
-                };
-                var res = await _cardRepository.CreateCardAsync(newCard);
-                if (!res.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
-                {
-                    return new Return<dynamic>
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.CARD_IS_EXIST,
+                            InternalErrorMessage = card.InternalErrorMessage
+                        };
+                    }
+                    var newCard = new Card()
                     {
-                        InternalErrorMessage = res.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
+                        CardNumber = item,
+                        CreatedById = checkAuth.Data.Id,
+                        Status = CardStatusEnum.ACTIVE
                     };
+                    var result = await _cardRepository.CreateCardAsync(newCard);
+                    if (!result.IsSuccess)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.SERVER_ERROR,
+                            InternalErrorMessage = result.InternalErrorMessage
+                        };
+                    }
                 }
+                scope.Complete();
                 return new Return<dynamic>
                 {
                     IsSuccess = true,

@@ -10,6 +10,7 @@ using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.AspNetCore.Rewrite;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -2230,11 +2231,9 @@ namespace FUParkingService
                         }
                     default:
                         return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
-                bool? isEnoughToPay;
+                }                
                 // Check if customer is paid
-                if (result.Data.Customer?.CustomerType?.Name.Equals(CustomerTypeEnum.PAID) ?? false && result.Data.CustomerId is not null)
+                if (result.Data.Customer is not null && result.Data.Customer.CustomerType?.Name == (CustomerTypeEnum.PAID))
                 {
                     // Get Customer Wallet Main 
                     var customerWalletMain = await _walletRepository.GetMainWalletByCustomerId(result.Data.CustomerId ?? new Guid());
@@ -2258,18 +2257,10 @@ namespace FUParkingService
                     }
 
                     if (customerWalletMain.Data is not null && customerWalletExtra.Data is not null)
-                    {
-                        isEnoughToPay = (customerWalletMain.Data.Balance + customerWalletExtra.Data.Balance) >= amount;
-                    }
-                    else
-                    {
-                        isEnoughToPay = null;
-                    }
-                }
-                else
-                {
-                    isEnoughToPay = null;
-                }
+                    {                        
+                        amount = (customerWalletMain.Data.Balance + customerWalletExtra.Data.Balance) >= amount ? 0 : amount;
+                    }               
+                }                
 
                 return new Return<GetSessionByCardNumberResDto>
                 {
@@ -2286,8 +2277,7 @@ namespace FUParkingService
                         PlateNumber = result.Data.PlateNumber,
                         TimeIn = result.Data.TimeIn,
                         VehicleType = result.Data.VehicleType?.Name ?? "",
-                        Amount = amount,
-                        IsEnoughToPay = isEnoughToPay
+                        Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,                        
                     }
                 };
             }
