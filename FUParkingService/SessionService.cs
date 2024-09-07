@@ -303,28 +303,6 @@ namespace FUParkingService
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
 
-                //if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
-                //{
-                //    // Notification logic if Firebase token is available
-                //    var firebaseReq = new FirebaseReqDto
-                //    {
-                //        ClientTokens = new List<string> { customer.Data.FCMToken },
-                //        Title = "Vehicle Check-In",
-                //        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data.TimeIn}."
-                //    };
-
-                //    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                //    if (!notificationResult.IsSuccess)
-                //    {
-                //        return new Return<dynamic>
-                //        {
-                //            IsSuccess = false,
-                //            Message = "Check-in successful but failed to send notification.",
-                //            InternalErrorMessage = notificationResult.InternalErrorMessage
-                //        };
-                //    }
-                //}
-
                 return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
@@ -605,6 +583,31 @@ namespace FUParkingService
                         var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                         if (!updateSession.IsSuccess)
                             return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateSession.InternalErrorMessage };
+
+                        // Firebase send notification
+                        if (sessionCard.Data.CustomerId.HasValue)
+                        {
+                            var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                            if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                            {
+                                var firebaseReq = new FirebaseReqDto
+                                {
+                                    ClientTokens = new List<string> { customer.Data.FCMToken },
+                                    Title = "Check-out Successful",
+                                    Body = $"Your vehicle has been checked out successfully."
+                                };
+                                var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                if (!notificationResult.IsSuccess)
+                                {
+                                    return new Return<dynamic>
+                                    {
+                                        IsSuccess = false,
+                                        Message = "Check-out successful but failed to send notification.",
+                                        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                    };
+                                }
+                            }
+                        }
                         scope.Complete();
                         return new Return<dynamic>
                         {
@@ -698,7 +701,37 @@ namespace FUParkingService
                                 scope.Dispose();
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
-                            scope.Complete();
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                            ? paymentMethod.Data.Name
+                                            : "";
+
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Check-out Successful",
+                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            return new Return<dynamic>
+                                            {
+                                                IsSuccess = false,
+                                                Message = "Check-out successful but failed to send notification.",
+                                                InternalErrorMessage = notificationResult.InternalErrorMessage
+                                            };
+                                        }
+                                    }
+                                }
+
+                                scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -761,7 +794,37 @@ namespace FUParkingService
                                 scope.Dispose();
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
-                            scope.Complete();
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                            ? paymentMethod.Data.Name
+                                            : "";
+
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Check-out Successful",
+                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            return new Return<dynamic>
+                                            {
+                                                IsSuccess = false,
+                                                Message = "Check-out successful but failed to send notification.",
+                                                InternalErrorMessage = notificationResult.InternalErrorMessage
+                                            };
+                                        }
+                                    }
+                                }
+
+                                scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -859,7 +922,37 @@ namespace FUParkingService
                                 scope.Dispose();
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
-                            scope.Complete();
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                            ? paymentMethod.Data.Name
+                                            : "";
+
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Check-out Successful",
+                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            return new Return<dynamic>
+                                            {
+                                                IsSuccess = false,
+                                                Message = "Check-out successful but failed to send notification.",
+                                                InternalErrorMessage = notificationResult.InternalErrorMessage
+                                            };
+                                        }
+                                    }
+                                }
+
+                                scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -918,7 +1011,36 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
 
-                            scope.Complete();
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                            ? paymentMethod.Data.Name
+                                            : "";
+
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Check-out Successful",
+                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            return new Return<dynamic>
+                                            {
+                                                IsSuccess = false,
+                                                Message = "Check-out successful but failed to send notification.",
+                                                InternalErrorMessage = notificationResult.InternalErrorMessage
+                                            };
+                                        }
+                                    }
+                                }
+
+                                scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -973,6 +1095,37 @@ namespace FUParkingService
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
+
+                // Firebase send notification
+                if (sessionCard.Data.CustomerId.HasValue)
+                {
+                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                    {
+                        var paymentMethod = await _paymentRepository.GetPaymentMethodByIdAsync(sessionCard.Data.PaymentMethodId ?? Guid.Empty);
+                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                            ? paymentMethod.Data.Name
+                            : "";
+
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            Title = "Check-out Successful",
+                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                        if (!notificationResult.IsSuccess)
+                        {
+                            return new Return<dynamic>
+                            {
+                                IsSuccess = false,
+                                Message = "Check-out successful but failed to send notification.",
+                                InternalErrorMessage = notificationResult.InternalErrorMessage
+                            };
+                        }
+                    }
+                }
+
                 scope.Complete();
                 return new Return<dynamic>
                 {
