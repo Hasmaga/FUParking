@@ -181,6 +181,29 @@ namespace FUParkingService
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+
+                if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                {
+                    // Notification logic if Firebase token is available
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        Title = "Vehicle Check-In",
+                        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data.TimeIn}."
+                    };
+
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                    if (!notificationResult.IsSuccess)
+                    {
+                        return new Return<dynamic>
+                        {
+                            IsSuccess = false,
+                            Message = "Check-in successful but failed to send notification.",
+                            InternalErrorMessage = notificationResult.InternalErrorMessage
+                        };
+                    }
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };                
             }
             catch (Exception ex)
