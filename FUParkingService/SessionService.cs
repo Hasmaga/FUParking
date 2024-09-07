@@ -1633,14 +1633,12 @@ namespace FUParkingService
                     TotalPrice = price,
                     SessionId = session.Data.Id
                 };
-
                 var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
                 if (!createPayment.IsSuccess || createPayment.Data is null)
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createPayment.InternalErrorMessage };
                 }
-
                 // Create transaction
                 FUParkingModel.Object.Transaction transaction = new()
                 {
@@ -1649,31 +1647,28 @@ namespace FUParkingService
                     PaymentId = createPayment.Data.Id,
                     Amount = price
                 };
-
                 var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                 if (!createTransaction.IsSuccess || createTransaction.Data is null)
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createTransaction.InternalErrorMessage };
                 }
-
-                // Update Card to missing 
-                if (session.Data.Card?.Id is not null)
+                // Update Card to missing                
+                var card = await _cardRepository.GetCardByIdAsync(session.Data.CardId);
+                if (!card.IsSuccess || card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    var card = await _cardRepository.GetCardByIdAsync(session.Data.Card.Id);
-                    if (!card.IsSuccess || card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
-                    }
-                    card.Data.Status = CardStatusEnum.MISSING;
-                    var updateCard = await _cardRepository.UpdateCardAsync(card.Data);
-                    if (!updateCard.IsSuccess)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
-                    }
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 }
+                card.Data.Status = CardStatusEnum.MISSING;
+                card.Data.LastModifyById = checkAuth.Data.Id;
+                card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var updateCard = await _cardRepository.UpdateCardAsync(card.Data);
+                if (!updateCard.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
+                }                
                 scope.Complete();
                 return new Return<dynamic>
                 {
