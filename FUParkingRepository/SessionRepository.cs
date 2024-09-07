@@ -609,7 +609,6 @@ namespace FUParkingRepository
                     query = query.Where(p => p.Status.Contains(statusFilter));
                 }
 
-                // Get total record count before pagination
                 int totalRecords = await query.CountAsync();
 
                 var result = await query
