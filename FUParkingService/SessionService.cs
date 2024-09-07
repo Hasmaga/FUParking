@@ -2001,7 +2001,7 @@ namespace FUParkingService
                         Status = fb.Status,
                         Mode = fb.Mode,
                         Block = fb.Block,
-                        VehicleTypeName = fb.VehicleType?.Name ?? "N/A",
+                        VehicleTypeName = fb.VehicleType?.Description ?? "N/A",
                         PaymentMethodName = fb.PaymentMethod?.Name ?? "N/A",
                         CustomerEmail = fb.Customer?.Email ?? "N/A",
                         ImageInBodyUrl = fb.ImageInBodyUrl,
