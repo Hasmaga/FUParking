@@ -562,14 +562,14 @@ namespace FUParkingRepository
             try
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                startDate ??= datetimenow;
-                endDate ??= datetimenow;
+                startDate ??= datetimenow.Date;
+                endDate ??= datetimenow.Date;
 
                 if (startDate > endDate)
                 {
                     (startDate, endDate) = (endDate, startDate);
                 }
-
+                
                 var query = _db.Sessions
                     .Include(t => t.GateIn)
                     .Include(t => t.GateOut)
@@ -578,8 +578,8 @@ namespace FUParkingRepository
                     .Include(t => t.Customer)
                     .Include(t => t.Card)
                     .Where(p => p.DeletedDate == null 
-                        && p.CreatedDate <= endDate.GetValueOrDefault()
-                        && p.CreatedDate >= startDate.GetValueOrDefault())
+                        && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
+                        && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
                     .AsQueryable();
 
                 if(!string.IsNullOrEmpty(plateNum))
@@ -606,7 +606,7 @@ namespace FUParkingRepository
                 {
                     Data = result,
                     TotalRecord = query.Count(),
-                    Message = result.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,
                 };
             }
