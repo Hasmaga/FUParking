@@ -317,25 +317,12 @@ namespace FUParkingRepository
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
-                if (startDate.HasValue && endDate.HasValue)
+                startDate ??= datetimenow;
+                endDate ??= datetimenow;
+
+                if (startDate > endDate)
                 {
-                    if (startDate > endDate)
-                    {
-                        (startDate, endDate) = (endDate, startDate);
-                    }
-                }
-                else if (startDate.HasValue && !endDate.HasValue)
-                {
-                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  //endDate = dd/MM/yyyy 23:59:59.9999999
-                }
-                else if (!startDate.HasValue && endDate.HasValue)
-                {
-                    startDate = endDate.Value.Date;
-                }
-                else
-                {
-                    startDate = datetimenow.Date;
-                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  //endDate = dd/MM/yyyy 23:59:59.9999999
+                    (startDate, endDate) = (endDate, startDate);
                 }
 
                 var totalWalletPayment = await _db.Payments
@@ -344,8 +331,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.WALLET
-                        && p.CreatedDate <= endDate.Value
-                        && p.CreatedDate >= startDate.Value)
+                        && p.CreatedDate <= endDate.GetValueOrDefault()
+                        && p.CreatedDate >= startDate.GetValueOrDefault())
                     .SumAsync(p => p.TotalPrice);
 
                 var totalCashPayment = await _db.Payments
@@ -354,8 +341,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.CASH
-                        && p.CreatedDate <= endDate.Value
-                        && p.CreatedDate >= startDate.Value)
+                        && p.CreatedDate <= endDate.GetValueOrDefault()
+                        && p.CreatedDate >= startDate.GetValueOrDefault())
                     .SumAsync(p => p.TotalPrice);
 
                 return new Return<StatisticPaymentTodayResDto>

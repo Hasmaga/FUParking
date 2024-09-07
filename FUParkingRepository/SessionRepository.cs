@@ -562,14 +562,28 @@ namespace FUParkingRepository
             try
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                startDate ??= datetimenow.Date;
-                endDate ??= datetimenow.Date;
 
-                if (startDate > endDate)
+                if (startDate.HasValue && endDate.HasValue)
                 {
-                    (startDate, endDate) = (endDate, startDate);
+                    if (startDate > endDate)
+                    {
+                        (startDate, endDate) = (endDate, startDate);
+                    }
                 }
-                
+                else if (startDate.HasValue && !endDate.HasValue)
+                {
+                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  // endDate = dd/MM/yyyy 23:59:59.9999999
+                }
+                else if (!startDate.HasValue && endDate.HasValue)
+                {
+                    startDate = endDate.Value.Date;
+                }
+                else
+                {
+                    startDate = datetimenow.Date;
+                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  // endDate = dd/MM/yyyy 23:59:59.9999999
+                }
+
                 var query = _db.Sessions
                     .Include(t => t.GateIn)
                     .Include(t => t.GateOut)
@@ -577,16 +591,16 @@ namespace FUParkingRepository
                     .Include(t => t.VehicleType)
                     .Include(t => t.Customer)
                     .Include(t => t.Card)
-                    .Where(p => p.DeletedDate == null 
-                        && p.CreatedDate.Date <= endDate.GetValueOrDefault().Date
-                        && p.CreatedDate.Date >= startDate.GetValueOrDefault().Date)
+                    .Where(p => p.DeletedDate == null
+                        && p.TimeIn <= endDate.GetValueOrDefault()
+                        && p.TimeIn >= startDate.GetValueOrDefault())
                     .AsQueryable();
 
-                if(!string.IsNullOrEmpty(plateNum))
+                if (!string.IsNullOrEmpty(plateNum))
                 {
                     query = query.Where(p => p.PlateNumber.Contains(plateNum));
                 }
-                if(!string.IsNullOrEmpty(cardNum))
+                if (!string.IsNullOrEmpty(cardNum))
                 {
                     query = query.Where(p => p.Card!.CardNumber.Contains(cardNum));
                 }
@@ -594,6 +608,9 @@ namespace FUParkingRepository
                 {
                     query = query.Where(p => p.Status.Contains(statusFilter));
                 }
+
+                // Get total record count before pagination
+                int totalRecords = await query.CountAsync();
 
                 var result = await query
                     .OrderByDescending(t => t.Status == SessionEnum.PARKED)
@@ -605,8 +622,8 @@ namespace FUParkingRepository
                 return new Return<IEnumerable<Session>>
                 {
                     Data = result,
-                    TotalRecord = query.Count(),
-                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = totalRecords,
+                    Message = result.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,
                 };
             }
