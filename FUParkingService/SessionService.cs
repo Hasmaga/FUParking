@@ -1019,7 +1019,7 @@ namespace FUParkingService
                         Message = listSession.Message
                     };
                 }
-                var listSessionData = new List<GetHistorySessionResDto>();
+                List<GetHistorySessionResDto> listSessionData = new List<GetHistorySessionResDto>();
                 if (listSession.Data == null)
                 {
                     return new Return<IEnumerable<GetHistorySessionResDto>>
