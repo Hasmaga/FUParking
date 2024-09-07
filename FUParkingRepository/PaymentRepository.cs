@@ -317,12 +317,12 @@ namespace FUParkingRepository
             {
                 var datetimenow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
-                startDate ??= datetimenow;
-                endDate ??= datetimenow;
-
-                if (startDate > endDate)
+                if (startDate.HasValue && endDate.HasValue)
                 {
-                    (startDate, endDate) = (endDate, startDate);
+                    if (startDate > endDate)
+                    {
+                        (startDate, endDate) = (endDate, startDate);
+                    }
                 }
 
                 var totalWalletPayment = await _db.Payments
@@ -331,8 +331,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.WALLET
-                        && p.CreatedDate <= endDate.GetValueOrDefault()
-                        && p.CreatedDate >= startDate.GetValueOrDefault())
+                        && p.CreatedDate <= endDate.Value
+                        && p.CreatedDate >= startDate.Value)
                     .SumAsync(p => p.TotalPrice);
 
                 var totalCashPayment = await _db.Payments
@@ -341,8 +341,8 @@ namespace FUParkingRepository
                     .Where(p => p.Session != null
                         && p.Session.GateOutId.Equals(gateId)
                         && p.PaymentMethod!.Name == PaymentMethods.CASH
-                        && p.CreatedDate <= endDate.GetValueOrDefault()
-                        && p.CreatedDate >= startDate.GetValueOrDefault())
+                        && p.CreatedDate <= endDate.Value
+                        && p.CreatedDate >= startDate.Value)
                     .SumAsync(p => p.TotalPrice);
 
                 return new Return<StatisticPaymentTodayResDto>

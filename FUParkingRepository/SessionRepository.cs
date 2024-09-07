@@ -583,7 +583,7 @@ namespace FUParkingRepository
                     startDate = datetimenow.Date;
                     endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  // endDate = dd/MM/yyyy 23:59:59.9999999
                 }
-
+                
                 var query = _db.Sessions
                     .Include(t => t.GateIn)
                     .Include(t => t.GateOut)
