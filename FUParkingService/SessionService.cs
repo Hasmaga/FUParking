@@ -1,8 +1,10 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Customer;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
@@ -30,8 +32,9 @@ namespace FUParkingService
         private readonly ITransactionRepository _transactionRepository;
         private readonly IPriceRepository _priceRepository;
         private readonly IVehicleRepository _vehicleRepository;
+        private readonly IFirebaseService _firebaseService;
 
-        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository)
+        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository, IFirebaseService firebaseService)
         {
             _sessionRepository = sessionRepository;
             _helpperService = helpperService;
@@ -45,6 +48,8 @@ namespace FUParkingService
             _transactionRepository = transactionRepository;
             _priceRepository = priceRepository;
             _vehicleRepository = vehicleRepository;
+            _firebaseService = firebaseService;
+            _firebaseService = firebaseService;
         }
 
         public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req)
@@ -274,6 +279,29 @@ namespace FUParkingService
                 var newsession = await _sessionRepository.CreateSessionAsync(newSession);
                 if (!newsession.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+
+                //if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                //{
+                //    // Notification logic if Firebase token is available
+                //    var firebaseReq = new FirebaseReqDto
+                //    {
+                //        ClientTokens = new List<string> { customer.Data.FCMToken },
+                //        Title = "Vehicle Check-In",
+                //        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data.TimeIn}."
+                //    };
+
+                //    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                //    if (!notificationResult.IsSuccess)
+                //    {
+                //        return new Return<dynamic>
+                //        {
+                //            IsSuccess = false,
+                //            Message = "Check-in successful but failed to send notification.",
+                //            InternalErrorMessage = notificationResult.InternalErrorMessage
+                //        };
+                //    }
+                //}
+
                 return new Return<bool> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
