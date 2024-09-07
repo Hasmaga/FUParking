@@ -324,19 +324,6 @@ namespace FUParkingRepository
                         (startDate, endDate) = (endDate, startDate);
                     }
                 }
-                else if (startDate.HasValue && !endDate.HasValue)
-                {
-                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  //endDate = dd/MM/yyyy 23:59:59.9999999
-                }
-                else if (!startDate.HasValue && endDate.HasValue)
-                {
-                    startDate = endDate.Value.Date;
-                }
-                else
-                {
-                    startDate = datetimenow.Date;
-                    endDate = datetimenow.Date.AddDays(1).AddTicks(-1);  //endDate = dd/MM/yyyy 23:59:59.9999999
-                }
 
                 var totalWalletPayment = await _db.Payments
                     .Include(x => x.PaymentMethod)
