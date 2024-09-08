@@ -1,16 +1,10 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        locales \
-        libicu-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && locale-gen en_US.UTF-8 \
-    && update-locale LANG=en_US.UTF-8
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FUParkingApi/FUParkingApi.csproj", "FUParkingApi/"]

@@ -378,7 +378,7 @@ namespace FUParkingService
                     };
                 }
 
-                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(sessionCard.Data.PlateNumber))
+                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(sessionCard.Data.PlateNumber) && resultSessionPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
                 {
                     return new Return<dynamic>
                     {
@@ -2345,7 +2345,7 @@ namespace FUParkingService
                     };
                 }
 
-                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(result.Data.PlateNumber))
+                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(result.Data.PlateNumber) && resultSessionPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
                 {
                     return new Return<GetSessionByCardNumberResDto>
                     {
