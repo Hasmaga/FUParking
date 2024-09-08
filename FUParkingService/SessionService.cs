@@ -12,7 +12,6 @@ using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Microsoft.AspNetCore.Rewrite;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -346,6 +345,45 @@ namespace FUParkingService
                 // Check time out 
                 if (req.TimeOut < sessionCard.Data.TimeIn)
                     return new Return<dynamic> { Message = ErrorEnumApplication.INVALID_INPUT };
+                // Check plate number exists
+                if (string.IsNullOrEmpty(req.PlateNumber) && req.PlateNumber == null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                    };
+                }
+                // Check Plate Number is valid
+                req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                if (!regex.IsMatch(req.PlateNumber))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                    };
+                }
+
+                var resultSessionPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
+                if (!resultSessionPlateNumber.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = resultSessionPlateNumber.InternalErrorMessage,
+                        Message = resultSessionPlateNumber.Message
+                    };
+                }
+
+                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(sessionCard.Data.PlateNumber) && resultSessionPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
+                    };
+                }
+
                 if (sessionCard.Data.Customer?.CustomerType is not null && sessionCard.Data.Customer.CustomerType.Name.Equals(CustomerTypeEnum.FREE))
                 {
                     var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
@@ -597,15 +635,6 @@ namespace FUParkingService
                                     Body = $"Your vehicle has been checked out successfully."
                                 };
                                 var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                //if (!notificationResult.IsSuccess)
-                                //{
-                                //    return new Return<dynamic>
-                                //    {
-                                //        IsSuccess = false,
-                                //        Message = "Check-out successful but failed to send notification.",
-                                //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                //    };
-                                //}
                             }
                         }
                         scope.Complete();
@@ -719,15 +748,6 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        //if (!notificationResult.IsSuccess)
-                                        //{
-                                        //    return new Return<dynamic>
-                                        //    {
-                                        //        IsSuccess = false,
-                                        //        Message = "Check-out successful but failed to send notification.",
-                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                        //    };
-                                        //}
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
@@ -821,15 +841,6 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        //if (!notificationResult.IsSuccess)
-                                        //{
-                                        //    return new Return<dynamic>
-                                        //    {
-                                        //        IsSuccess = false,
-                                        //        Message = "Check-out successful but failed to send notification.",
-                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                        //    };
-                                        //}
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
@@ -958,15 +969,6 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        //if (!notificationResult.IsSuccess)
-                                        //{
-                                        //    return new Return<dynamic>
-                                        //    {
-                                        //        IsSuccess = false,
-                                        //        Message = "Check-out successful but failed to send notification.",
-                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                        //    };
-                                        //}
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
@@ -1055,15 +1057,6 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        //if (!notificationResult.IsSuccess)
-                                        //{
-                                        //    return new Return<dynamic>
-                                        //    {
-                                        //        IsSuccess = false,
-                                        //        Message = "Check-out successful but failed to send notification.",
-                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                        //    };
-                                        //}
                                     }
                                 }
 
@@ -1141,15 +1134,6 @@ namespace FUParkingService
                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                         };
                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                        //if (!notificationResult.IsSuccess)
-                        //{
-                        //    return new Return<dynamic>
-                        //    {
-                        //        IsSuccess = false,
-                        //        Message = "Check-out successful but failed to send notification.",
-                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
-                        //    };
-                        //}
                     }
                 }
 
@@ -1813,14 +1797,12 @@ namespace FUParkingService
                     TotalPrice = price,
                     SessionId = session.Data.Id
                 };
-
                 var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
                 if (!createPayment.IsSuccess || createPayment.Data is null)
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createPayment.InternalErrorMessage };
                 }
-
                 // Create transaction
                 FUParkingModel.Object.Transaction transaction = new()
                 {
@@ -1829,31 +1811,28 @@ namespace FUParkingService
                     PaymentId = createPayment.Data.Id,
                     Amount = price
                 };
-
                 var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
                 if (!createTransaction.IsSuccess || createTransaction.Data is null)
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = createTransaction.InternalErrorMessage };
                 }
-
-                // Update Card to missing 
-                if (session.Data.Card?.Id is not null)
+                // Update Card to missing                
+                var card = await _cardRepository.GetCardByIdAsync(session.Data.CardId);
+                if (!card.IsSuccess || card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
-                    var card = await _cardRepository.GetCardByIdAsync(session.Data.Card.Id);
-                    if (!card.IsSuccess || card.Data == null || !card.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
-                    }
-                    card.Data.Status = CardStatusEnum.MISSING;
-                    var updateCard = await _cardRepository.UpdateCardAsync(card.Data);
-                    if (!updateCard.IsSuccess)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
-                    }
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = card.InternalErrorMessage };
                 }
+                card.Data.Status = CardStatusEnum.MISSING;
+                card.Data.LastModifyById = checkAuth.Data.Id;
+                card.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var updateCard = await _cardRepository.UpdateCardAsync(card.Data);
+                if (!updateCard.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
+                }                
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -2304,7 +2283,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
                     };
-                }
+                }                
 
                 var amount = 0;
                 var totalBlockTime = (int)(TimeOut - result.Data.TimeIn).TotalMinutes / result.Data.Block;
@@ -2793,7 +2772,8 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
-                }
+                }            
+
                 // Check Plate Number is belong to another session
                 var checkPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!checkPlateNumber.IsSuccess)
@@ -2804,6 +2784,7 @@ namespace FUParkingService
                         Message = checkPlateNumber.Message
                     };
                 }
+                
                 if (checkPlateNumber.Data != null && checkPlateNumber.Data.Id != req.SessionId)
                 {
                     if (checkPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
@@ -2813,6 +2794,23 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
                         };
                     }
+                }
+
+                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                if (!vehicle.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = vehicle.InternalErrorMessage,
+                        Message = vehicle.Message
+                    };
+                }
+                if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_IS_PENDING
+                    };
                 }
 
                 // Check Plate Number is belong to any user
@@ -2948,6 +2946,19 @@ namespace FUParkingService
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
                 if (!vehicle.IsSuccess)
                     return new Return<GetCustomerTypeByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
+                if (vehicle.Data is null)
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.GUEST
+                        },
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        IsSuccess = true
+                    };
+                }
+                
                 if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.REJECTED))
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {

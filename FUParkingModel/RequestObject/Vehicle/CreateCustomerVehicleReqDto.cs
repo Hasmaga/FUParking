@@ -10,8 +10,7 @@ namespace FUParkingModel.RequestObject.Vehicle
         private const int MaxFileSize = 50 * 1024 * 1024; // 50MB       
 
         [FromForm]
-        [Required(ErrorMessage = "Must have Plate Number")]
-        [RegularExpression("^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$", ErrorMessage = "Wrong Format PlateNumber")]
+        [Required(ErrorMessage = "Must have Plate Number")]        
         public string PlateNumber { get; set; } = null!;
 
 

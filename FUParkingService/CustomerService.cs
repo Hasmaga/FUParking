@@ -394,6 +394,25 @@ namespace FUParkingService
 
                 foreach (var vehicle in req.Vehicles ?? [])
                 {
+                    if (string.IsNullOrEmpty(vehicle.PlateNumber) && vehicle.PlateNumber == null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                        };
+                    }
+                    // Check Plate Number is valid
+                    vehicle.PlateNumber = vehicle.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    if (!regex.IsMatch(vehicle.PlateNumber))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                        };
+                    }
                     // Check plate number is exist
                     var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(vehicle.PlateNumber);
                     if (isPlateNumberExist.Data != null && isPlateNumberExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
@@ -577,6 +596,172 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> DeleteCustomerByStaff(Guid id)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var customer = await _customerRepository.GetCustomerByIdAsync(id);
+                if (customer.Data == null || !customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = customer.InternalErrorMessage,
+                        Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST
+                    };
+                }
+
+                customer.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                customer.Data.LastModifyById = checkAuth.Data.Id;
+                customer.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
+                // Get list vehicle own by user
+                var listVehicle = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(id);
+                if (listVehicle.Data == null || !listVehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    scope.Dispose();
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = listVehicle.InternalErrorMessage,
+                        Message = listVehicle.Message
+                    };
+                }
+
+                foreach (var vehicle in listVehicle.Data)
+                {
+                    vehicle.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                    vehicle.LastModifyById = checkAuth.Data.Id;
+                    vehicle.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
+                    var resultDelete = await _vehicleRepository.UpdateVehicleAsync(vehicle);
+                    if (resultDelete.Data == null || !resultDelete.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultDelete.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
+                var result = await _customerRepository.UpdateCustomerAsync(customer.Data);
+                if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> UpdateInformationCustomerByStaff(UpdateInformationCustomerResDto req)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var customer = await _customerRepository.GetCustomerByIdAsync(req.CustomerId);
+                if (customer.Data == null || !customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = customer.InternalErrorMessage,
+                        Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST
+                    };
+                }
+
+                if (req.CustomerTypeId != null)
+                {
+                    var customerType = await _customerRepository.GetCustomerTypeByIdAsync(req.CustomerTypeId.Value);
+                    if (customerType.Data == null || !customerType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = customerType.InternalErrorMessage,
+                            Message = customerType.Message
+                        };
+                    }
+                    customer.Data.CustomerTypeId = customerType.Data.Id;
+                }
+
+                if (req.FullName != null)
+                {
+                    customer.Data.FullName = req.FullName;
+                }
+
+                if (req.Email != null) {
+                    var isEmailCustomerExist = await _customerRepository.GetCustomerByEmailAsync(req.Email);
+                    if (isEmailCustomerExist.Data != null && isEmailCustomerExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.EMAIL_IS_EXIST
+                        };
+                    }
+                    customer.Data.Email = req.Email;
+                }
+
+                customer.Data.LastModifyById = checkAuth.Data.Id;
+                customer.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                var result = await _customerRepository.UpdateCustomerAsync(customer.Data);
+                if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex

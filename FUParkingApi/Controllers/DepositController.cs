@@ -27,15 +27,7 @@ namespace FUParkingApi.Controllers
         [HttpPost("zalopay/{packageId}")]
         public async Task<IActionResult> CustomerBuyPackageAsync([FromRoute] Guid packageId)
         {
-            var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packageId);
-            if (!result.Message.Equals(SuccessfullyEnumServer.SUCCESSFULLY))
-            {
-                if (result.InternalErrorMessage is not null)
-                {
-                    _logger.LogError("Error when create request buy package by ZaloPay: {ex}", result.InternalErrorMessage);
-                }
-                return Helper.GetErrorResponse(result.Message);
-            }
+            var result = await _zaloService.CustomerCreateRequestBuyPackageByZaloPayAsync(packageId);            
             return Ok(result);
         }
 

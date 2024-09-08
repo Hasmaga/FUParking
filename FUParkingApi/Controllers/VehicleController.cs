@@ -274,7 +274,7 @@ namespace FUParkingApi.Controllers
         [HttpPost("user/update")]
         public async Task<IActionResult> UpdateCustomerVehicleByUser([FromBody] UpdateCustomerVehicleByUserReqDto req)
         {
-            var result = await _vehicleService.UpdateVehicleInformationByUserAsync(req.VehicleId, req.VehicleTypeId);
+            var result = await _vehicleService.UpdateVehicleInformationByUserAsync(req);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

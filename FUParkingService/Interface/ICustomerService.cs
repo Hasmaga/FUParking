@@ -18,5 +18,7 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> CreateNonPaidCustomerAsync(CreateNonPaidCustomerReqDto req);
         Task<Return<GetCustomerTypeByPlateNumberResDto>> GetCustomerTypeByPlateNumberAsync(string PlateNumber);
         Task<Return<bool>> UpdateCustomerFCMTokenAsync(string fcmToken);
+        Task<Return<dynamic>> DeleteCustomerByStaff(Guid id);
+        Task<Return<dynamic>> UpdateInformationCustomerByStaff(UpdateInformationCustomerResDto req);
     }
 }

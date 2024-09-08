@@ -18,5 +18,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<Customer>>> GetListCustomerAsync(GetCustomersWithFillerReqDto req);
         Task<Return<Customer>> GetCustomerByPlateNumberAsync(string plateNumber);
         Task<Return<StatisticCustomerResDto>> StatisticCustomerAsync();
+        Task<Return<CustomerType>> GetCustomerTypeByIdAsync(Guid id);
     }
 }

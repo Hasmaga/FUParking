@@ -119,5 +119,41 @@ namespace FUParkingApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteCustomerAsync([FromRoute] Guid id)
+        {            
+            var result = await _customerService.DeleteCustomerByStaff(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when delete customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
+
+        [HttpPut("customer")]
+        [Authorize]
+        public async Task<IActionResult> UpdateCustomerByStaffAsync([FromBody] UpdateInformationCustomerResDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _customerService.UpdateInformationCustomerByStaff(req);
+            if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when update customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
     }
 }
