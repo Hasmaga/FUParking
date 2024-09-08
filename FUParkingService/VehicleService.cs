@@ -9,6 +9,7 @@ using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Text.RegularExpressions;
 using System.Transactions;
 
 namespace FUParkingService
@@ -472,6 +473,25 @@ namespace FUParkingService
                     };
                 }
                 // Check plate number exists
+                if (string.IsNullOrEmpty(reqDto.PlateNumber) && reqDto.PlateNumber == null)
+                {
+                    return new Return<GetInformationVehicleCreateResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                    };
+                }
+                // Check Plate Number is valid
+                reqDto.PlateNumber = reqDto.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                if (!regex.IsMatch(reqDto.PlateNumber))
+                {
+                    return new Return<GetInformationVehicleCreateResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                    };
+                }
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(reqDto.PlateNumber);
                 if (!vehicle.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
@@ -582,7 +602,38 @@ namespace FUParkingService
                     vehicle.Data.VehicleTypeId = vehicleType.Data.Id;
                 }
                 if (req.PlateNumber != null)
+                {
+                    if (string.IsNullOrEmpty(req.PlateNumber) && req.PlateNumber == null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                        };
+                    }
+                    // Check Plate Number is valid
+                    req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    if (!regex.IsMatch(req.PlateNumber))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                        };
+                    }
+                    // Check PlateNumber is exist
+                    var vehicleByPlateNumber = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                    if (!vehicleByPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = vehicleByPlateNumber.InternalErrorMessage,
+                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                        };
+                    }
                     vehicle.Data.PlateNumber = req.PlateNumber;
+                }
                 vehicle.Data.StatusVehicle = StatusVehicleEnum.PENDING;
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
@@ -629,7 +680,7 @@ namespace FUParkingService
                         InternalErrorMessage = newestSession.InternalErrorMessage
                     };
                 }
-                if (newestSession.Data?.GateOut is not null)
+                if (newestSession.Data?.Status == (SessionEnum.PARKED))
                 {
                     return new Return<dynamic>
                     {
@@ -637,7 +688,8 @@ namespace FUParkingService
                     };
                 }
                 vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-
+                vehicle.Data.LastModifyById = checkAuth.Data.Id;
+                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -848,7 +900,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<dynamic>> UpdateVehicleInformationByUserAsync(Guid vehicleId, Guid vehicleTypeId)
+        public async Task<Return<dynamic>> UpdateVehicleInformationByUserAsync(UpdateCustomerVehicleByUserReqDto req)
         {
             try
             {
@@ -861,13 +913,15 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(vehicleId);
-                if (!vehicle.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
-
-                if (vehicle.Data == null || !vehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.VEHICLE_NOT_EXIST };
-
+                var vehicle = await _vehicleRepository.GetVehicleByIdAsync(req.VehicleId);
+                if (!vehicle.IsSuccess || vehicle.Data is null)
+                {
+                    return new Return<dynamic> 
+                    { 
+                        Message = ErrorEnumApplication.VEHICLE_NOT_EXIST, 
+                        InternalErrorMessage = vehicle.InternalErrorMessage 
+                    };
+                }
                 // Check vehicle is in any session
                 var newestSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(vehicle.Data.PlateNumber);
                 if (!newestSession.IsSuccess)
@@ -886,16 +940,61 @@ namespace FUParkingService
                     };
                 }
 
-                var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(vehicleTypeId);
-                if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                if (req.PlateNumber != null)
                 {
-                    return new Return<dynamic>
+                    // Check input 
+                    if (string.IsNullOrEmpty(req.PlateNumber))
                     {
-                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
-                    };
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                        };
+                    }
+
+                    // Check if the input PlateNumber is the same as the existing PlateNumber
+                    if (vehicle.Data.PlateNumber != null && req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "") != vehicle.Data.PlateNumber)
+                    {
+                        // Check Plate Number is valid
+                        req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                        Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                        if (!regex.IsMatch(req.PlateNumber))
+                        {
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                            };
+                        }
+
+                        // Check PlateNumber is exist 
+                        var vehicleByPlateNumber = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                        if (!vehicleByPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                        {
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = vehicleByPlateNumber.InternalErrorMessage,
+                                Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                            };
+                        }
+                    }
+
+                    vehicle.Data.PlateNumber = req.PlateNumber;
                 }
-                vehicle.Data.VehicleTypeId = vehicleType.Data.Id;
-                vehicle.Data.StatusVehicle = StatusVehicleEnum.ACTIVE;
+                if (req.VehicleTypeId != null)
+                {
+                    var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(req.VehicleTypeId.Value);
+                    if (!vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || vehicleType.Data is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                        };
+                    }
+                    vehicle.Data.VehicleTypeId = req.VehicleTypeId.Value;
+                }
+                vehicle.Data.LastModifyById = checkAuth.Data.Id;
+                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -1037,6 +1136,25 @@ namespace FUParkingService
                         };
                     }
                     // Check plate number exists
+                    if (string.IsNullOrEmpty(item.PlateNumber) && item.PlateNumber == null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                        };
+                    }
+                    // Check Plate Number is valid
+                    item.PlateNumber = item.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    if (!regex.IsMatch(item.PlateNumber))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                        };
+                    }
                     var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(item.PlateNumber);
                     if (!vehicle.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                     {

@@ -394,6 +394,25 @@ namespace FUParkingService
 
                 foreach (var vehicle in req.Vehicles ?? [])
                 {
+                    if (string.IsNullOrEmpty(vehicle.PlateNumber) && vehicle.PlateNumber == null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                        };
+                    }
+                    // Check Plate Number is valid
+                    vehicle.PlateNumber = vehicle.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                    if (!regex.IsMatch(vehicle.PlateNumber))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                        };
+                    }
                     // Check plate number is exist
                     var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(vehicle.PlateNumber);
                     if (isPlateNumberExist.Data != null && isPlateNumberExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
