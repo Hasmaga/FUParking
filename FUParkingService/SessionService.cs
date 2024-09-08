@@ -2761,24 +2761,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
-                }
-                
-                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
-                if (!vehicle.IsSuccess)
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = vehicle.InternalErrorMessage,
-                        Message = vehicle.Message
-                    };
-                }
-                if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.VEHICLE_IS_PENDING
-                    };
-                }
+                }            
 
                 // Check Plate Number is belong to another session
                 var checkPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
@@ -2800,6 +2783,23 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
                         };
                     }
+                }
+
+                var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                if (!vehicle.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = vehicle.InternalErrorMessage,
+                        Message = vehicle.Message
+                    };
+                }
+                if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.PENDING))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_IS_PENDING
+                    };
                 }
 
                 // Check Plate Number is belong to any user
