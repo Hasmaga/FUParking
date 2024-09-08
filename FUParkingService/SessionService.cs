@@ -2762,6 +2762,8 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
                 }
+                
+
                 // Check Plate Number is belong to another session
                 var checkPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!checkPlateNumber.IsSuccess)
@@ -2772,7 +2774,7 @@ namespace FUParkingService
                         Message = checkPlateNumber.Message
                     };
                 }
-                // check vehicle status to do list
+                
                 if (checkPlateNumber.Data != null && checkPlateNumber.Data.Id != req.SessionId)
                 {
                     if (checkPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
@@ -2917,7 +2919,7 @@ namespace FUParkingService
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
                 if (!vehicle.IsSuccess)
                     return new Return<GetCustomerTypeByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = vehicle.InternalErrorMessage };
-                if (vehicle.Data is not null && vehicle.Data.DeletedDate is not null)
+                if (vehicle.Data is null)
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {
