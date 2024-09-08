@@ -1,7 +1,9 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.RequestObject.Vehicle;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Vehicle;
@@ -20,14 +22,16 @@ namespace FUParkingService
         private readonly ISessionRepository _sessionRepository;
         private readonly IMinioService _minioService;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IFirebaseService _firebaseService;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
             _minioService = minioService;
             _customerRepository = customerRepository;
+            _firebaseService = firebaseService;
         }
 
         public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
@@ -518,6 +522,19 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+
+                // Firebase send notification
+                if (!string.IsNullOrEmpty(checkAuth.Data.FCMToken))
+                {
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        Title = "Vehicle Registered Successfully",
+                        Body = $"Your vehicle with plate number {reqDto.PlateNumber} has been registered successfully. Please park your vehicle in our facility for the first time to activate it."
+                    };
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                }
+
                 scope.Complete();
                 return new Return<GetInformationVehicleCreateResDto>
                 {
@@ -587,6 +604,19 @@ namespace FUParkingService
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // Firebase
+                if (!string.IsNullOrEmpty(checkAuth.Data.FCMToken))
+                {
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        Title = "Vehicle Information Updated",
+                        Body = $"Your vehicle information with plate number {vehicle.Data.PlateNumber} has been updated successfully."
+                    };
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
@@ -641,6 +671,19 @@ namespace FUParkingService
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // Firebase
+                if (!string.IsNullOrEmpty(checkAuth.Data.FCMToken))
+                {
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        Title = "Vehicle Information Deleteted",
+                        Body = $"Your vehicle information with plate number {vehicle.Data.PlateNumber} has been deleteted successfully."
+                    };
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)

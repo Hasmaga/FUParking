@@ -597,15 +597,15 @@ namespace FUParkingService
                                     Body = $"Your vehicle has been checked out successfully."
                                 };
                                 var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                if (!notificationResult.IsSuccess)
-                                {
-                                    return new Return<dynamic>
-                                    {
-                                        IsSuccess = false,
-                                        Message = "Check-out successful but failed to send notification.",
-                                        InternalErrorMessage = notificationResult.InternalErrorMessage
-                                    };
-                                }
+                                //if (!notificationResult.IsSuccess)
+                                //{
+                                //    return new Return<dynamic>
+                                //    {
+                                //        IsSuccess = false,
+                                //        Message = "Check-out successful but failed to send notification.",
+                                //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                //    };
+                                //}
                             }
                         }
                         scope.Complete();
@@ -719,15 +719,24 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        if (!notificationResult.IsSuccess)
+                                        //if (!notificationResult.IsSuccess)
+                                        //{
+                                        //    return new Return<dynamic>
+                                        //    {
+                                        //        IsSuccess = false,
+                                        //        Message = "Check-out successful but failed to send notification.",
+                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                        //    };
+                                        //}
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            return new Return<dynamic>
-                                            {
-                                                IsSuccess = false,
-                                                Message = "Check-out successful but failed to send notification.",
-                                                InternalErrorMessage = notificationResult.InternalErrorMessage
-                                            };
-                                        }
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Payment Debited",
+                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                        };
+                                        await Task.Delay(1000);
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                     }
                                 }
 
@@ -812,15 +821,24 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        if (!notificationResult.IsSuccess)
+                                        //if (!notificationResult.IsSuccess)
+                                        //{
+                                        //    return new Return<dynamic>
+                                        //    {
+                                        //        IsSuccess = false,
+                                        //        Message = "Check-out successful but failed to send notification.",
+                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                        //    };
+                                        //}
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            return new Return<dynamic>
-                                            {
-                                                IsSuccess = false,
-                                                Message = "Check-out successful but failed to send notification.",
-                                                InternalErrorMessage = notificationResult.InternalErrorMessage
-                                            };
-                                        }
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Payment Debited",
+                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                        };
+                                        await Task.Delay(1000);
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                     }
                                 }
 
@@ -940,15 +958,24 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        if (!notificationResult.IsSuccess)
+                                        //if (!notificationResult.IsSuccess)
+                                        //{
+                                        //    return new Return<dynamic>
+                                        //    {
+                                        //        IsSuccess = false,
+                                        //        Message = "Check-out successful but failed to send notification.",
+                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                        //    };
+                                        //}
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            return new Return<dynamic>
-                                            {
-                                                IsSuccess = false,
-                                                Message = "Check-out successful but failed to send notification.",
-                                                InternalErrorMessage = notificationResult.InternalErrorMessage
-                                            };
-                                        }
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = "Payment Debited",
+                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                        };
+                                        await Task.Delay(1000);
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                     }
                                 }
 
@@ -1028,15 +1055,15 @@ namespace FUParkingService
                                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                                         };
                                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                        if (!notificationResult.IsSuccess)
-                                        {
-                                            return new Return<dynamic>
-                                            {
-                                                IsSuccess = false,
-                                                Message = "Check-out successful but failed to send notification.",
-                                                InternalErrorMessage = notificationResult.InternalErrorMessage
-                                            };
-                                        }
+                                        //if (!notificationResult.IsSuccess)
+                                        //{
+                                        //    return new Return<dynamic>
+                                        //    {
+                                        //        IsSuccess = false,
+                                        //        Message = "Check-out successful but failed to send notification.",
+                                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                                        //    };
+                                        //}
                                     }
                                 }
 
@@ -1114,15 +1141,15 @@ namespace FUParkingService
                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                         };
                         var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                        if (!notificationResult.IsSuccess)
-                        {
-                            return new Return<dynamic>
-                            {
-                                IsSuccess = false,
-                                Message = "Check-out successful but failed to send notification.",
-                                InternalErrorMessage = notificationResult.InternalErrorMessage
-                            };
-                        }
+                        //if (!notificationResult.IsSuccess)
+                        //{
+                        //    return new Return<dynamic>
+                        //    {
+                        //        IsSuccess = false,
+                        //        Message = "Check-out successful but failed to send notification.",
+                        //        InternalErrorMessage = notificationResult.InternalErrorMessage
+                        //    };
+                        //}
                     }
                 }
 
