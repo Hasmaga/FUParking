@@ -175,6 +175,7 @@ app.Services.UseScheduler(scheduler =>
 });
 
 app.UseSwagger();
+
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FU_Parking"));
 
 app.UseHttpsRedirection();

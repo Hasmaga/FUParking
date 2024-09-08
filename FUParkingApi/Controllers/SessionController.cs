@@ -200,10 +200,10 @@ namespace FUParkingApi.Controllers
             return StatusCode(200, result);
         }
 
-        [HttpGet("card/{cardNumber}&{timeOut}")]
-        public async Task<IActionResult> GetNewestSessionByCardNumberAsync(string cardNumber, DateTime timeOut)
+        [HttpGet("card/{cardNumber}&{timeOut}&{plateNumber}")]
+        public async Task<IActionResult> GetNewestSessionByCardNumberAsync(string cardNumber, DateTime timeOut, string plateNumber)
         {
-            var result = await _sessionService.GetNewestSessionByCardNumberAsync(cardNumber, timeOut);
+            var result = await _sessionService.GetNewestSessionByCardNumberAsync(cardNumber, timeOut, plateNumber);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)

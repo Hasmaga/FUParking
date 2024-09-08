@@ -13,6 +13,7 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Rewrite;
+using Minio.DataModel;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -346,6 +347,45 @@ namespace FUParkingService
                 // Check time out 
                 if (req.TimeOut < sessionCard.Data.TimeIn)
                     return new Return<dynamic> { Message = ErrorEnumApplication.INVALID_INPUT };
+                // Check plate number exists
+                if (string.IsNullOrEmpty(req.PlateNumber) && req.PlateNumber == null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                    };
+                }
+                // Check Plate Number is valid
+                req.PlateNumber = req.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                if (!regex.IsMatch(req.PlateNumber))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                    };
+                }
+
+                var resultSessionPlateNumber = await _sessionRepository.GetSessionByPlateNumberAsync(req.PlateNumber);
+                if (!resultSessionPlateNumber.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = resultSessionPlateNumber.InternalErrorMessage,
+                        Message = resultSessionPlateNumber.Message
+                    };
+                }
+
+                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(sessionCard.Data.PlateNumber))
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
+                    };
+                }
+
                 if (sessionCard.Data.Customer?.CustomerType is not null && sessionCard.Data.Customer.CustomerType.Name.Equals(CustomerTypeEnum.FREE))
                 {
                     var objNameNonePaid = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid() + "_Plate_Out" + Path.GetExtension(req.ImageOut.FileName);
@@ -2220,7 +2260,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut)
+        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut, string PlateNumber)
         {
             try
             {
@@ -2271,6 +2311,45 @@ namespace FUParkingService
                     return new Return<GetSessionByCardNumberResDto>
                     {
                         Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
+                    };
+                }
+
+                // Check plate number exists
+                if (string.IsNullOrEmpty(PlateNumber) && PlateNumber == null)
+                {
+                    return new Return<GetSessionByCardNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                    };
+                }
+                // Check Plate Number is valid
+                PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+                if (!regex.IsMatch(PlateNumber))
+                {
+                    return new Return<GetSessionByCardNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                    };
+                }
+
+                var resultSessionPlateNumber = await _sessionRepository.GetSessionByPlateNumberAsync(PlateNumber);
+                if (!resultSessionPlateNumber.IsSuccess)
+                {
+                    return new Return<GetSessionByCardNumberResDto>
+                    {
+                        InternalErrorMessage = resultSessionPlateNumber.InternalErrorMessage,
+                        Message = resultSessionPlateNumber.Message
+                    };
+                }
+
+                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(result.Data.PlateNumber))
+                {
+                    return new Return<GetSessionByCardNumberResDto>
+                    {
+                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
                     };
                 }
 
