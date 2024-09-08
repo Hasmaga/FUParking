@@ -77,6 +77,7 @@
         public const string MUST_HAVE_VEHICLE_TYPE = "Must have vehicle type";
         public const string PLATE_NUMBER_INVALID = "Plate number is invalid";
         public const string CARD_IS_MISSING = "Card is missing";
+        public const string VEHICLE_IS_PENDING = "This vehicle is pending";
     }
 
     public class MinioErrorServerDefineEnum
