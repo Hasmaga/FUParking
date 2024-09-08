@@ -12,8 +12,6 @@ using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
-using Microsoft.AspNetCore.Rewrite;
-using Minio.DataModel;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -368,7 +366,7 @@ namespace FUParkingService
                     };
                 }
 
-                var resultSessionPlateNumber = await _sessionRepository.GetSessionByPlateNumberAsync(req.PlateNumber);
+                var resultSessionPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!resultSessionPlateNumber.IsSuccess)
                 {
                     return new Return<dynamic>
@@ -2260,7 +2258,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut, string PlateNumber)
+        public async Task<Return<GetSessionByCardNumberResDto>> GetNewestSessionByCardNumberAsync(string CardNumber, DateTime TimeOut)
         {
             try
             {
@@ -2312,46 +2310,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
                     };
-                }
-
-                // Check plate number exists
-                if (string.IsNullOrEmpty(PlateNumber) && PlateNumber == null)
-                {
-                    return new Return<GetSessionByCardNumberResDto>
-                    {
-                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
-                    };
-                }
-                // Check Plate Number is valid
-                PlateNumber = PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-                Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
-#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-                if (!regex.IsMatch(PlateNumber))
-                {
-                    return new Return<GetSessionByCardNumberResDto>
-                    {
-                        Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
-                    };
-                }
-
-                var resultSessionPlateNumber = await _sessionRepository.GetSessionByPlateNumberAsync(PlateNumber);
-                if (!resultSessionPlateNumber.IsSuccess)
-                {
-                    return new Return<GetSessionByCardNumberResDto>
-                    {
-                        InternalErrorMessage = resultSessionPlateNumber.InternalErrorMessage,
-                        Message = resultSessionPlateNumber.Message
-                    };
-                }
-
-                if (resultSessionPlateNumber.Data is not null && !resultSessionPlateNumber.Data.PlateNumber.Equals(result.Data.PlateNumber) && resultSessionPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
-                {
-                    return new Return<GetSessionByCardNumberResDto>
-                    {
-                        Message = ErrorEnumApplication.PLATE_NUMBER_IS_BELONG_TO_ANOTHER_SESSION
-                    };
-                }
+                }                
 
                 var amount = 0;
                 var totalBlockTime = (int)(TimeOut - result.Data.TimeIn).TotalMinutes / result.Data.Block;
