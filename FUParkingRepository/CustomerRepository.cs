@@ -308,5 +308,27 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<CustomerType>> GetCustomerTypeByIdAsync(Guid id)
+        {
+            try
+            {
+                var result = await _db.CustomerTypes.FirstOrDefaultAsync(ct => ct.Id == id);
+                return new Return<CustomerType>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result != null ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<CustomerType>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
