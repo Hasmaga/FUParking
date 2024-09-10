@@ -45,9 +45,7 @@ namespace FUParkingModel.Object
         public ICollection<CustomerType>? CustomerTypeCreateBy { get; set; }
         public ICollection<CustomerType>? CustomerTypeLastModifyBy { get; set; }
         public ICollection<Gate>? GateCreateBy { get; set; }
-        public ICollection<Gate>? GateLastModifyBy { get; set; }
-        public ICollection<GateType>? GateTypeCreateBy { get; set; }
-        public ICollection<GateType>? GateTypeLastModifyBy { get; set; }
+        public ICollection<Gate>? GateLastModifyBy { get; set; }        
         public ICollection<Package>? PackageCreateBy { get; set; }
         public ICollection<Package>? PackageLastModifyBy { get; set; }
         public ICollection<ParkingArea>? ParkingAreaCreateBy { get; set; }

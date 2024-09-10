@@ -9,17 +9,15 @@ using System.Transactions;
 namespace FUParkingService
 {
     public class InitializeDataService : IInitializeDataService
-    {
-        private readonly IGateRepository _gateRepository;
+    {        
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IHelpperService _helpperService;
 
-        public InitializeDataService(IHelpperService helpperService, IGateRepository gateRepository, IVehicleRepository vehicleRepository, IRoleRepository roleRepository, IUserRepository userRepository, ICustomerRepository customerRepository)
-        {
-            _gateRepository = gateRepository;
+        public InitializeDataService(IHelpperService helpperService, IVehicleRepository vehicleRepository, IRoleRepository roleRepository, IUserRepository userRepository, ICustomerRepository customerRepository)
+        {            
             _vehicleRepository = vehicleRepository;
             _roleRepository = roleRepository;
             _userRepository = userRepository;
@@ -62,38 +60,7 @@ namespace FUParkingService
                             };
                         }
                     }
-                }
-                // Initialize data Table GateType
-                var isGateTypeHadData = await _gateRepository.GetAllGateTypeAsync();
-                if (isGateTypeHadData.Data == null || !isGateTypeHadData.Data.Any())
-                {
-                    var gateType = new List<GateType>
-                    {
-                        new() {
-                            Name = GateTypeEnum.IN,
-                            Descriptipn = "Gate in"
-                        },
-                        new() {
-                            Name = GateTypeEnum.OUT,
-                            Descriptipn = "Gate out"
-                        }
-                    };
-                    foreach (var item in gateType)
-                    {
-                        var isSuccessfully = await _gateRepository.CreateGateTypeAsync(item);
-                        if (!isSuccessfully.IsSuccess)
-                        {
-                            transaction.Dispose();
-                            return new Return<bool>
-                            {
-                                Data = false,
-                                Message = ErrorEnumApplication.ADD_OBJECT_ERROR,
-                                IsSuccess = false,
-                                InternalErrorMessage = isSuccessfully.InternalErrorMessage
-                            };
-                        }
-                    }
-                }
+                }                
                 // Initialize data Table VehicleType
                 GetListObjectWithFiller getListObjectWithFiller = new()
                 {

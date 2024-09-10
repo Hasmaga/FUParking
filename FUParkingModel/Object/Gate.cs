@@ -13,11 +13,7 @@ namespace FUParkingModel.Object
         public required string Name { get; set; }
 
         [Column("Description")]
-        public string? Description { get; set; }
-
-        [Column("GateTypeId")]
-        public Guid GateTypeId { get; set; }
-        public GateType? GateType { get; set; }
+        public string? Description { get; set; }        
 
         [Column("StatusGate")]
         public required string StatusGate { get; set; }

@@ -2,7 +2,6 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
-using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -136,7 +135,7 @@ namespace FUParkingApi.Controllers
             return Ok(result);
         }
 
-        [HttpPut("customer")]
+        [HttpPut("info")]
         [Authorize]
         public async Task<IActionResult> UpdateCustomerByStaffAsync([FromBody] UpdateInformationCustomerResDto req)
         {
@@ -150,6 +149,22 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error when update customer: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("type")]
+        [Authorize]
+        public async Task<IActionResult> GetCustomerTypeOptionAsync()
+        {
+            var result = await _customerService.GetCustomerTypeOptionAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get customer type option: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

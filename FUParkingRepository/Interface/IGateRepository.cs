@@ -7,14 +7,10 @@ namespace FUParkingRepository.Interface
     public interface IGateRepository
     {
         Task<Return<Gate>> CreateGateAsync(Gate gate);
-        Task<Return<IEnumerable<Gate>>> GetAllGateAsync(GetListObjectWithFiller req);
-        Task<Return<IEnumerable<GateType>>> GetAllGateTypeAsync();
-        Task<Return<GateType>> CreateGateTypeAsync(GateType gateType);
+        Task<Return<IEnumerable<Gate>>> GetAllGateAsync(GetListObjectWithFiller req);        
         Task<Return<Gate>> UpdateGateAsync(Gate gate);
         Task<Return<Gate>> GetGateByIdAsync(Guid id);
-        Task<Return<Gate>> GetGateByNameAsync(string name);
-        Task<Return<GateType>> GetGateTypeByIdAsync(Guid id);
-        Task<Return<Gate>> GetVirtualGateAsync();
+        Task<Return<Gate>> GetGateByNameAsync(string name);               
         Task<Return<IEnumerable<Gate>>> GetListGateByParkingAreaAsync(Guid parkingAreaId);
     }
 }

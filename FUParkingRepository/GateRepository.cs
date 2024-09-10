@@ -44,8 +44,7 @@ namespace FUParkingRepository
         {
             try
             {
-                var query = _db.Gates
-                    .Include(p => p.GateType)
+                var query = _db.Gates                    
                     .Include(p => p.ParkingArea)
                     .Include(p => p.CreateBy)
                     .Include(p => p.LastModifyBy)
@@ -90,53 +89,7 @@ namespace FUParkingRepository
                     Message = ErrorEnumApplication.SERVER_ERROR
                 };
             }
-        }
-
-        public async Task<Return<GateType>> CreateGateTypeAsync(GateType gateType)
-        {
-            try
-            {
-                await _db.GateTypes.AddAsync(gateType);
-                await _db.SaveChangesAsync();
-                return new Return<GateType>()
-                {
-                    Data = gateType,
-                    IsSuccess = true,
-                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<GateType>()
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = ex
-                };
-            }
-        }
-
-        public async Task<Return<IEnumerable<GateType>>> GetAllGateTypeAsync()
-        {
-            try
-            {
-                var result = await _db.GateTypes.ToListAsync();
-                return new Return<IEnumerable<GateType>>
-                {
-                    Data = result,
-                    IsSuccess = true,
-                    TotalRecord = result.Count,
-                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<IEnumerable<GateType>>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = ex
-                };
-            }
-        }
+        }        
 
         public async Task<Return<Gate>> UpdateGateAsync(Gate gate)
         {
@@ -169,8 +122,7 @@ namespace FUParkingRepository
             };
             try
             {
-                var result = await _db.Gates
-                    .Include(p => p.GateType)
+                var result = await _db.Gates                    
                     .Include(p => p.ParkingArea)
                     .Where(p => p.DeletedDate == null && p.Id.Equals(id))
                     .FirstOrDefaultAsync();
@@ -202,52 +154,13 @@ namespace FUParkingRepository
             {
                 return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
-        }
-
-        public async Task<Return<GateType>> GetGateTypeByIdAsync(Guid id)
-        {
-            try
-            {
-                var result = await _db.GateTypes.Where(t => t.DeletedDate == null).FirstOrDefaultAsync(p => p.Id.Equals(id));
-                return new Return<GateType>
-                {
-                    Data = result,
-                    IsSuccess = true,
-                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<GateType> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
-            }
-        }
-
-        public async Task<Return<Gate>> GetVirtualGateAsync()
-        {
-            try
-            {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                var result = await _db.Gates.Include(p => p.GateType).FirstOrDefaultAsync(p => p.GateType.Name.Equals(GateTypeEnum.VIRUTAL));
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-                return new Return<Gate>
-                {
-                    Data = result,
-                    IsSuccess = true,
-                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<Gate> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
-            }
-        }
+        } 
 
         public async Task<Return<IEnumerable<Gate>>> GetListGateByParkingAreaAsync(Guid parkingAreaId)
         {
             try
             {
-                var result = await _db.Gates
-                    .Include(p => p.GateType)
+                var result = await _db.Gates                    
                     .Include(p => p.ParkingArea)
                     .Where(p => p.ParkingAreaId.Equals(parkingAreaId) && p.StatusGate.Equals(StatusGateEnum.ACTIVE))
                     .ToListAsync();

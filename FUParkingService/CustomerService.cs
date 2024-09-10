@@ -768,5 +768,51 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetCustomerTypeOptionResDto>>> GetCustomerTypeOptionAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetCustomerTypeOptionResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _customerRepository.GetAllCustomerTypeAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetCustomerTypeOptionResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = result.Message
+                    };
+                }
+                return new Return<IEnumerable<GetCustomerTypeOptionResDto>>
+                {
+                    Data = result.Data?.Select(b => new GetCustomerTypeOptionResDto
+                    {
+                        Id = b.Id,
+                        Name = b.Name,
+                        Description = b.Description
+                    }),
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetCustomerTypeOptionResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

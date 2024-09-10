@@ -117,25 +117,7 @@ namespace FUParkingModel.DatabaseContext
                 .HasOne(e => e.LastModifyBy)
                 .WithMany(e => e.GateLastModifyBy)
                 .HasForeignKey(e => e.LastModifyById)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<GateType>()
-                .HasMany(e => e.Gates)
-                .WithOne(e => e.GateType)
-                .HasForeignKey(e => e.GateTypeId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<GateType>()
-                .HasOne(e => e.CreateBy)
-                .WithMany(e => e.GateTypeCreateBy)
-                .HasForeignKey(e => e.CreatedById)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<GateType>()
-                .HasOne(e => e.LastModifyBy)
-                .WithMany(e => e.GateTypeLastModifyBy)
-                .HasForeignKey(e => e.LastModifyById)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);            
 
             modelBuilder.Entity<ParkingArea>()
                 .HasMany(e => e.Gates)
@@ -367,8 +349,7 @@ namespace FUParkingModel.DatabaseContext
         public virtual DbSet<CustomerType> CustomerTypes { get; set; }
         public virtual DbSet<Deposit> Deposits { get; set; }
         public virtual DbSet<Feedback> Feedbacks { get; set; }
-        public virtual DbSet<Gate> Gates { get; set; }
-        public virtual DbSet<GateType> GateTypes { get; set; }
+        public virtual DbSet<Gate> Gates { get; set; }        
         public virtual DbSet<Package> Packages { get; set; }
         public virtual DbSet<ParkingArea> ParkingAreas { get; set; }
         public virtual DbSet<Payment> Payments { get; set; }

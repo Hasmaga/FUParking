@@ -10,9 +10,6 @@ namespace FUParkingModel.RequestObject
         [Required]
         public required string Name { get; set; }
 
-        public string? Description { get; set; }
-
-        [Required]
-        public required Guid GateTypeId { get; set; }
+        public string? Description { get; set; }        
     }
 }

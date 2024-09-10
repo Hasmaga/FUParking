@@ -20,5 +20,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> UpdateCustomerFCMTokenAsync(string fcmToken);
         Task<Return<dynamic>> DeleteCustomerByStaff(Guid id);
         Task<Return<dynamic>> UpdateInformationCustomerByStaff(UpdateInformationCustomerResDto req);
+        Task<Return<IEnumerable<GetCustomerTypeOptionResDto>>> GetCustomerTypeOptionAsync();
     }
 }

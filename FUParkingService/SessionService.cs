@@ -92,9 +92,7 @@ namespace FUParkingService
                 if (!gateIn.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
-                if (gateIn.Data.GateType == null || gateIn.Data.GateType.Name.Equals(GateTypeEnum.OUT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };               
 
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
@@ -186,9 +184,9 @@ namespace FUParkingService
                     // Notification logic if Firebase token is available
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        ClientTokens = [customer.Data.FCMToken],
                         Title = "Vehicle Check-In",
-                        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data.TimeIn}."
+                        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data?.TimeIn}."
                     };
 
                     var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
@@ -630,7 +628,7 @@ namespace FUParkingService
                             {
                                 var firebaseReq = new FirebaseReqDto
                                 {
-                                    ClientTokens = new List<string> { customer.Data.FCMToken },
+                                    ClientTokens = [customer.Data.FCMToken],
                                     Title = "Check-out Successful",
                                     Body = $"Your vehicle has been checked out successfully."
                                 };
@@ -730,37 +728,35 @@ namespace FUParkingService
                                 scope.Dispose();
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
-
-                                // Firebase send notification
-                                if (sessionCard.Data.CustomerId.HasValue)
+                            // Firebase send notification
+                            if (sessionCard.Data.CustomerId.HasValue)
+                            {
+                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                                 {
-                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                        ? paymentMethod.Data.Name
+                                        : "";
+
+                                    var firebaseReq = new FirebaseReqDto
                                     {
-                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                            ? paymentMethod.Data.Name
-                                            : "";
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Check-out Successful",
+                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                    };
+                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
 
-                                        var firebaseReq = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Check-out Successful",
-                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                        };
-                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                        var firebaseReqDeduction = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Payment Debited",
-                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                        };
-                                        await Task.Delay(1000);
-                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
-                                    }
+                                    var firebaseReqDeduction = new FirebaseReqDto
+                                    {
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Payment Debited",
+                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                    };
+                                    await Task.Delay(1000);
+                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                 }
-
-                                scope.Complete();
+                            }
+                            scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -824,36 +820,35 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
 
-                                // Firebase send notification
-                                if (sessionCard.Data.CustomerId.HasValue)
+                            // Firebase send notification
+                            if (sessionCard.Data.CustomerId.HasValue)
+                            {
+                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                                 {
-                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                        ? paymentMethod.Data.Name
+                                        : "";
+
+                                    var firebaseReq = new FirebaseReqDto
                                     {
-                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                            ? paymentMethod.Data.Name
-                                            : "";
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Check-out Successful",
+                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                    };
+                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
 
-                                        var firebaseReq = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Check-out Successful",
-                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                        };
-                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                        var firebaseReqDeduction = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Payment Debited",
-                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                        };
-                                        await Task.Delay(1000);
-                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
-                                    }
+                                    var firebaseReqDeduction = new FirebaseReqDto
+                                    {
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Payment Debited",
+                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                    };
+                                    await Task.Delay(1000);
+                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                 }
-
-                                scope.Complete();
+                            }
+                            scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -952,36 +947,36 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
 
-                                // Firebase send notification
-                                if (sessionCard.Data.CustomerId.HasValue)
+                            // Firebase send notification
+                            if (sessionCard.Data.CustomerId.HasValue)
+                            {
+                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                                 {
-                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                        ? paymentMethod.Data.Name
+                                        : "";
+
+                                    var firebaseReq = new FirebaseReqDto
                                     {
-                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                            ? paymentMethod.Data.Name
-                                            : "";
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Check-out Successful",
+                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                    };
+                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
 
-                                        var firebaseReq = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Check-out Successful",
-                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                        };
-                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                        var firebaseReqDeduction = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Payment Debited",
-                                            Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                        };
-                                        await Task.Delay(1000);
-                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
-                                    }
+                                    var firebaseReqDeduction = new FirebaseReqDto
+                                    {
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Payment Debited",
+                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
+                                    };
+                                    await Task.Delay(1000);
+                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
                                 }
+                            }
 
-                                scope.Complete();
+                            scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -1040,27 +1035,26 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
 
-                                // Firebase send notification
-                                if (sessionCard.Data.CustomerId.HasValue)
+                            // Firebase send notification
+                            if (sessionCard.Data.CustomerId.HasValue)
+                            {
+                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                                 {
-                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
+                                        ? paymentMethod.Data.Name
+                                        : "";
+
+                                    var firebaseReq = new FirebaseReqDto
                                     {
-                                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                            ? paymentMethod.Data.Name
-                                            : "";
-
-                                        var firebaseReq = new FirebaseReqDto
-                                        {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
-                                            Title = "Check-out Successful",
-                                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                        };
-                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                    }
+                                        ClientTokens = [customer.Data.FCMToken],
+                                        Title = "Check-out Successful",
+                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
+                                    };
+                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
                                 }
-
-                                scope.Complete();
+                            }
+                            scope.Complete();
                             return new Return<dynamic>
                             {
                                 IsSuccess = true,
@@ -1129,7 +1123,7 @@ namespace FUParkingService
 
                         var firebaseReq = new FirebaseReqDto
                         {
-                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            ClientTokens = [customer.Data.FCMToken],
                             Title = "Check-out Successful",
                             Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
                         };
@@ -1234,7 +1228,7 @@ namespace FUParkingService
                         Message = listSession.Message
                     };
                 }
-                List<GetHistorySessionResDto> listSessionData = new List<GetHistorySessionResDto>();
+                List<GetHistorySessionResDto> listSessionData = [];
                 if (listSession.Data == null)
                 {
                     return new Return<IEnumerable<GetHistorySessionResDto>>
@@ -1492,31 +1486,17 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                // Check Gate
-                if (req.GateId != null)
+                // Check Gate         
+                var isGateExist = await _gateRepository.GetGateByIdAsync(req.GateId);
+                if (!isGateExist.IsSuccess || isGateExist.Data == null)
                 {
-                    var isGateExist = await _gateRepository.GetGateByIdAsync(req.GateId ?? Guid.Empty);
-                    if (!isGateExist.IsSuccess || isGateExist.Data == null || isGateExist.Data.GateType == null)
+                    scope.Dispose();
+                    return new Return<dynamic>
                     {
-                        scope.Dispose();
-                        return new Return<dynamic>
-                        {
-                            InternalErrorMessage = isGateExist.InternalErrorMessage,
-                            Message = ErrorEnumApplication.GATE_NOT_EXIST
-                        };
-                    }
-
-                    // Check Gate is gate out 
-                    if (!isGateExist.Data.GateType.Name.Equals(GateTypeEnum.OUT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
-                        {
-                            Message = ErrorEnumApplication.NOT_GATE_OUT
-                        };
-                    }
-                }
-
+                        InternalErrorMessage = isGateExist.InternalErrorMessage,
+                        Message = ErrorEnumApplication.GATE_NOT_EXIST
+                    };
+                }    
                 // Check PlateNumber
                 var session = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!session.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || session.Data is null)
@@ -1543,18 +1523,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
-                }
-                // Get virtual gate
-                var gateOut = await _gateRepository.GetVirtualGateAsync();
-                if (!gateOut.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || gateOut.Data == null)
-                {
-                    scope.Dispose();
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = gateOut.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
+                }               
 
                 string imagePlateOutUrl = "";
                 string imageBodyOutUrl = "";
@@ -1598,7 +1567,7 @@ namespace FUParkingService
                 // check customer type is free
                 if ((session.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.FREE))
                 {
-                    session.Data.GateOutId = req.GateId is null ? gateOut.Data.Id : req.GateId;
+                    session.Data.GateOutId = req.GateId;
                     session.Data.TimeOut = req.CheckOutTime;
                     session.Data.ImageOutUrl = imagePlateOutUrl;
                     session.Data.ImageOutBodyUrl = imageBodyOutUrl;
@@ -1776,7 +1745,7 @@ namespace FUParkingService
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                 }
-                session.Data.GateOutId = req.GateId is null ? gateOut.Data.Id : req.GateId;
+                session.Data.GateOutId = req.GateId;
                 session.Data.TimeOut = req.CheckOutTime;
                 session.Data.ImageOutBodyUrl = imageBodyOutUrl;
                 session.Data.ImageOutUrl = imagePlateOutUrl;

@@ -57,13 +57,7 @@ namespace FUParkingService
                             Id = x.ParkingArea?.Id ?? Guid.Empty,
                             Name = x.ParkingArea?.Name ?? "",
                             Description = x.ParkingArea?.Description ?? ""
-                        },
-                        GateType = new GetGetTypeResDto
-                        {
-                            Id = x.GateType?.Id ?? Guid.Empty,
-                            Name = x.GateType?.Name ?? "",
-                            Descriptipn = x.GateType?.Descriptipn ?? ""
-                        },
+                        },                        
                         StatusGate = x.StatusGate.ToString(),
                         CreatedBy = x.CreateBy?.Email ?? "",
                         LastModifyBy = x.LastModifyBy?.Email ?? ""
@@ -122,8 +116,7 @@ namespace FUParkingService
                     Name = req.Name,
                     StatusGate = StatusParkingEnum.ACTIVE,
                     CreatedById = checkAuth.Data.Id,
-                    Description = req.Description,
-                    GateTypeId = req.GateTypeId,
+                    Description = req.Description,                    
                     ParkingAreaId = isParkingAreaExist.Data.Id
                 };
                 var result = await _gateRepository.CreateGateAsync(gate);
@@ -164,18 +157,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }
-                if (req.GateTypeId is not null)
-                {
-                    var isGateTypeExist = await _gateRepository.GetGateTypeByIdAsync(req.GateTypeId.Value);
-                    if (!isGateTypeExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isGateTypeExist.Data == null)
-                    {
-                        return new Return<dynamic>
-                        {
-                            Message = ErrorEnumApplication.GATE_TYPE_NOT_EXIST
-                        };
-                    }
-                }
+                }                
                 if (req.ParkingAreaId is not null)
                 {
                     var isParkingAreaExist = await _parkingAreaRepository.GetParkingAreaByIdAsync(req.ParkingAreaId.Value);
@@ -201,10 +183,8 @@ namespace FUParkingService
                         };
                     }
                     existingGate.Data.Name = req.Name;
-                }
-                
-                existingGate.Data.Description = req.Description ?? existingGate.Data.Description;
-                existingGate.Data.GateTypeId = req.GateTypeId ?? existingGate.Data.GateTypeId;
+                }                
+                existingGate.Data.Description = req.Description ?? existingGate.Data.Description;                
                 existingGate.Data.ParkingAreaId = req.ParkingAreaId ?? existingGate.Data.ParkingAreaId;
                 existingGate.Data.LastModifyById = checkAuth.Data.Id;
                 existingGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -254,15 +234,7 @@ namespace FUParkingService
                         InternalErrorMessage = existedGate.InternalErrorMessage,
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }
-                // Check if gate is virtual
-                if (existedGate.Data.GateType?.Name.Equals(GateTypeEnum.VIRUTAL) ?? false)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.CANNOT_DELETE_VIRTUAL_GATE
-                    };
-                }
+                }                
                 existedGate.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedGate.Data.LastModifyById = checkAuth.Data.Id;
                 existedGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -312,14 +284,7 @@ namespace FUParkingService
                         InternalErrorMessage = existedGate.InternalErrorMessage,
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }
-                if (existedGate.Data.GateType?.Name.Equals(GateTypeEnum.VIRUTAL) ?? false)
-                {
-                    return new Return<dynamic>
-                    {
-                        Message = ErrorEnumApplication.CANNOT_UPDATE_STATUS_VIRTUAL_GATE
-                    };
-                }
+                }                
                 if (isActive)
                 {
                     if (existedGate.Data.StatusGate == StatusGateEnum.ACTIVE)
@@ -367,52 +332,7 @@ namespace FUParkingService
                     InternalErrorMessage = ex
                 };
             }
-        }
-
-        public async Task<Return<IEnumerable<GetGetTypeResDto>>> GetAllGateTypeAsync()
-        {
-            try
-            {
-                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
-                if (!checkAuth.IsSuccess || checkAuth.Data is null)
-                {
-                    return new Return<IEnumerable<GetGetTypeResDto>>
-                    {
-                        InternalErrorMessage = checkAuth.InternalErrorMessage,
-                        Message = checkAuth.Message
-                    };
-                }
-                var result = await _gateRepository.GetAllGateTypeAsync();
-                if (!result.IsSuccess)
-                {
-                    return new Return<IEnumerable<GetGetTypeResDto>>
-                    {
-                        InternalErrorMessage = result.InternalErrorMessage,
-                        Message = ErrorEnumApplication.SERVER_ERROR
-                    };
-                }
-                return new Return<IEnumerable<GetGetTypeResDto>>
-                {
-                    Data = result.Data?.Select(x => new GetGetTypeResDto
-                    {
-                        Id = x.Id,
-                        Name = x.Name,
-                        Descriptipn = x.Descriptipn                        
-                    }),
-                    IsSuccess = true,
-                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
-                    TotalRecord = result.TotalRecord
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Return<IEnumerable<GetGetTypeResDto>>
-                {
-                    Message = ErrorEnumApplication.SERVER_ERROR,
-                    InternalErrorMessage = ex
-                };
-            }
-        }
+        }        
 
         public async Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetListGateByParkingAreaAsync(Guid parkingAreaId)
         {
@@ -453,8 +373,7 @@ namespace FUParkingService
                     {
                         Id = x.Id,
                         Name = x.Name,
-                        Description = x.Description ?? "",
-                        GateType = x.GateType?.Name ?? ""
+                        Description = x.Description ?? "",                        
                     }),
                     IsSuccess = true,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
