@@ -107,7 +107,7 @@ namespace FUParkingService
                 if (!customer.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };               
                 
-                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null)
+                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null || customer.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };               
                 // Check vehicle type of plate number
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
