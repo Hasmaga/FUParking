@@ -65,7 +65,7 @@ namespace FUParkingService
                         isCustomerExist.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                         // Update status Account
                         var isUpdate = await _customerRepository.UpdateCustomerAsync(isCustomerExist.Data);
-                        if (isUpdate.Data == null || !isUpdate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                        if (!isUpdate.IsSuccess)
                         {
                             return new Return<dynamic>
                             {
