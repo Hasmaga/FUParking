@@ -2994,6 +2994,19 @@ namespace FUParkingService
                     };
                 }                
 
+                if (result.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
+                {
+                    return new Return<GetCustomerTypeByPlateNumberResDto>
+                    {
+                        Data = new GetCustomerTypeByPlateNumberResDto
+                        {
+                            CustomerType = CustomerTypeEnum.GUEST
+                        },
+                        Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                        IsSuccess = true
+                    };
+                }
+
                 return new Return<GetCustomerTypeByPlateNumberResDto>
                 {
                     Data = new GetCustomerTypeByPlateNumberResDto

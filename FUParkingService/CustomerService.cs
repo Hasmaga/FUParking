@@ -729,8 +729,9 @@ namespace FUParkingService
                 {
                     customer.Data.FullName = req.FullName;
                 }
-
-                if (req.Email != null) {
+                
+                if (req.Email != null && !req.Email.Equals(customer.Data.Email, StringComparison.OrdinalIgnoreCase))
+                {
                     var isEmailCustomerExist = await _customerRepository.GetCustomerByEmailAsync(req.Email);
                     if (isEmailCustomerExist.Data != null && isEmailCustomerExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
@@ -739,9 +740,8 @@ namespace FUParkingService
                             Message = ErrorEnumApplication.EMAIL_IS_EXIST
                         };
                     }
-                    customer.Data.Email = req.Email;
+                    customer.Data.Email = req.Email.ToLower();
                 }
-
                 customer.Data.LastModifyById = checkAuth.Data.Id;
                 customer.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _customerRepository.UpdateCustomerAsync(customer.Data);
