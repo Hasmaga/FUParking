@@ -2,19 +2,12 @@
 using FUParkingService.Interface;
 using FUParkingService;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Card;
 using FUParkingModel.ReturnCommon;
 using Xunit;
-using Bogus;
 using FUParkingModel.ResponseObject.Card;
-using FUParkingRepository;
 using FUParkingModel.ResponseObject.Statistic;
 
 namespace FUParkingTesting
