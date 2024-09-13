@@ -2,11 +2,13 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Gate;
 using FUParkingModel.ResponseObject.Gate;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -57,7 +59,7 @@ namespace FUParkingService
                             Id = x.ParkingArea?.Id ?? Guid.Empty,
                             Name = x.ParkingArea?.Name ?? "",
                             Description = x.ParkingArea?.Description ?? ""
-                        },                        
+                        },
                         StatusGate = x.StatusGate.ToString(),
                         CreatedBy = x.CreateBy?.Email ?? "",
                         LastModifyBy = x.LastModifyBy?.Email ?? ""
@@ -116,7 +118,7 @@ namespace FUParkingService
                     Name = req.Name,
                     StatusGate = StatusParkingEnum.ACTIVE,
                     CreatedById = checkAuth.Data.Id,
-                    Description = req.Description,                    
+                    Description = req.Description,
                     ParkingAreaId = isParkingAreaExist.Data.Id
                 };
                 var result = await _gateRepository.CreateGateAsync(gate);
@@ -157,7 +159,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }                
+                }
                 if (req.ParkingAreaId is not null)
                 {
                     var isParkingAreaExist = await _parkingAreaRepository.GetParkingAreaByIdAsync(req.ParkingAreaId.Value);
@@ -183,8 +185,8 @@ namespace FUParkingService
                         };
                     }
                     existingGate.Data.Name = req.Name;
-                }                
-                existingGate.Data.Description = req.Description ?? existingGate.Data.Description;                
+                }
+                existingGate.Data.Description = req.Description ?? existingGate.Data.Description;
                 existingGate.Data.ParkingAreaId = req.ParkingAreaId ?? existingGate.Data.ParkingAreaId;
                 existingGate.Data.LastModifyById = checkAuth.Data.Id;
                 existingGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -234,7 +236,7 @@ namespace FUParkingService
                         InternalErrorMessage = existedGate.InternalErrorMessage,
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }                
+                }
                 existedGate.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 existedGate.Data.LastModifyById = checkAuth.Data.Id;
                 existedGate.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -284,7 +286,7 @@ namespace FUParkingService
                         InternalErrorMessage = existedGate.InternalErrorMessage,
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }                
+                }
                 if (isActive)
                 {
                     if (existedGate.Data.StatusGate == StatusGateEnum.ACTIVE)
@@ -332,7 +334,7 @@ namespace FUParkingService
                     InternalErrorMessage = ex
                 };
             }
-        }        
+        }
 
         public async Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetListGateByParkingAreaAsync(Guid parkingAreaId)
         {
@@ -373,7 +375,143 @@ namespace FUParkingService
                     {
                         Id = x.Id,
                         Name = x.Name,
-                        Description = x.Description ?? "",                        
+                        Description = x.Description ?? "",
+                        Status = x.StatusGate
+                    }),
+                    IsSuccess = true,
+                    Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = result.TotalRecord
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> CreateGatesForParkingAreaByStaffAsync(CreateGatesForParkingAreaByStaffReqDto req)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // Chec if parking area exists
+                var isParkingAreaExist = await _parkingAreaRepository.GetParkingAreaByIdAsync(req.ParkingAreaId);
+                if (!isParkingAreaExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isParkingAreaExist.Data == null)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST,
+                        InternalErrorMessage = isParkingAreaExist.InternalErrorMessage
+                    };
+                }
+
+                if (req.Gates.Length > 0)
+                {
+                    foreach (var gates in req.Gates)
+                    {
+                        // Check gate name is existed
+                        var isGateNameExisted = await _gateRepository.GetGateByNameAsync(gates.Name);
+                        if (!isGateNameExisted.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                        {
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.OBJECT_EXISTED,
+                                InternalErrorMessage = isGateNameExisted.InternalErrorMessage
+                            };
+                        }
+
+                        var gate = new Gate
+                        {
+                            Name = gates.Name,
+                            StatusGate = StatusParkingEnum.ACTIVE,
+                            CreatedById = checkAuth.Data.Id,
+                            Description = gates.Description,
+                            ParkingAreaId = isParkingAreaExist.Data.Id
+                        };
+
+                        var result = await _gateRepository.CreateGateAsync(gate);
+                        if (!result.IsSuccess)
+                        {
+                            scope.Dispose();
+                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+                        }
+                    }
+                }
+                else
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.INVALID_INPUT
+                    };
+                }
+                scope.Complete();
+                return new Return<dynamic> { Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, IsSuccess = true };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetAllGateByParkingAreaAsync(Guid parkingAreaId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var isParkingAreaExist = await _parkingAreaRepository.GetParkingAreaByIdAsync(parkingAreaId);
+                if (!isParkingAreaExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isParkingAreaExist.Data == null)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST,
+                        InternalErrorMessage = isParkingAreaExist.InternalErrorMessage
+                    };
+                }
+
+                var result = await _gateRepository.GetAllGateByParkingAreaAsync(parkingAreaId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return new Return<IEnumerable<GetGateByParkingAreaResDto>>
+                {
+                    Data = result.Data?.Select(x => new GetGateByParkingAreaResDto
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Description = x.Description ?? "",
+                        Status = x.StatusGate
                     }),
                     IsSuccess = true,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,

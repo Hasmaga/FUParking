@@ -341,6 +341,12 @@ namespace FUParkingModel.DatabaseContext
                 .HasForeignKey(e => e.LastModifyById)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<User>()
+                .HasMany(e => e.TransactionTopUpBys)
+                .WithOne(e => e.UserTopUp)
+                .HasForeignKey(e => e.UserTopUpId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             OnModelCreatingPartial(modelBuilder);
         }
 

@@ -1,6 +1,6 @@
-﻿using FUParkingModel.Object;
-using FUParkingModel.RequestObject;
+﻿using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.ParkingArea;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 
@@ -14,5 +14,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> UpdateParkingAreaAsync(UpdateParkingAreaReqDto req);
         Task<Return<dynamic>> UpdateStatusParkingAreaAsync(Guid parkingId, bool isActive);
         Task<Return<IEnumerable<GetParkingAreaOptionResDto>>> GetParkingAreaOptionAsync();
+        Task<Return<dynamic>> CreateParkingAreaAndGateAsync(CreateParkingAreaAndGateReqDto req);
     }
 }

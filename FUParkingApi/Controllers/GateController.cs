@@ -134,5 +134,41 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [Authorize]
+        [HttpPost("area")]
+        public async Task<IActionResult> CreateGatesForParkingAreaByStaffAsync([FromBody] CreateGatesForParkingAreaByStaffReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when create gates for parking area by staff: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpGet("area/all/{id}")]
+        public async Task<IActionResult> GetAllGateByParkingAreaAsync([FromRoute] Guid id)
+        {
+            var result = await _gateService.GetAllGateByParkingAreaAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get all gate by parking area: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

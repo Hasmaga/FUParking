@@ -25,5 +25,9 @@ namespace FUParkingModel.Object
 
         [Column("TransactionStatus")]
         public required string TransactionStatus { get; set; }
+
+        [Column("UserTopUpId")]
+        public Guid? UserTopUpId { get; set; }
+        public User? UserTopUp { get; set; }
     }
 }

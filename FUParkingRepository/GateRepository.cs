@@ -142,7 +142,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Gates.FirstOrDefaultAsync(p => p.Name.Equals(name));
+                var result = await _db.Gates
+                    .Where(_ => _.DeletedDate == null && _.Name.Equals(name))
+                    .FirstOrDefaultAsync();
                 return new Return<Gate>
                 {
                     Data = result,
@@ -162,7 +164,40 @@ namespace FUParkingRepository
             {
                 var result = await _db.Gates                    
                     .Include(p => p.ParkingArea)
-                    .Where(p => p.ParkingAreaId.Equals(parkingAreaId) && p.StatusGate.Equals(StatusGateEnum.ACTIVE))
+                    .Where(p => 
+                        p.ParkingAreaId.Equals(parkingAreaId) && 
+                        p.StatusGate.Equals(StatusGateEnum.ACTIVE) &&
+                        p.DeletedDate == null
+                    )
+                    .ToListAsync();
+                return new Return<IEnumerable<Gate>>
+                {
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = result.Count
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<Gate>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<Gate>>> GetAllGateByParkingAreaAsync(Guid parkingAreaId)
+        {
+            try
+            {
+                var result = await _db.Gates
+                    .Include(p => p.ParkingArea)
+                    .Where(p =>
+                        p.ParkingAreaId.Equals(parkingAreaId) &&                        
+                        p.DeletedDate == null
+                    )
                     .ToListAsync();
                 return new Return<IEnumerable<Gate>>
                 {

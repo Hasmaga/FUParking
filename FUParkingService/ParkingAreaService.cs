@@ -2,10 +2,12 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.ParkingArea;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -14,16 +16,19 @@ namespace FUParkingService
         private readonly IParkingAreaRepository _parkingAreaRepository;
         private readonly IHelpperService _helpperService;
         private readonly ISessionRepository _sessionRepository;
+        private readonly IGateRepository _gateRepository;
 
-        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService, ISessionRepository sessionRepository)
+        public ParkingAreaService(IParkingAreaRepository parkingAreaRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IGateRepository gateRepository)
         {
             _parkingAreaRepository = parkingAreaRepository;
             _helpperService = helpperService;
             _sessionRepository = sessionRepository;
+            _gateRepository = gateRepository;
         }
 
         public async Task<Return<dynamic>> DeleteParkingArea(Guid id)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
@@ -76,6 +81,28 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                // Delete all gate of this parking area
+                var gates = await _gateRepository.GetAllGateByParkingAreaAsync(id);
+                if (gates.IsSuccess && gates.Data is not null)
+                {
+                    foreach (var gate in gates.Data)
+                    {
+                        gate.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                        gate.LastModifyById = checkAuth.Data.Id;
+                        gate.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                        var resultGate = await _gateRepository.UpdateGateAsync(gate);
+                        if (!resultGate.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                        {
+                            
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = resultGate.InternalErrorMessage,
+                                Message = ErrorEnumApplication.SERVER_ERROR
+                            };
+                        }
+                    }
+                }
+                scope.Complete();
                 return new Return<dynamic>
                 {
                     IsSuccess = true,
@@ -411,6 +438,117 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<IEnumerable<GetParkingAreaOptionResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> CreateParkingAreaAndGateAsync(CreateParkingAreaAndGateReqDto req)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // Check for duplicate parking area name
+                var isDuplicateName = await _parkingAreaRepository.GetParkingAreaByNameAsync(req.Name);
+                if (!isDuplicateName.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT)) {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isDuplicateName.InternalErrorMessage,
+                        Message = ErrorEnumApplication.OBJECT_EXISTED
+                    };
+                }
+
+                string? mode;
+                switch (req.Mode)
+                {
+                    case 1:
+                        mode = ModeEnum.MODE1;
+                        break;
+                    case 2:
+                        mode = ModeEnum.MODE2;
+                        break;
+                    case 3:
+                        mode = ModeEnum.MODE3;
+                        break;
+                    case 4:
+                        mode = ModeEnum.MODE4;
+                        break;
+                    default:
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.INVALID_INPUT
+                        };
+                }
+                var parkingArea = new ParkingArea
+                {
+                    Mode = mode ?? ModeEnum.MODE1,
+                    StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    Name = req.Name,
+                    Description = req.Description,
+                    MaxCapacity = req.MaxCapacity,
+                    Block = req.Block,
+                    CreatedById = checkAuth.Data.Id,
+                };
+                var result = await _parkingAreaRepository.CreateParkingAreaAsync(parkingArea);
+                if (!result.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+
+                if (req.Gates is not null && req.Gates.Length > 0)
+                {
+                    foreach (var gate in req.Gates)
+                    {
+                        var gateResult = await _gateRepository.GetGateByNameAsync(gate.Name);
+                        if (!gateResult.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                        {
+                            var newGate = new Gate
+                            {
+                                Name = gate.Name,
+                                ParkingAreaId = result.Data.Id,
+                                StatusGate = StatusGateEnum.ACTIVE,
+                                CreatedById = checkAuth.Data.Id
+                            };
+                            var createGateResult = await _gateRepository.CreateGateAsync(newGate);
+                            if (!createGateResult.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                            {
+                                scope.Dispose();
+                                return new Return<dynamic>
+                                {
+                                    InternalErrorMessage = createGateResult.InternalErrorMessage,
+                                    Message = ErrorEnumApplication.SERVER_ERROR
+                                };
+                            }
+                        }
+                    }
+                }
+
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

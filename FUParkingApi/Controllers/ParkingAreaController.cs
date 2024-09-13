@@ -23,26 +23,7 @@ namespace FUParkingApi.Controllers
         {
             _parkingAreaService = parkingAreaService;
             _logger = logger;
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateParkingAreaAsync([FromBody] CreateParkingAreaReqDto req)
-        {
-            if (!ModelState.IsValid)
-            {
-                return StatusCode(422, Helper.GetValidationErrors(ModelState));
-            }
-            var result = await _parkingAreaService.CreateParkingAreaAsync(req);
-            if (!result.IsSuccess)
-            {
-                if (result.InternalErrorMessage is not null)
-                {
-                    _logger.LogError("Error when create parking area: {ex}", result.InternalErrorMessage);
-                }
-                return Helper.GetErrorResponse(result.Message);
-            }
-            return StatusCode(200, result);
-        }
+        }        
 
         [HttpGet]
         public async Task<IActionResult> GetParkingAreasAsync(GetListObjectWithFiller req)
@@ -123,6 +104,25 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error when get parking area option: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateParkingAreaAndGateAsync([FromBody] CreateParkingAreaAndGateReqDto req)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
+            var result = await _parkingAreaService.CreateParkingAreaAndGateAsync(req);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get list parking area with gate: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

@@ -66,5 +66,6 @@ namespace FUParkingModel.Object
         public ICollection<Session>? SessionLastModifyBy { get; set; }
         public ICollection<User>? CreatedBys { get; set; }
         public ICollection<User>? LastModifyBys { get; set; }
+        public ICollection<Transaction>? TransactionTopUpBys { get; set; }
     }
 }

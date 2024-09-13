@@ -1,5 +1,6 @@
 ﻿using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Gate;
 using FUParkingModel.ResponseObject.Gate;
 using FUParkingModel.ReturnCommon;
 
@@ -13,5 +14,7 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> DeleteGate(Guid id);
         Task<Return<dynamic>> UpdateStatusGateAsync(Guid gateId, bool isActive);        
         Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetListGateByParkingAreaAsync(Guid parkingAreaId);
+        Task<Return<dynamic>> CreateGatesForParkingAreaByStaffAsync(CreateGatesForParkingAreaByStaffReqDto req);
+        Task<Return<IEnumerable<GetGateByParkingAreaResDto>>> GetAllGateByParkingAreaAsync(Guid parkingAreaId);
     }
 }
