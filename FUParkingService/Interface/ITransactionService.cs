@@ -1,4 +1,5 @@
 ﻿using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Transaction;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ReturnCommon;
@@ -12,5 +13,6 @@ namespace FUParkingService.Interface
         Task<Return<int>> GetRevenueTodayAsync();
         Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync();
         Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req);
+        Task<Return<dynamic>> TopUpCustomerWalletByUserAsync(TopUpCustomerWalletByUserReqDto req);
     }
 }

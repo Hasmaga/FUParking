@@ -1,10 +1,13 @@
 ﻿using FUParkingModel.Enum;
+using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Transaction;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -12,11 +15,15 @@ namespace FUParkingService
     {
         private readonly ITransactionRepository _transactionRepository;
         private readonly IHelpperService _helpperService;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly IWalletRepository _walletRepository;
 
-        public TransactionService(ITransactionRepository transactionRepository, IHelpperService helpperService)
+        public TransactionService(ITransactionRepository transactionRepository, IHelpperService helpperService, ICustomerRepository customerRepository, IWalletRepository walletRepository)
         {
             _transactionRepository = transactionRepository;
             _helpperService = helpperService;
+            _customerRepository = customerRepository;
+            _walletRepository = walletRepository;
         }
 
         public async Task<Return<IEnumerable<GetTransactionPaymentResDto>>> GetListTransactionPaymentAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
@@ -174,6 +181,91 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> TopUpCustomerWalletByUserAsync(TopUpCustomerWalletByUserReqDto req)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // check customerId 
+                var customer = await _customerRepository.GetCustomerByIdAsync(req.CustomerId);
+                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = customer.InternalErrorMessage,
+                        Message = ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    };
+                }
+
+                // get wallet main
+                var wallet = await _walletRepository.GetMainWalletByCustomerId(req.CustomerId);
+                if (!wallet.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || wallet.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = wallet.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                    };
+                }
+
+                wallet.Data.Balance += req.Amount;
+                var resultUpdateWallet = await _walletRepository.UpdateWalletAsync(wallet.Data);
+                if (!resultUpdateWallet.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = resultUpdateWallet.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                    };
+                }
+
+                var transaction = new FUParkingModel.Object.Transaction
+                {
+                    Amount = req.Amount,
+                    CreatedDate = DateTime.Now,
+                    WalletId = wallet.Data.Id,
+                    TransactionDescription = "Top Up Wallet By Staff",
+                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                    UserTopUpId = checkAuth.Data.Id,                    
+                };
+
+                var result = await _transactionRepository.CreateTransactionAsync(transaction);
+                if (!result.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                    };
+                }
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR

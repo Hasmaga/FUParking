@@ -717,9 +717,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.VEHICLE_IS_IN_SESSION
                     };
                 }
-                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                vehicle.Data.LastModifyById = checkAuth.Data.Id;
-                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
