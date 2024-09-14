@@ -299,7 +299,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = existingParkingArea.InternalErrorMessage };
                 }
-                return new Return<dynamic> { Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY, IsSuccess = true };
+                return new Return<dynamic> { Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, IsSuccess = true };
             }
             catch (Exception ex)
             {
@@ -361,7 +361,7 @@ namespace FUParkingService
                 {
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateResult.InternalErrorMessage };
                 }
-                return new Return<dynamic> { Message = SuccessfullyEnumServer.UPLOAD_OBJECT_SUCCESSFULLY, IsSuccess = true };
+                return new Return<dynamic> { Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, IsSuccess = true };
             }
             catch (Exception ex)
             {
