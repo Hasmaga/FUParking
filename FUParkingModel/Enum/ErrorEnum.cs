@@ -78,6 +78,7 @@
         public const string PLATE_NUMBER_INVALID = "Plate number is invalid";
         public const string CARD_IS_MISSING = "Card is missing";
         public const string VEHICLE_IS_PENDING = "This vehicle is pending";
+        public const string CAN_NOT_UPDATE_DEFAULT_PRICE_TABLE = "Can not update default price table";
     }
 
     public class MinioErrorServerDefineEnum

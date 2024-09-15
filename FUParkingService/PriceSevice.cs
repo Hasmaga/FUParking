@@ -842,5 +842,71 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<dynamic>> UpdatePriceTableAsync(UpdatePriceTableReqDto req)
+        {
+            try
+            {
+                // check auth
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // check price table
+                var isPriceTableExist = await _priceRepository.GetPriceTableByIdAsync(req.PriceTableId);
+                if (isPriceTableExist.Data is null || !isPriceTableExist.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.PRICE_TABLE_NOT_EXIST
+                    };
+                }
+
+                // if default price table
+                if (isPriceTableExist.Data.Priority == 1)
+                {
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.CAN_NOT_UPDATE_DEFAULT_PRICE_TABLE
+                    };
+                }
+
+                isPriceTableExist.Data.Name = req.Name ?? isPriceTableExist.Data.Name;
+                isPriceTableExist.Data.ApplyFromDate = req.ApplyFromDate;
+                isPriceTableExist.Data.ApplyToDate = req.ApplyToDate;
+                isPriceTableExist.Data.LastModifyById = checkAuth.Data.Id;
+                isPriceTableExist.Data.LastModifyDate = DateTime.Now;
+
+                var result = await _priceRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
+                if (!result.IsSuccess)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }
