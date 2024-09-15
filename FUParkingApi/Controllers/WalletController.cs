@@ -38,13 +38,11 @@ namespace FUParkingApi.Controllers
                 return Helper.GetErrorResponse(result.Message);
             }
             return StatusCode(200, result);
-
         }
 
         [HttpGet("transaction/extra")]
         public async Task<IActionResult> GetTransactionWalletExtra([FromQuery] GetListObjectWithFillerDateReqDto req)
         {
-
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
@@ -59,13 +57,11 @@ namespace FUParkingApi.Controllers
                 return Helper.GetErrorResponse(result.Message);
             }
             return StatusCode(200, result);
-
         }
 
         [HttpGet("balance/main")]
         public async Task<IActionResult> GetBalanceWalletMain()
         {
-
             var result = await _walletService.GetBalanceWalletMainAsync();
             if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
@@ -76,13 +72,11 @@ namespace FUParkingApi.Controllers
                 return Helper.GetErrorResponse(result.Message);
             }
             return StatusCode(200, result);
-
         }
 
         [HttpGet("balance/extra")]
         public async Task<IActionResult> GetBalanceWalletExtra()
         {
-
             var result = await _walletService.GetBalanceWalletExtraAsync();
             if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
             {
@@ -93,7 +87,21 @@ namespace FUParkingApi.Controllers
                 return Helper.GetErrorResponse(result.Message);
             }
             return StatusCode(200, result);
+        }
 
+        [HttpGet("balance/{id}")]
+        public async Task<IActionResult> GetBalanceWalletMainExtraAsync(Guid id)
+        {
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(id);
+            if (!result.Message.Equals(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY))
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get balance wallet: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
         }
     }
 }

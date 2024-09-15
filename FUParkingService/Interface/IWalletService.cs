@@ -11,5 +11,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<GetInfoWalletTransResDto>>> GetTransactionWalletExtraAsync(GetListObjectWithFillerDateReqDto req);
         Task<Return<int>> GetBalanceWalletMainAsync();
         Task<Return<GetWalletExtraResDto>> GetBalanceWalletExtraAsync();
+        Task<Return<GetBalanceWalletMainExtraResDto>> GetBalanceWalletMainExtraAsync(Guid customerId);
     }
 }

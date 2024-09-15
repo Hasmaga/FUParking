@@ -831,7 +831,6 @@ namespace FUParkingService
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
-
             }
             catch (Exception e)
             {

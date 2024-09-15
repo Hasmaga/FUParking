@@ -183,5 +183,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpDelete("/api/price/{id}")]
+        public async Task<IActionResult> DeletePriceTableAsync([FromRoute] Guid id)
+        {
+            var result = await _priceService.DeletePriceTableAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at delete price table async: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

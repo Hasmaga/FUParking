@@ -214,5 +214,60 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<GetBalanceWalletMainExtraResDto>> GetBalanceWalletMainExtraAsync(Guid customerId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var walletMain = await _walletRepository.GetMainWalletByCustomerId(customerId);
+                if (!walletMain.IsSuccess)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletMain.InternalErrorMessage };
+                }
+                if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data is null)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(customerId);
+                if (!walletExtra.IsSuccess)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = walletExtra.InternalErrorMessage };
+                }
+                if (!walletExtra.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletExtra.Data is null)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                return new Return<GetBalanceWalletMainExtraResDto>()
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    Data = new GetBalanceWalletMainExtraResDto
+                    {
+                        BalanceMain = walletMain.Data.Balance,
+                        BalanceExtra = walletExtra.Data.Balance,
+                        ExpDate = walletExtra.Data.EXPDate
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetBalanceWalletMainExtraResDto>()
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }
