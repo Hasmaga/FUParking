@@ -817,6 +817,7 @@ namespace FUParkingService
                 isPriceTableExist.Data.StatusPriceTable = StatusPriceTableEnum.INACTIVE;
                 isPriceTableExist.Data.LastModifyById = checkAuth.Data.Id;
                 isPriceTableExist.Data.LastModifyDate = DateTime.Now;
+                isPriceTableExist.Data.DeletedDate = DateTime.Now;
                 var isUpdate = await _priceRepository.UpdatePriceTableAsync(isPriceTableExist.Data);
                 if (!isUpdate.IsSuccess)
                 {
