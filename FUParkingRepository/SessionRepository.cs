@@ -368,10 +368,11 @@ namespace FUParkingRepository
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 req.StartDate ??= DateTime.MinValue;
 
-                req.EndDate ??= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
+                req.EndDate ??= TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));        
+                
+                query = query.Where(p => p.CreatedDate >= req.StartDate && p.CreatedDate <= req.EndDate);
 
-                var result = await query
-                    .Where(p => p.CreatedDate >= req.StartDate && p.CreatedDate <= req.EndDate)
+                var result = await query                    
                     .OrderByDescending(t => t.CreatedDate)
                     .Skip((req.PageIndex - 1) * req.PageSize)
                     .Take(req.PageSize)
@@ -380,8 +381,8 @@ namespace FUParkingRepository
                 return new Return<IEnumerable<Session>>
                 {
                     Data = result,
-                    TotalRecord = query.Count(),
-                    Message = query.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    TotalRecord = await query.CountAsync(),
+                    Message = await query.AnyAsync() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,
                 };
             }
