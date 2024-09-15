@@ -17,13 +17,15 @@ namespace FUParkingService
     {
         private readonly ICustomerRepository _customerRepository;        
         private readonly IHelpperService _helpperService;
-        private readonly IVehicleRepository _vehicleRepository;        
+        private readonly IVehicleRepository _vehicleRepository;     
+        private readonly IWalletRepository _walletRepository;
 
-        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository)
+        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository, IWalletRepository walletRepository)
         {
             _customerRepository = customerRepository;
             _helpperService = helpperService;
-            _vehicleRepository = vehicleRepository;            
+            _vehicleRepository = vehicleRepository;
+            _walletRepository = walletRepository;
         }
 
         public async Task<Return<dynamic>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)
@@ -689,6 +691,7 @@ namespace FUParkingService
 
         public async Task<Return<dynamic>> UpdateInformationCustomerByStaff(UpdateInformationCustomerResDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
@@ -721,6 +724,43 @@ namespace FUParkingService
                             InternalErrorMessage = customerType.InternalErrorMessage,
                             Message = customerType.Message
                         };
+                    }
+                    if (customerType.Data.Name.Equals(CustomerTypeEnum.PAID))
+                    {
+                        // create wallet main and waller extra
+                        var walletMain = new Wallet
+                        {
+                            CustomerId = customer.Data.Id,
+                            WalletType = WalletType.MAIN,
+                            Balance = 0,                            
+                        };
+
+                        var walletExtra = new Wallet
+                        {
+                            CustomerId = customer.Data.Id,
+                            WalletType = WalletType.EXTRA,
+                            Balance = 0,
+                        };
+
+                        var resultWalletMain = await _walletRepository.CreateWalletAsync(walletMain);
+                        if (resultWalletMain.Data == null || !resultWalletMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                        {
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = resultWalletMain.InternalErrorMessage,
+                                Message = ErrorEnumApplication.SERVER_ERROR
+                            };
+                        }
+
+                        var resultWalletExtra = await _walletRepository.CreateWalletAsync(walletExtra);
+                        if (resultWalletExtra.Data == null || !resultWalletExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                        {
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = resultWalletExtra.InternalErrorMessage,
+                                Message = ErrorEnumApplication.SERVER_ERROR
+                            };
+                        }
                     }
                     customer.Data.CustomerTypeId = customerType.Data.Id;
                 }

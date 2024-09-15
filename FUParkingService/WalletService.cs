@@ -13,12 +13,14 @@ namespace FUParkingService
         private readonly IWalletRepository _walletRepository;
         private readonly IHelpperService _helpperService;
         private readonly ITransactionRepository _transactionRepository;
+        private readonly ICustomerRepository _customerRepository;
 
-        public WalletService(IWalletRepository walletRepository, IHelpperService helpperService, ITransactionRepository transactionRepository)
+        public WalletService(IWalletRepository walletRepository, IHelpperService helpperService, ITransactionRepository transactionRepository, ICustomerRepository customerRepository)
         {
             _walletRepository = walletRepository;
             _helpperService = helpperService;
             _transactionRepository = transactionRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<Return<IEnumerable<GetInfoWalletTransResDto>>> GetTransactionWalletExtraAsync(GetListObjectWithFillerDateReqDto req)
@@ -229,6 +231,21 @@ namespace FUParkingService
                     };
                 }
 
+                // check customer
+                var customer = await _customerRepository.GetCustomerByIdAsync(customerId);
+                if (!customer.IsSuccess)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
+                }
+                if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data is null)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+                // Check customerType
+                if (customer.Data.CustomerType?.Name != CustomerTypeEnum.PAID)
+                {
+                    return new Return<GetBalanceWalletMainExtraResDto> { Message = ErrorEnumApplication.MUST_BE_CUSTOMER_PAID };
+                }
                 var walletMain = await _walletRepository.GetMainWalletByCustomerId(customerId);
                 if (!walletMain.IsSuccess)
                 {
