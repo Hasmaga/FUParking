@@ -18,5 +18,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> UpdatePasswordAsync(UpdateUserPasswordReqDto req);
         Task<Return<bool>> DeleteUserByIdAsync(Guid id);
         Task<Return<dynamic>> CreateListUserAsync(CreateListUserReqDto req);
+        Task<Return<IEnumerable<GetRoleResDto>>> GetAllRoleAsync();
     }
 }

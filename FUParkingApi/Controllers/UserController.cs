@@ -194,8 +194,7 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
-
-        [Authorize]
+        
         [HttpPost("list")]
         public async Task<IActionResult> CreateListUserAsync([FromBody] FUParkingModel.RequestObject.User.CreateListUserReqDto req)
         {
@@ -209,6 +208,22 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at create list user: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [Authorize]
+        [HttpGet("role")]
+        public async Task<IActionResult> GetAllRolesAsync()
+        {
+            var result = await _userService.GetAllRoleAsync();
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get all roles: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

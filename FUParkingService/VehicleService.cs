@@ -279,7 +279,8 @@ namespace FUParkingService
                         Email = x.Customer?.Email ?? "",
                         LastModifyBy = x.LastModifyBy?.Email ?? "",
                         LastModifyDate = x.LastModifyDate,
-                        StaffApproval = x.Staff?.Email ?? ""
+                        StaffApproval = x.Staff?.Email ?? "",
+                        VehicleTypeId = x.VehicleTypeId
                     }),
                     TotalRecord = result.TotalRecord,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,

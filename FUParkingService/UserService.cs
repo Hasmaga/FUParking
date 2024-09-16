@@ -708,5 +708,51 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<GetRoleResDto>>> GetAllRoleAsync()
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetRoleResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _roleRepository.GetAllRoleAsync();
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetRoleResDto>>
+                    {
+                        Message = ErrorEnumApplication.SERVER_ERROR,
+                        InternalErrorMessage = result.InternalErrorMessage
+                    };
+                }
+                return new Return<IEnumerable<GetRoleResDto>>
+                {
+                    IsSuccess = true,
+                    Data = result.Data?.Select(t => new GetRoleResDto
+                    {
+                        RoleId = t.Id,
+                        Name = t.Name,
+                        Description = t.Description
+                    }),
+                    TotalRecord = result.TotalRecord,
+                    Message = result.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<GetRoleResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }

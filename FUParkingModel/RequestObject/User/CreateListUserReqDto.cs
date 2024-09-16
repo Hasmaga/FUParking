@@ -4,10 +4,10 @@ namespace FUParkingModel.RequestObject.User
 {
     public class CreateListUserReqDto
     {
-        public CreateUserReqDto[] Users { get; set; } = null!;
+        public CreateUsersReqDto[] Users { get; set; } = null!;
     }
 
-    public class CreateUserReqDto
+    public class CreateUsersReqDto
     {
         [Required]
         [EmailAddress(ErrorMessage = "Must be email format")]
