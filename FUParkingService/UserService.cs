@@ -9,6 +9,7 @@ using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using System.Security.Cryptography;
 using System.Text;
+using System.Transactions;
 
 namespace FUParkingService
 {
@@ -254,7 +255,7 @@ namespace FUParkingService
                         FullName = t.FullName,
                         Id = t.Id,
                         Role = t.Role?.Name ?? "",
-                        Status= t.StatusUser
+                        Status = t.StatusUser
                     }),
                     TotalRecord = result.TotalRecord,
                     Message = result.Message
@@ -477,7 +478,7 @@ namespace FUParkingService
                 // Verify password
                 if (!VerifyPasswordHash(req.OldPassword, Convert.FromBase64String(user.Data.PasswordSalt ?? ""), user.Data.PasswordHash ?? ""))
                 {
-                    return new Return<bool> 
+                    return new Return<bool>
                     {
                         Message = ErrorEnumApplication.CRENEDTIAL_IS_WRONG
                     };
@@ -506,6 +507,77 @@ namespace FUParkingService
             catch (Exception ex)
             {
                 return new Return<bool>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
+
+        public async Task<Return<dynamic>> CreateListUserAsync(FUParkingModel.RequestObject.User.CreateListUserReqDto req)
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                foreach (var user in req.Users)
+                {
+                    var isUserRegistered = await _userRepository.GetUserByEmailAsync(user.Email);
+                    if (!isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.EMAIL_IS_EXIST,
+                            InternalErrorMessage = isUserRegistered.InternalErrorMessage,
+                        };
+                    }
+                    var role = await _roleRepository.GetRoleByIdAsync(user.RoleId);
+                    if (!role.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || role.Data is null)
+                    {
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                            InternalErrorMessage = role.InternalErrorMessage
+                        };
+                    }
+                    var newUser = new CreateUserPrimaryReqDto
+                    {
+                        Email = user.Email,
+                        FullName = user.FullName,
+                        Password = user.Password,
+                        RoleId = role.Data.Id,
+                        CreateById = checkAuth.Data.Id
+                    };
+                    var result = await CreateUserAsync(newUser);
+                    if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            Message = ErrorEnumApplication.SERVER_ERROR,
+                            InternalErrorMessage = result.InternalErrorMessage
+                        };
+                    }
+                }
+                scope.Complete();
+                return new Return<dynamic>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<dynamic>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = ex
@@ -605,7 +677,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.USER_NOT_EXIST,
                         InternalErrorMessage = user.InternalErrorMessage
                     };
-                }                
+                }
 
                 user.Data.StatusUser = StatusUserEnum.INACTIVE;
                 user.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
