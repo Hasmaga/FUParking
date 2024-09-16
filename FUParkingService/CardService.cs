@@ -481,24 +481,29 @@ namespace FUParkingService
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                     Data = new GetCardByCardNumberResDto
                     {
+                        CardId = card.Data.Id,
                         CardNumber = card.Data.CardNumber,
-                        Status = card.Data.Status,                        
+                        Status = card.Data.Status
                     }
                 };
 
                 if (session.Data is not null &&
                     (session.Data.Status.Equals(SessionEnum.PARKED) || session.Data.Status.Equals(SessionEnum.CLOSED)))
                 {
-                    response.Data.SessionCustomerEmail = session.Data.Customer?.Email;
-                    response.Data.SessionCustomerName = session.Data.Customer?.FullName;
                     response.Data.SessionGateIn = session.Data.GateIn?.Name;
                     response.Data.SessionId = session.Data.Id;
                     response.Data.SessionPlateNumber = session.Data.PlateNumber;
                     response.Data.SessionTimeIn = session.Data.TimeIn;
-                    response.Data.SessionVehicleType = session.Data.VehicleType?.Name;
+                    response.Data.SessionVehicleType = session.Data.VehicleType?.Description;
                     response.Data.ImageInUrl = session.Data.ImageInUrl;
                     response.Data.ImageInBodyUrl = session.Data.ImageInBodyUrl;
                     response.Data.SessionStatus = session.Data.Status;
+
+                    if (session.Data.Status.Equals(SessionEnum.CLOSED))
+                    {
+                        response.Data.SessionTimeOut = session.Data.TimeOut;
+                        response.Data.SessionGateOut = session.Data.GateOut?.Name;
+                    }
                 }
 
                 return response;
@@ -512,6 +517,7 @@ namespace FUParkingService
                 };
             }
         }
+
 
         public async Task<Return<IEnumerable<GetCardOptionsResDto>>> GetCardOptionAsync()
         {
