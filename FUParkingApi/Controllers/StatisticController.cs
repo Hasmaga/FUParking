@@ -286,5 +286,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("parkings/{parkingId}/revenue")]
+        public async Task<IActionResult> GetListStatisticRevenueOfParkingSystemDetailsAsync([FromRoute] Guid parkingId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemDetailsAsync(parkingId, startDate, endDate);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetListStatisticRevenueOfParkingSystemDetailsAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

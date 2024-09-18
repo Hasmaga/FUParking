@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FUParkingModel.ResponseObject.Statistic
 {
-    public class StatisticRevenueOfParkingSystemDto
+    public class StatisticRevenueOfParkingSystemResDto
     {
         public GetParkingAreaOptionResDto ParkingArea { get; set; } = null!;
 

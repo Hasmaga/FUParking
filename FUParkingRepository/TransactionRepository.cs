@@ -378,11 +378,10 @@ namespace FUParkingRepository
             }
         }
 
-        public async Task<Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate)
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate)
         {
             try
             {
-                // Use today's date if startDate or endDate is null
                 DateTime today = DateTime.Today;
                 startDate ??= today;
                 endDate ??= today;
@@ -439,7 +438,7 @@ namespace FUParkingRepository
                 int averageRevenue = numberOfParkingAreas > 0 ? totalRevenue / numberOfParkingAreas : 0;
 
                 // Join the revenue data with parking areas
-                var result = parkingAreas.Select(pa => new StatisticRevenueOfParkingSystemDto
+                var result = parkingAreas.Select(pa => new StatisticRevenueOfParkingSystemResDto
                 {
                     ParkingArea = pa,
                     totalRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.TotalRevenue ?? 0,
@@ -448,7 +447,7 @@ namespace FUParkingRepository
                     averageRevenue = averageRevenue
                 }).ToList();
 
-                return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
                 {
                     Data = result,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
@@ -457,7 +456,7 @@ namespace FUParkingRepository
             }
             catch (Exception e)
             {
-                return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e
@@ -465,5 +464,89 @@ namespace FUParkingRepository
             }
         }
 
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>> GetListStatisticRevenueOfParkingSystemDetailsAsync(Guid parkingId, DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                startDate ??= DateTime.Today;
+                endDate ??= DateTime.Today;
+
+                var allGates = await _db.Gates
+                    .Where(g => g.ParkingAreaId == parkingId)
+                    .Select(g => g.Name)
+                    .ToListAsync();
+
+                var query = from gate in _db.Gates
+                            where gate.ParkingAreaId == parkingId
+                            join session in _db.Sessions on gate.Id equals session.GateOutId into sessionGroup
+                            from session in sessionGroup.DefaultIfEmpty()
+                            join payment in _db.Payments on session.Id equals payment.SessionId into paymentGroup
+                            from payment in paymentGroup.DefaultIfEmpty()
+                            join transaction in _db.Transactions on payment.Id equals transaction.PaymentId into transactionGroup
+                            from transaction in transactionGroup.DefaultIfEmpty()
+                            join paymentMethod in _db.PaymentMethods on payment.PaymentMethodId equals paymentMethod.Id into paymentMethodGroup
+                            from paymentMethod in paymentMethodGroup.DefaultIfEmpty()
+                            where (transaction == null || (transaction.DeletedDate == null
+                                && transaction.TransactionStatus == StatusTransactionEnum.SUCCEED
+                                && transaction.CreatedDate >= startDate.Value
+                                && transaction.CreatedDate <= endDate.Value))
+                                && (paymentMethod.Name == PaymentMethods.WALLET || paymentMethod.Name == PaymentMethods.CASH)
+                            select new
+                            {
+                                GateName = gate.Name,
+                                PaymentMethodName = paymentMethod != null ? paymentMethod.Name : "",
+                                Amount = transaction != null ? transaction.Amount : 0,
+                                CreatedDate = transaction != null ? transaction.CreatedDate : (DateTime?)null
+                            };
+
+                var result = await query.ToListAsync();
+
+                var groupedResult = result
+                    .GroupBy(r => r.PaymentMethodName)
+                    .Select(g => new StatisticRevenueOfParkingAreaSystemDetailResDto
+                    {
+                        PaymentMethod = string.IsNullOrEmpty(g.Key) ? "" : g.Key,
+                        Gates = allGates.Select(gateName => new GateDetailDto
+                        {
+                            Name = gateName,
+                            Revenue = g.Where(x => x.GateName == gateName).Sum(x => x.Amount)
+                        }).ToList(),
+                        total = g.Sum(x => x.Amount)
+                    }).ToList();
+
+                var paymentMethods = new[] { PaymentMethods.WALLET, PaymentMethods.CASH };
+                foreach (var method in paymentMethods)
+                {
+                    if (!groupedResult.Any(r => r.PaymentMethod == method))
+                    {
+                        groupedResult.Add(new StatisticRevenueOfParkingAreaSystemDetailResDto
+                        {
+                            PaymentMethod = method,
+                            Gates = allGates.Select(gateName => new GateDetailDto
+                            {
+                                Name = gateName,
+                                Revenue = 0
+                            }).ToList(),
+                            total = 0
+                        });
+                    }
+                }
+
+                return new Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>
+                {
+                    Data = groupedResult,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }
