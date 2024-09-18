@@ -1,9 +1,7 @@
-﻿using FUParkingModel.Object;
-using FUParkingModel.RequestObject.Common;
+﻿using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.RequestObject.Session;
 using FUParkingModel.ResponseObject.Session;
-using FUParkingModel.ResponseObject.SessionCheckOut;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 

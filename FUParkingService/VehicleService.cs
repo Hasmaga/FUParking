@@ -641,14 +641,17 @@ namespace FUParkingService
                         };
                     }
                     // Check PlateNumber is exist
-                    var vehicleByPlateNumber = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
-                    if (!vehicleByPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                    if (!req.PlateNumber.Equals(vehicle.Data.PlateNumber, StringComparison.OrdinalIgnoreCase))
                     {
-                        return new Return<dynamic>
+                        var vehicleByPlateNumber = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
+                        if (!vehicleByPlateNumber.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                         {
-                            InternalErrorMessage = vehicleByPlateNumber.InternalErrorMessage,
-                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
-                        };
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = vehicleByPlateNumber.InternalErrorMessage,
+                                Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                            };
+                        }
                     }
                     vehicle.Data.PlateNumber = req.PlateNumber;
                 }

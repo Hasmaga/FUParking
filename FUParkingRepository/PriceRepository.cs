@@ -406,5 +406,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<PriceTable>>> GetAllPriceTableByVehicleTypeAsync(Guid vehicleType)
+        {
+            try
+            {
+                var result = await _db.PriceTables
+                    .Include(r => r.VehicleType)
+                    .Where(t => t.DeletedDate == null && t.VehicleTypeId.Equals(vehicleType))
+                    .ToListAsync();
+
+                return new Return<IEnumerable<PriceTable>>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    TotalRecord = result.Count(),
+                    Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<PriceTable>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

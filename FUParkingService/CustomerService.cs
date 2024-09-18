@@ -230,7 +230,8 @@ namespace FUParkingService
                     CreateDate = DateOnly.FromDateTime(b.CreatedDate),
                     CustomerType = b.CustomerType?.Name ?? "",
                     FullName = b.FullName,
-                    StatusCustomer = b.StatusCustomer
+                    StatusCustomer = b.StatusCustomer,
+                    CustomerTypeId = b.CustomerTypeId,
                 }).ToList();
                 res.TotalRecord = listCustomerRes.TotalRecord;
                 res.Message = listCustomerRes.Data?.Count() > 0 ? SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY : ErrorEnumApplication.NOT_FOUND_OBJECT;

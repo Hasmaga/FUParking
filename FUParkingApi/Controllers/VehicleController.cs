@@ -180,9 +180,8 @@ namespace FUParkingApi.Controllers
         [Authorize]
         public async Task<IActionResult> GetCustomerVehicleByCustomerIdAsync()
         {
-
             var result = await _vehicleService.GetListCustomerVehicleByCustomerIdAsync();
-            if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+            if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
                 {
@@ -191,7 +190,6 @@ namespace FUParkingApi.Controllers
                 return Helper.GetErrorResponse(result.Message);
             }
             return Ok(result);
-
         }
 
         [HttpDelete("customer/{id}")]

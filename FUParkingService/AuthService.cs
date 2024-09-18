@@ -328,6 +328,10 @@ namespace FUParkingService
                 }
                 if (isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && isUserRegistered.Data is not null)
                 {
+                    if (isUserRegistered.Data.StatusCustomer == StatusCustomerEnum.INACTIVE)
+                    {
+                        return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED };
+                    }                    
                     transaction.Complete();
                     return new Return<LoginWithGoogleMoblieResDto>
                     {

@@ -621,6 +621,26 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+
+                if (req.PriceItems is not null)
+                {
+                    var createListPriceItem = new CreateListPriceItemReqDto
+                    {
+                        PriceTableId = priceTable.Id,
+                        PriceItems = req.PriceItems
+                    };
+
+                    var resultPriceItems = await CreatePriceItemAsync(createListPriceItem);
+                    if (!resultPriceItems.IsSuccess)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultPriceItems.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }                
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -902,6 +922,75 @@ namespace FUParkingService
             catch (Exception e)
             {
                 return new Return<dynamic>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableByVehicleTypeAsync(Guid vehicleTypeId)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                // Check VehicleType 
+                var isVehicleTypeExist = await _vehicleRepository.GetVehicleTypeByIdAsync(vehicleTypeId);
+                if (!isVehicleTypeExist.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        InternalErrorMessage = isVehicleTypeExist.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                if (!isVehicleTypeExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                    };
+                }
+
+                var result = await _priceRepository.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<GetPriceTableResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+
+                return new Return<IEnumerable<GetPriceTableResDto>>
+                {
+                    Data = result.Data?.Select(t => new GetPriceTableResDto
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        ApplyFromDate = t.ApplyFromDate,
+                        ApplyToDate = t.ApplyToDate,
+                        Priority = t.Priority,
+                        StatusPriceTable = t.StatusPriceTable,
+                        VehicleType = t.VehicleType?.Name ?? ""
+                    }),
+                    IsSuccess = true,
+                    TotalRecord = result.TotalRecord,
+                    Message = result.Message
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<GetPriceTableResDto>>
                 {
                     Message = ErrorEnumApplication.SERVER_ERROR,
                     InternalErrorMessage = e

@@ -198,5 +198,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("/api/price/vehicle-type/{id}")]
+        public async Task<IActionResult> GetListPriceTableActiveByVehicleTypeAsync([FromRoute] Guid id)
+        {
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at get list price table active by vehicle type async: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

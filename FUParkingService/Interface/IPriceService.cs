@@ -20,5 +20,6 @@ namespace FUParkingService.Interface
         Task<Return<bool>> UpdateStatusPriceTableAsync(ChangeStatusPriceTableReqDto req);
         Task<Return<bool>> DeletePriceTableAsync(Guid pricetableId);
         Task<Return<dynamic>> UpdatePriceTableAsync(UpdatePriceTableReqDto req);
+        Task<Return<IEnumerable<GetPriceTableResDto>>> GetAllPriceTableByVehicleTypeAsync(Guid vehicleTypeId);
     }
 }

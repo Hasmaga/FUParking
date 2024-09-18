@@ -27,6 +27,8 @@ namespace FUParkingModel.RequestObject
         [Required(ErrorMessage = "Must have min price default")]
         public int MinPrice { get; set; }
 
+        public List<CreatePriceItemReqDto>? PriceItems { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (ApplyFromDate is not null && ApplyToDate is not null)

@@ -7,6 +7,7 @@
         public string Email { get; set; } = "";
         public string StatusCustomer { get; set; } = "";
         public string CustomerType { get; set; } = "";
+        public Guid CustomerTypeId { get; set; }
         public DateOnly CreateDate { get; set; }
     }
 }
