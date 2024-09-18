@@ -17,5 +17,6 @@ namespace FUParkingRepository.Interface
         Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync();
         Task<Return<Transaction>> GetTransactionBySessionIdAsync(Guid sessionId);
         Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req);
+        Task<Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate);
     }
 }

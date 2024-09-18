@@ -1,5 +1,7 @@
 ﻿using FUParkingApi.HelperClass;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.ResponseObject.Statistic;
+using FUParkingModel.ReturnCommon;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +31,7 @@ namespace FUParkingApi.Controllers
             _cardService = cardService;
         }
 
-        [HttpGet("session")]        
+        [HttpGet("session")]
         public async Task<IActionResult> StatisticSessionAppAsync()
         {
             if (!ModelState.IsValid)
@@ -107,7 +109,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("revenue/today")]
         public async Task<IActionResult> StatisticRevenueTodayAsync()
-        {            
+        {
             var result = await _transactionService.GetRevenueTodayAsync();
             if (!result.IsSuccess)
             {
@@ -122,7 +124,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("session/parked")]
         public async Task<IActionResult> StatisticSessionParkedAsync()
-        {            
+        {
             var result = await _sessionService.GetTotalSessionParkedAsync();
             if (!result.IsSuccess)
             {
@@ -137,7 +139,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("session/average")]
         public async Task<IActionResult> StatisticSessionAverageAsync()
-        {            
+        {
             var result = await _sessionService.GetAverageSessionDurationPerDayAsync();
             if (!result.IsSuccess)
             {
@@ -152,7 +154,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("customer")]
         public async Task<IActionResult> StatisticCustomerAsync()
-        {            
+        {
             var result = await _customerService.StatisticCustomerAsync();
             if (!result.IsSuccess)
             {
@@ -167,7 +169,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("vehicle")]
         public async Task<IActionResult> StatisticVehicleAsync()
-        {            
+        {
             var result = await _vehicleService.GetStatisticVehicleAsync();
             if (!result.IsSuccess)
             {
@@ -182,7 +184,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("session/checkin-checkout")]
         public async Task<IActionResult> StatisticCheckInCheckOutAsync()
-        {            
+        {
             var result = await _sessionService.GetStatisticCheckInCheckOutAsync();
             if (!result.IsSuccess)
             {
@@ -197,7 +199,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("card")]
         public async Task<IActionResult> StatisticCardAsync()
-        {            
+        {
             var result = await _cardService.GetStatisticCardAsync();
             if (!result.IsSuccess)
             {
@@ -212,7 +214,7 @@ namespace FUParkingApi.Controllers
 
         [HttpGet("parkingarea/renvenue")]
         public async Task<IActionResult> StatisticParkingAreaRevenueAsync()
-        {            
+        {
             var result = await _transactionService.GetListStatisticParkingAreaRevenueAsync();
             if (!result.IsSuccess)
             {
@@ -241,7 +243,7 @@ namespace FUParkingApi.Controllers
         }
 
         [HttpGet("payment/{gateId}/today")]
-        public async Task<IActionResult> StatisticPaymentTodayForGateAsync([FromRoute] Guid gateId,[FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        public async Task<IActionResult> StatisticPaymentTodayForGateAsync([FromRoute] Guid gateId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
             var result = await _paymentService.GetStatisticPaymentTodayForGateAsync(gateId, startDate, endDate);
             if (!result.IsSuccess)
@@ -264,6 +266,21 @@ namespace FUParkingApi.Controllers
                 if (result.InternalErrorMessage is not null)
                 {
                     _logger.LogError("Error at GetListStatisticRevenueParkingAreasDetailsAsync: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
+
+        [HttpGet("parkings/revenue")]
+        public async Task<IActionResult> GetListStatisticRevenueOfParkingSystemAsync([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error at GetListStatisticRevenueOfParkingSystemAsync: {ex}", result.InternalErrorMessage);
                 }
                 return Helper.GetErrorResponse(result.Message);
             }

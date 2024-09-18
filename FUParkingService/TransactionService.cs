@@ -272,5 +272,40 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _transactionRepository.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }

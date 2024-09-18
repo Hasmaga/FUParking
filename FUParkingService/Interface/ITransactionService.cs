@@ -14,5 +14,6 @@ namespace FUParkingService.Interface
         Task<Return<IEnumerable<StatisticParkingAreaRevenueResDto>>> GetListStatisticParkingAreaRevenueAsync();
         Task<Return<IEnumerable<StatisticRevenueParkingAreasDetailsResDto>>> GetListStatisticRevenueParkingAreasDetailsAsync(GetListObjectWithFillerDateAndSearchInputResDto req);
         Task<Return<dynamic>> TopUpCustomerWalletByUserAsync(TopUpCustomerWalletByUserReqDto req);
+        Task<Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate);
     }
 }

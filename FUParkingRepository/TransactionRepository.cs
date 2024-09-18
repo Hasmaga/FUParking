@@ -377,5 +377,93 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                // Use today's date if startDate or endDate is null
+                DateTime today = DateTime.Today;
+                startDate ??= today;
+                endDate ??= today;
+
+                // Get all parking areas
+                var parkingAreas = await _db.ParkingAreas
+                    .Where(pa => pa.DeletedDate == null)
+                    .Select(pa => new GetParkingAreaOptionResDto
+                    {
+                        Id = pa.Id,
+                        Name = pa.Name
+                    })
+                    .ToListAsync();
+
+                // Get total revenue of each parking area
+                var query = _db.Transactions
+                    .Where(t => t.DeletedDate == null && t.TransactionStatus == StatusTransactionEnum.SUCCEED);
+
+                if (startDate.HasValue)
+                {
+                    query = query.Where(t => t.CreatedDate >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    query = query.Where(t => t.CreatedDate <= endDate.Value);
+                }
+
+                var revenueData = await query
+                    .Join(_db.Payments,
+                        t => t.PaymentId,
+                        p => p.Id,
+                        (t, p) => new { Transaction = t, Payment = p })
+                    .Join(_db.Sessions,
+                        tp => tp.Payment.SessionId,
+                        s => s.Id,
+                        (tp, s) => new { tp.Transaction, tp.Payment, Session = s })
+                    .Join(_db.Gates,
+                        tps => tps.Session.GateInId,
+                        g => g.Id,
+                        (tps, g) => new { tps.Transaction, tps.Payment, tps.Session, Gate = g })
+                    .GroupBy(x => x.Gate.ParkingAreaId)
+                    .Select(g => new
+                    {
+                        ParkingAreaId = g.Key,
+                        TotalRevenue = g.Sum(x => x.Transaction.Amount),
+                        WalletRevenue = g.Sum(x => x.Payment.PaymentMethod.Name == PaymentMethods.WALLET ? x.Transaction.Amount : 0),
+                        OtherRevenue = g.Sum(x => x.Payment.PaymentMethod.Name != PaymentMethods.WALLET ? x.Transaction.Amount : 0)
+                    })
+                    .ToListAsync();
+
+                // Calculate total revenue and average revenue
+                int totalRevenue = revenueData.Sum(r => r.TotalRevenue);
+                int numberOfParkingAreas = parkingAreas.Count();
+                int averageRevenue = numberOfParkingAreas > 0 ? totalRevenue / numberOfParkingAreas : 0;
+
+                // Join the revenue data with parking areas
+                var result = parkingAreas.Select(pa => new StatisticRevenueOfParkingSystemDto
+                {
+                    ParkingArea = pa,
+                    totalRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.TotalRevenue ?? 0,
+                    walletRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.WalletRevenue ?? 0,
+                    otherRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.OtherRevenue ?? 0,
+                    averageRevenue = averageRevenue
+                }).ToList();
+
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                {
+                    Data = result,
+                    Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
+                    IsSuccess = true
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemDto>>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
+
     }
 }
