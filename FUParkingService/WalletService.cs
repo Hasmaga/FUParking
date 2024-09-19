@@ -114,7 +114,7 @@ namespace FUParkingService
                     TransactionDescription = x.TransactionDescription,
                     TransactionStatus = x.TransactionStatus,
                     Date = x.CreatedDate,
-                    TransactionType = (x.DepositId is not null) ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
+                    TransactionType = (x.DepositId is not null || x.UserTopUpId is not null) ? TransactionTypeEnum.IN : TransactionTypeEnum.OUT
                 });
 
                 return new Return<IEnumerable<GetInfoWalletTransResDto>>()

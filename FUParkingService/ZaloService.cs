@@ -208,6 +208,7 @@ namespace FUParkingService
                 FUParkingModel.Object.Transaction newTransactionMain = new()
                 {
                     Amount = package.Data.CoinAmount,
+                    DepositId = deposit.Data.Id,
                     TransactionDescription = "Buy " + package.Data.Name,
                     TransactionStatus = StatusTransactionEnum.SUCCEED,
                     WalletId = walletMain.Data.Id
@@ -239,6 +240,7 @@ namespace FUParkingService
                     FUParkingModel.Object.Transaction newTransactionExtra = new()
                     {
                         Amount = package.Data.ExtraCoin ?? 0,
+                        DepositId = deposit.Data.Id,
                         TransactionDescription = "Buy " + package.Data.Name,
                         TransactionStatus = StatusTransactionEnum.SUCCEED,
                         WalletId = walletExtra.Data.Id

@@ -91,9 +91,13 @@ namespace FUParkingRepository
             try
             {
                 DateTime endDateValue = endDate ?? TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                endDateValue = endDateValue.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
                 DateTime startDateValue = startDate ?? DateTime.MinValue;
 
-                var res = await _db.Transactions.Include(t => t.Payment)
+                var res = await _db.Transactions
+                    .Include(t => t.Payment)
+                    .Include(t => t.Deposit)
+                    .Include(t => t.UserTopUp)
                     .Where(t => t.WalletId.Equals(walletId) && t.CreatedDate >= startDateValue && t.CreatedDate <= endDateValue && t.TransactionStatus != StatusTransactionEnum.PENDING)
                     .OrderByDescending(t => t.CreatedDate)
                     .ToListAsync();

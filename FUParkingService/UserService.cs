@@ -7,6 +7,7 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text;
 using System.Transactions;
@@ -255,7 +256,8 @@ namespace FUParkingService
                         FullName = t.FullName,
                         Id = t.Id,
                         Role = t.Role?.Name ?? "",
-                        Status = t.StatusUser
+                        Status = t.StatusUser,
+                        RoleId = t.RoleId
                     }),
                     TotalRecord = result.TotalRecord,
                     Message = result.Message
@@ -272,7 +274,7 @@ namespace FUParkingService
             }
         }
 
-        public async Task<Return<bool>> ChangeUserStatusAsync(Guid userId)
+        public async Task<Return<bool>> ChangeUserStatusAsync(Guid userId, bool isActive)
         {
             try
             {
@@ -312,8 +314,29 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.NOT_AUTHORITY
                     };
                 }
-
-                user.Data.StatusUser = user.Data.StatusUser == StatusUserEnum.ACTIVE ? StatusUserEnum.INACTIVE : StatusUserEnum.ACTIVE;
+                if (isActive)
+                {
+                    // if user is already active, can not change status
+                    if (user.Data.StatusUser == StatusUserEnum.ACTIVE)
+                    {
+                        return new Return<bool>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    user.Data.StatusUser = StatusUserEnum.ACTIVE;
+                } else if (!isActive)
+                {
+                    // if user is already inactive, can not change status
+                    if (user.Data.StatusUser == StatusUserEnum.INACTIVE)
+                    {
+                        return new Return<bool>
+                        {
+                            Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY
+                        };
+                    }
+                    user.Data.StatusUser = StatusUserEnum.INACTIVE;
+                }                
                 user.Data.LastModifyById = user.Data.Id;
                 user.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
@@ -419,8 +442,42 @@ namespace FUParkingService
                         InternalErrorMessage = user.InternalErrorMessage
                     };
                 }
-                user.Data.FullName = req.FullName;
-                user.Data.Email = req.Email.ToLower();
+                user.Data.FullName = req.FullName ?? user.Data.FullName;
+                if (req.Email is not null)
+                {
+                    // check email is already registered and not the same email
+                    if (req.Email != user.Data.Email)
+                    {
+                        var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email);
+                        if (!isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
+                        {
+                            return new Return<bool>
+                            {
+                                Message = ErrorEnumApplication.EMAIL_IS_EXIST,
+                                InternalErrorMessage = isUserRegistered.InternalErrorMessage
+                            };
+                        }
+                        user.Data.Email = req.Email;
+                    }
+                }
+                if (req.RoleId != null)
+                {
+                    var role = await _roleRepository.GetRoleByIdAsync(req.RoleId.Value);
+                    if (!role.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || role.Data is null)
+                    {
+                        return new Return<bool>
+                        {
+                            Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                            InternalErrorMessage = role.InternalErrorMessage
+                        };
+                    }
+                    user.Data.RoleId = role.Data.Id;
+                }                
+                if (!req.Password.IsNullOrEmpty())
+                {
+                    user.Data.PasswordHash = CreatePassHashAndPassSalt(req.Password, out byte[] passwordSalt);
+                    user.Data.PasswordSalt = Convert.ToBase64String(passwordSalt);
+                }
                 user.Data.LastModifyById = user.Data.Id;
                 user.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _userRepository.UpdateUserAsync(user.Data);

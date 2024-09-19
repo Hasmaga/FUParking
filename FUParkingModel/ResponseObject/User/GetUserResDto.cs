@@ -14,5 +14,6 @@ namespace FUParkingModel.ResponseObject.User
         public string Role {  get; set; } = null!;
         public string Status { get; set; } = null!;
         public DateTime CreatedDate { get; set; }
+        public Guid RoleId { get; set; }
     }
 }

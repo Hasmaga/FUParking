@@ -11,12 +11,14 @@ namespace FUParkingModel.RequestObject
     {
         [Required]
         public Guid Id { get; set; }
-
-        [Required]
-        public required string FullName { get; set; }
-
-        [Required]
+        
+        public string? FullName { get; set; }
+        
         [EmailAddress(ErrorMessage = "Must be email format")]
-        public string Email { get; set; } = null!;
+        public string? Email { get; set; }
+
+        public string? Password { get; set; }
+
+        public Guid? RoleId { get; set; }
     }
 }

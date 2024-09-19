@@ -2,6 +2,7 @@
 using FUParkingModel.Enum;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.User;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -102,13 +103,13 @@ namespace FUParkingApi.Controllers
 
         [Authorize]
         [HttpPut("status")]
-        public async Task<IActionResult> UpdateStatusUserAsync([FromQuery] Guid userId)
+        public async Task<IActionResult> UpdateStatusUserAsync([FromBody] UpdateStatusUserReqDto req)
         {
             if (!ModelState.IsValid)
             {
                 return StatusCode(422, Helper.GetValidationErrors(ModelState));
             }
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(req.Id, req.IsActive);
             if (!result.IsSuccess)
             {
                 if (result.InternalErrorMessage is not null)
