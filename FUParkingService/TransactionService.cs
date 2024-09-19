@@ -272,5 +272,75 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>> GetListStatisticRevenueOfParkingSystemAsync(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _transactionRepository.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>> GetListStatisticRevenueOfParkingSystemDetailsAsync(Guid parkingId, DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _transactionRepository.GetListStatisticRevenueOfParkingSystemDetailsAsync(parkingId, startDate, endDate);
+                if (!result.IsSuccess)
+                {
+                    return new Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return new Return<IEnumerable<StatisticRevenueOfParkingAreaSystemDetailResDto>>
+                {
+                    InternalErrorMessage = ex,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
     }
 }
