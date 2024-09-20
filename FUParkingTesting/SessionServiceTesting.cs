@@ -4410,7 +4410,7 @@ namespace FUParkingTesting
             Assert.Equal(ErrorEnumApplication.CARD_NOT_EXIST, result.Message);
         }
 
-        // GetHistorySessionResDto
+        // GetListSessionByCustomerAsync
         // Failure
         [Fact]
         public async Task GetListSessionByCustomerAsync_ShouldReturnFailure_WhenCustomerInvalid()
