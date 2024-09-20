@@ -150,7 +150,7 @@ namespace FUParkingService
                     CreatedById = checkAuth.Data.Id
                 };
                 var result = await _customerRepository.CreateNewCustomerAsync(newCustomer);
-                if (result.Data == null || !result.Data.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
                     res.InternalErrorMessage = result.InternalErrorMessage;
                     return res;
