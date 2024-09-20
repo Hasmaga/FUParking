@@ -11,12 +11,12 @@ namespace FUParkingModel.ResponseObject.Statistic
     {
         public GetParkingAreaOptionResDto ParkingArea { get; set; } = null!;
 
-        public int totalRevenue { get; set; }
+        public int TotalRevenue { get; set; }
 
-        public int walletRevenue { get; set; } 
+        public int WalletRevenue { get; set; } 
 
-        public int otherRevenue { get; set; }
+        public int OtherRevenue { get; set; }
 
-        public int averageRevenue { get; set; }
+        public int AverageRevenue { get; set; }
     }
 }

@@ -19,6 +19,7 @@ namespace FUParkingTesting
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private readonly Mock<IHelpperService> _helpperServiceMock;
         private readonly Mock<IVehicleRepository> _vehicleRepositoryMock;
+        private readonly Mock<IWalletRepository> _walletRepositoryMock;
         private readonly CustomerService _customerService;
 
         public CustomerServiceTesting()
@@ -26,7 +27,8 @@ namespace FUParkingTesting
             _customerRepositoryMock = new Mock<ICustomerRepository>();
             _helpperServiceMock = new Mock<IHelpperService>();
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
-            _customerService = new CustomerService(_customerRepositoryMock.Object, _helpperServiceMock.Object, _vehicleRepositoryMock.Object);
+            _walletRepositoryMock = new Mock<IWalletRepository>();
+            _customerService = new CustomerService(_customerRepositoryMock.Object, _helpperServiceMock.Object, _vehicleRepositoryMock.Object, _walletRepositoryMock.Object);
         }
 
         // ChangeStatusCustomerAsync
@@ -848,8 +850,7 @@ namespace FUParkingTesting
             // Arrange
             var listCustomer = new List<Customer>
             {
-                new Customer
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Email = "customer@localhost.com",
                     FullName = "Customer",
@@ -1229,14 +1230,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(userReturn);
@@ -1297,14 +1298,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             var newVehicleReturn = new Return<Vehicle>
@@ -1373,14 +1374,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             var existingCustomer = new Customer
@@ -1456,14 +1457,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             }; 
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(userReturn);
@@ -1505,14 +1506,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             var userReturn = new Return<User>
@@ -1609,14 +1610,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "INVALID",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             var userReturn = new Return<User>
@@ -1801,14 +1802,14 @@ namespace FUParkingTesting
             {
                 Name = "Customer",
                 Email = "customer@localhost.com",
-                Vehicles = new[]
-                {
+                Vehicles =
+                [
                     new CreateVehiclesNonPriceResDto
                     {
                         PlateNumber = "29A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             var newVehicleReturn = new Return<Vehicle>
@@ -2126,20 +2127,18 @@ namespace FUParkingTesting
         {
             // Arrange
             var plateNumber = "29A12345";
-
-            var role = new Role { Name = RoleEnum.STAFF.ToString() };
-            var userEmail = "staff@localhost.com";
-            var userName = "staff";
-            var user = new User
-            {
-                Email = userEmail,
-                FullName = userName,
-                RoleId = role.Id,
-                PasswordHash = "",
-                PasswordSalt = "",
-                StatusUser = StatusUserEnum.ACTIVE
-            };
-
+            //var role = new Role { Name = RoleEnum.STAFF.ToString() };
+            //var userEmail = "staff@localhost.com";
+            //var userName = "staff";
+            //var user = new User
+            //{
+            //    Email = userEmail,
+            //    FullName = userName,
+            //    RoleId = role.Id,
+            //    PasswordHash = "",
+            //    PasswordSalt = "",
+            //    StatusUser = StatusUserEnum.ACTIVE
+            //};
             // Act
             var result = await _customerService.GetCustomerTypeByPlateNumberAsync(plateNumber);
 
@@ -2320,8 +2319,7 @@ namespace FUParkingTesting
 
             var customerVehicle = new List<Vehicle>
                 {
-                    new Vehicle
-                    {
+                    new() {
                         PlateNumber = "29A12345",
                         StatusVehicle = StatusCustomerEnum.ACTIVE
                     }
@@ -2445,8 +2443,7 @@ namespace FUParkingTesting
 
             var customerVehicle = new List<Vehicle>
                 {
-                    new Vehicle
-                    {
+                    new() {
                         PlateNumber = "29A12345",
                         StatusVehicle = StatusCustomerEnum.ACTIVE
                     }
@@ -2507,8 +2504,7 @@ namespace FUParkingTesting
 
             var customerVehicle = new List<Vehicle>
                 {
-                    new Vehicle
-                    {
+                    new() {
                         PlateNumber = "29A12345",
                         StatusVehicle = StatusCustomerEnum.ACTIVE
                     }
@@ -2934,13 +2930,11 @@ namespace FUParkingTesting
 
             var customerTypes = new List<CustomerType>
             {
-                new CustomerType 
-                { Id = Guid.NewGuid(), 
+                new() { Id = Guid.NewGuid(), 
                     Name = CustomerTypeEnum.PAID, 
                     Description = "Paid customer" 
                 },
-                new CustomerType 
-                { 
+                new() { 
                     Id = Guid.NewGuid(), 
                     Name = CustomerTypeEnum.FREE,
                     Description = "Free customer" 

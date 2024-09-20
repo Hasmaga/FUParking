@@ -393,8 +393,7 @@ namespace FUParkingTesting
 
             var feedbacks = new List<Feedback>
             {
-                new Feedback
-                {
+                new() {
                     Title = "Test",
                     Description = "Test Description",
                     ParkingArea = new ParkingArea

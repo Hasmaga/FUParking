@@ -308,9 +308,9 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
-                    new CreatePriceItemReqDto 
+                PriceItems =
+                [
+                    new CreatePriceItemReqDto
                     { 
                         From = 0, 
                         To = 12, 
@@ -318,7 +318,7 @@ namespace FUParkingTesting
                         MinPrice = 50, 
                         BlockPricing = 10 
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -357,8 +357,8 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             Id = Guid.NewGuid(),
@@ -367,7 +367,7 @@ namespace FUParkingTesting
                             MinPrice = 50,
                             BlockPricing = 10
                         }
-                    },
+                    ],
                     IsSuccess = true
                 });
 
@@ -451,8 +451,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -461,7 +461,7 @@ namespace FUParkingTesting
                         MinPrice = 50,
                         BlockPricing = 10
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -505,8 +505,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -515,7 +515,7 @@ namespace FUParkingTesting
                         MinPrice = 50,
                         BlockPricing = 10
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -554,14 +554,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem> 
-                    { 
+                    Data =
+                    [
                         new PriceItem 
                         { 
                             ApplyFromHour = 0, 
                             ApplyToHour = 24 
                         } 
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -583,8 +583,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -593,7 +593,7 @@ namespace FUParkingTesting
                         MinPrice = 50,
                         BlockPricing = 10
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -632,8 +632,8 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             Id = Guid.NewGuid(),
@@ -642,7 +642,7 @@ namespace FUParkingTesting
                             MinPrice = 50,
                             BlockPricing = 10
                         }
-                    },
+                    ],
                     IsSuccess = true
                 });
 
@@ -670,8 +670,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -680,7 +680,7 @@ namespace FUParkingTesting
                         MinPrice = 50,
                         BlockPricing = 10
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -719,8 +719,8 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             Id = Guid.NewGuid(),
@@ -729,7 +729,7 @@ namespace FUParkingTesting
                             MinPrice = 50,
                             BlockPricing = 10
                         }
-                    },
+                    ],
                     IsSuccess = true
                 });
 
@@ -771,8 +771,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -781,7 +781,7 @@ namespace FUParkingTesting
                         MinPrice = 50,
                         BlockPricing = 10
                     },
-                }
+                ]
             };
 
             _helpperServiceMock
@@ -820,8 +820,8 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             Id = Guid.NewGuid(),
@@ -830,7 +830,7 @@ namespace FUParkingTesting
                             MinPrice = 50,
                             BlockPricing = 10
                         }
-                    },
+                    ],
                     IsSuccess = true
                 });
 
@@ -903,8 +903,7 @@ namespace FUParkingTesting
 
             var priceItems = new List<PriceItem>
             {
-                new PriceItem 
-                { 
+                new() { 
                     Id = Guid.NewGuid(), 
                     ApplyToHour = 1, 
                     ApplyFromHour = 0, 
@@ -1037,8 +1036,7 @@ namespace FUParkingTesting
 
             var priceItems = new List<PriceItem>
             {
-                new PriceItem
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     ApplyToHour = 1,
                     ApplyFromHour = 0,
@@ -1088,8 +1086,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -1098,7 +1096,7 @@ namespace FUParkingTesting
                         MaxPrice = 20,
                         BlockPricing = 2
                     },
-                }
+                ]
             };
 
             var priceTableReturn = new Return<PriceTable>
@@ -1214,8 +1212,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -1224,7 +1222,7 @@ namespace FUParkingTesting
                         MaxPrice = 20,
                         BlockPricing = 2
                     },
-                }
+                ]
             };
 
             var priceTableResult = new Return<PriceTable> 
@@ -1268,8 +1266,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -1278,7 +1276,7 @@ namespace FUParkingTesting
                         MaxPrice = 20,
                         BlockPricing = 2
                     },
-                }
+                ]
             };
 
             var priceTableReturn = new Return<PriceTable>
@@ -1340,8 +1338,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -1350,7 +1348,7 @@ namespace FUParkingTesting
                         MaxPrice = 20,
                         BlockPricing = 2
                     },
-                }
+                ]
             };
 
             var priceTableReturn = new Return<PriceTable>
@@ -1439,8 +1437,8 @@ namespace FUParkingTesting
             var req = new CreateListPriceItemReqDto
             {
                 PriceTableId = Guid.NewGuid(),
-                PriceItems = new List<CreatePriceItemReqDto>
-                {
+                PriceItems =
+                [
                     new CreatePriceItemReqDto
                     {
                         From = 0,
@@ -1449,7 +1447,7 @@ namespace FUParkingTesting
                         MaxPrice = 20,
                         BlockPricing = 2
                     },
-                }
+                ]
             };
 
             var priceTableReturn = new Return<PriceTable>
@@ -2187,8 +2185,7 @@ namespace FUParkingTesting
 
             var priceTableList = new List<PriceTable>
             {
-                new PriceTable
-                {
+                new() {
                     Name = "Price Table 1",
                     Priority = 1,
                     StatusPriceTable = StatusPriceTableEnum.ACTIVE
@@ -2226,7 +2223,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(result.Message, SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY);
+            Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
         }
 
         // Failure

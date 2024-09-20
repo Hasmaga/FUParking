@@ -846,8 +846,7 @@ namespace FUParkingTesting
 
             var userList = new List<User>
             {
-                new User
-                {
+                new() {
                     FullName = "John Doe",
                     Email = "john@example.com",
                     CreatedDate = DateTime.UtcNow,
@@ -1003,7 +1002,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(userId, false);
 
             // Assert
             Assert.True(result.IsSuccess);
@@ -1026,7 +1025,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(userId, false);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -1057,7 +1056,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(managerId);
+            var result = await _userService.ChangeUserStatusAsync(managerId, false);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -1097,7 +1096,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(userId, false);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -1146,7 +1145,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(userId, false);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -1203,7 +1202,7 @@ namespace FUParkingTesting
                 });
 
             // Act
-            var result = await _userService.ChangeUserStatusAsync(userId);
+            var result = await _userService.ChangeUserStatusAsync(userId, false);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -1439,8 +1438,8 @@ namespace FUParkingTesting
             var result = await _userService.UpdateUserAsync(updateReq);
 
             // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, result.Message);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // Failure

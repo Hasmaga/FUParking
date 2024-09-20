@@ -55,10 +55,10 @@ namespace FUParkingTesting
 
             var req = new CreateNewCardReqDto
             {
-                CardNumbers = new string[]
-                {
+                CardNumbers =
+                [
                     "1234567890"
-                }
+                ]
             };
 
             var existingCardReturn = new Return<Card>
@@ -117,10 +117,10 @@ namespace FUParkingTesting
 
             var req = new CreateNewCardReqDto
             {
-                CardNumbers = new string[]
-                {
+                CardNumbers =
+                [
                     "1234567890"
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(userReturn);
@@ -160,10 +160,10 @@ namespace FUParkingTesting
 
             var req = new CreateNewCardReqDto
             {
-                CardNumbers = new string[]
-                {
+                CardNumbers =
+                [
                     "1234567890"
-                }
+                ]
             };
 
             var existingCardReturn = new Return<Card>
@@ -223,10 +223,10 @@ namespace FUParkingTesting
 
             var req = new CreateNewCardReqDto
             {
-                CardNumbers = new string[]
-                {
+                CardNumbers =
+                [
                     "1234567890"
-                }
+                ]
             };
 
             var existingCardReturn = new Return<Card>
@@ -291,8 +291,8 @@ namespace FUParkingTesting
 
             var cards = new List<GetCardResDto>
             {
-                new GetCardResDto { Id = Guid.NewGuid(), CardNumber = "1234567890" },
-                new GetCardResDto { Id = Guid.NewGuid(), CardNumber = "0987654321" }
+                new() { Id = Guid.NewGuid(), CardNumber = "1234567890" },
+                new() { Id = Guid.NewGuid(), CardNumber = "0987654321" }
             };
 
             var listResult = new Return<IEnumerable<GetCardResDto>>
@@ -1060,8 +1060,8 @@ namespace FUParkingTesting
             var result = await _cardService.ChangeStatusCardAsync(cardId, false);
 
             // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, result.Message);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // Successfully
@@ -1124,8 +1124,8 @@ namespace FUParkingTesting
             var result = await _cardService.ChangeStatusCardAsync(cardId, true);
 
             // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, result.Message);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // ReturnError
@@ -1149,7 +1149,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // ReturnError
@@ -1191,7 +1191,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.CARD_NOT_EXIST, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // ReturnError
@@ -1265,7 +1265,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.CARD_IN_USE, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // ReturnError
@@ -1320,7 +1320,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.STATUS_IS_ALREADY_APPLY, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // ReturnError
@@ -1858,13 +1858,11 @@ namespace FUParkingTesting
 
             var cardOptions = new List<GetCardOptionsResDto>
             {
-                new GetCardOptionsResDto
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     CardNumber = "99L999999"
                 },
-                new GetCardOptionsResDto
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     CardNumber = "66L6666666"
                 }

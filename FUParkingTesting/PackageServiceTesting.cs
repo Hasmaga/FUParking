@@ -60,8 +60,7 @@ namespace FUParkingTesting
 
             var packageList = new List<Package>
             {
-                new Package
-                {
+                new() {
                     Name = "Package 1",
                     CoinAmount = 100,
                     Price = 10,
@@ -140,8 +139,7 @@ namespace FUParkingTesting
 
             var packageList = new List<Package>
             {
-                new Package
-                {
+                new() {
                     Name = "Package 1",
                     CoinAmount = 100,
                     Price = 10,
@@ -240,8 +238,7 @@ namespace FUParkingTesting
 
             var packageList = new List<Package>
             {
-                new Package
-                {
+                new() {
                     Name = "Package 1",
                     CoinAmount = 100,
                     Price = 10,

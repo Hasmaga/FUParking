@@ -21,7 +21,7 @@ namespace FUParkingTesting
         private readonly Mock<IWalletRepository> _walletRepositoryMock = new();
         private readonly Mock<IHelpperService> _helpperServiceMock = new();
         private readonly Mock<ITransactionRepository> _transactionRepositoryMock = new();
-
+        private readonly Mock<ICustomerRepository> _customerRepositoryMock = new();
         private readonly WalletService _walletService;
 
         public WalletServiceTesting()
@@ -29,8 +29,8 @@ namespace FUParkingTesting
             _helpperServiceMock = new Mock<IHelpperService>();
             _walletRepositoryMock = new Mock<IWalletRepository>();
             _transactionRepositoryMock = new Mock<ITransactionRepository>();
-
-            _walletService = new WalletService(_walletRepositoryMock.Object, _helpperServiceMock.Object, _transactionRepositoryMock.Object);
+            _customerRepositoryMock = new Mock<ICustomerRepository>();
+            _walletService = new WalletService(_walletRepositoryMock.Object, _helpperServiceMock.Object, _transactionRepositoryMock.Object, _customerRepositoryMock.Object);
         }
 
         // GetTransactionWalletExtraAsync
@@ -73,8 +73,7 @@ namespace FUParkingTesting
 
             var transactions = new List<Transaction>
             {
-                new Transaction 
-                { 
+                new() { 
                     Amount = 100, 
                     TransactionDescription = "Test", 
                     TransactionStatus = StatusTransactionEnum.SUCCEED,
@@ -176,6 +175,7 @@ namespace FUParkingTesting
 
         // GetTransactionWalletMainAsync
         // Successful
+        [Fact]
         public async Task GetTransactionWalletMainAsync_ShouldReturnSuccess_WhenDataIsValid()
         {
             // Arrange
@@ -191,8 +191,8 @@ namespace FUParkingTesting
 
             var transactions = new Return<IEnumerable<Transaction>>
             {
-                Data = new List<Transaction>
-                {
+                Data =
+                [
                     new Transaction
                     {
                         Id = Guid.NewGuid(),
@@ -202,7 +202,7 @@ namespace FUParkingTesting
                         CreatedDate = DateTime.Now.AddDays(-1),
                         DepositId = Guid.NewGuid()
                     }
-                },
+                ],
                 IsSuccess = true,
                 TotalRecord = 1,
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
@@ -501,7 +501,7 @@ namespace FUParkingTesting
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            var balance = 2000;
+            //var balance = 2000;
             var expDate = DateTime.UtcNow.AddDays(30);
 
             _helpperServiceMock.Setup(x => x.ValidateCustomerAsync())

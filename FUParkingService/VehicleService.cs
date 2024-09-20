@@ -549,7 +549,7 @@ namespace FUParkingService
                 {
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        ClientTokens = [checkAuth.Data.FCMToken],
                         Title = "Vehicle Registered Successfully",
                         Body = $"Your vehicle with plate number {reqDto.PlateNumber} has been registered successfully. Please park your vehicle in our facility for the first time to activate it."
                     };
@@ -665,7 +665,7 @@ namespace FUParkingService
                 {
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        ClientTokens = [checkAuth.Data.FCMToken],
                         Title = "Vehicle Information Updated",
                         Body = $"Your vehicle information with plate number {vehicle.Data.PlateNumber} has been updated successfully."
                     };
@@ -731,7 +731,7 @@ namespace FUParkingService
                 {
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        ClientTokens = [checkAuth.Data.FCMToken],
                         Title = "Vehicle Information Deleteted",
                         Body = $"Your vehicle information with plate number {vehicle.Data.PlateNumber} has been deleteted successfully."
                     };

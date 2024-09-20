@@ -28,6 +28,6 @@ namespace FUParkingModel.RequestObject.Session
 
         [FromForm]
         [Required(ErrorMessage = "Must have PlateNumber")]
-        public string PlateNumber { get; set; } = null;
+        public string PlateNumber { get; set; } = null!;
     }
 }

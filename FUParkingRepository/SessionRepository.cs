@@ -623,7 +623,7 @@ namespace FUParkingRepository
                 {
                     Data = result,
                     TotalRecord = totalRecords,
-                    Message = result.Any() ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
+                    Message = result.Count != 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,
                 };
             }

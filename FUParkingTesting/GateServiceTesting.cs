@@ -56,8 +56,7 @@ namespace FUParkingTesting
 
             var gates = new List<Gate>
             {
-                new Gate
-                {
+                new() {
                     Name = "Gate1",
                     Description = "Gate 1",
                     ParkingArea = new ParkingArea 
@@ -1550,8 +1549,7 @@ namespace FUParkingTesting
 
             var gateList = new List<Gate>
             {
-                new Gate
-                {
+                new() {
                     Name = "Old Gate",
                     Description = "Old Description",
                     ParkingArea = parking,
@@ -1689,8 +1687,7 @@ namespace FUParkingTesting
 
             var gateList = new List<Gate>
             {
-                new Gate
-                {
+                new() {
                     Name = "Old Gate",
                     Description = "Old Description",
                     ParkingArea = parking,

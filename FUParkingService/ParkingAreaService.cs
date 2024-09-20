@@ -502,7 +502,7 @@ namespace FUParkingService
                     CreatedById = checkAuth.Data.Id,
                 };
                 var result = await _parkingAreaRepository.CreateParkingAreaAsync(parkingArea);
-                if (!result.IsSuccess)
+                if (!result.IsSuccess || result.Data is null)
                 {
                     return new Return<dynamic>
                     {

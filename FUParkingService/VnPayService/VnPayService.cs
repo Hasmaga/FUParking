@@ -1,17 +1,11 @@
 ﻿using FUParkingModel.Enum;
 using FUParkingModel.Object;
-using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
 
 namespace FUParkingService.VnPayService
@@ -256,37 +250,40 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(deposit.Data.CustomerId);
-                if (!walletExtra.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletExtra.Data == null)
+                if (package.Data.ExtraCoin > 1)
                 {
-                    scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-                walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
-                walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
-
-                if (package.Data.ExtraCoin != null)
-                {
-                    FUParkingModel.Object.Transaction newTransactionExtra = new()
-                    {
-                        Amount = package.Data.ExtraCoin ?? 0,
-                        DepositId = deposit.Data.Id,
-                        TransactionDescription = "Buy " + package.Data.Name,
-                        TransactionStatus = StatusTransactionEnum.SUCCEED,
-                        WalletId = walletExtra.Data.Id
-                    };
-                    var transactionExtra = await _transactionRepository.CreateTransactionAsync(newTransactionExtra);
-                    if (!transactionExtra.IsSuccess || transactionExtra.Data == null)
+                    var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(deposit.Data.CustomerId);
+                    if (!walletExtra.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletExtra.Data == null)
                     {
                         scope.Dispose();
                         return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
-                }
-                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
-                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                {
-                    scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
+                    walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
+                    // Create transaction for wallet extra
+                    if (package.Data.ExtraCoin is not null)
+                    {
+                        FUParkingModel.Object.Transaction newTransactionExtra = new()
+                        {
+                            Amount = package.Data.ExtraCoin ?? 0,
+                            DepositId = deposit.Data.Id,
+                            TransactionDescription = "Buy " + package.Data.Name,
+                            TransactionStatus = StatusTransactionEnum.SUCCEED,
+                            WalletId = walletExtra.Data.Id
+                        };
+                        var transactionExtra = await _transactionRepository.CreateTransactionAsync(newTransactionExtra);
+                        if (transactionExtra.IsSuccess == false || transactionExtra.Data == null)
+                        {
+                            scope.Dispose();
+                            return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                        }
+                    }
+                    var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                    if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                    }
                 }
 
                 scope.Complete();

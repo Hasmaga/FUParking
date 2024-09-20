@@ -11,6 +11,6 @@
         public DateTime TimeIn { get; set; }        
         public string VehicleType { get; set; } = null!;        
         public int Amount { get; set; }
-        public string customerType { get; set; } = null!;
+        public string CustomerType { get; set; } = null!;
     }
 }

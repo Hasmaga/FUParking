@@ -130,7 +130,7 @@ namespace FUParkingTesting
             var statisticReturn = new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
             {
                 IsSuccess = true,
-                Data = new List<StatisticSessionPaymentMethodResDto>(),
+                Data = [],
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
             };
 
@@ -188,7 +188,7 @@ namespace FUParkingTesting
             var statisticReturn = new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
             {
                 IsSuccess = true,
-                Data = new List<StatisticSessionPaymentMethodResDto>(),
+                Data = [],
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
             };
 
@@ -221,7 +221,7 @@ namespace FUParkingTesting
             var statisticReturn = new Return<IEnumerable<StatisticSessionPaymentMethodResDto>>
             {
                 IsSuccess = true,
-                Data = new List<StatisticSessionPaymentMethodResDto>(),
+                Data = [],
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
             };
 
@@ -362,8 +362,8 @@ namespace FUParkingTesting
             Assert.True(result.IsSuccess);
             Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
 
-            Assert.Equal(expectedStatistic.TotalCashPayment, result.Data.TotalCashPayment);
-            Assert.Equal(expectedStatistic.TotalWalletPayment, result.Data.TotalWalletPayment);
+            Assert.Equal(expectedStatistic.TotalCashPayment, result.Data?.TotalCashPayment);
+            Assert.Equal(expectedStatistic.TotalWalletPayment, result.Data?.TotalWalletPayment);
         }
 
         // Failure

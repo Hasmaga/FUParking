@@ -1149,6 +1149,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnSuccess()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1158,6 +1159,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1281,6 +1283,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenInvalidUser()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1290,6 +1293,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -1312,6 +1316,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenCardNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1321,6 +1326,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1356,6 +1362,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenCardAlreadyInUse()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1365,6 +1372,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1418,6 +1426,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenPlateNumberInUse()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1427,6 +1436,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1483,6 +1493,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenGateNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1492,6 +1503,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1536,6 +1548,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenVehicleTypeNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1545,6 +1558,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1599,6 +1613,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenParkingAreaNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1608,6 +1623,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1672,6 +1688,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenImageUploadFails()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1681,6 +1698,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -1757,6 +1775,7 @@ namespace FUParkingTesting
         public async Task CheckInForGuestAsync_ShouldReturnFailure_WhenSessionCreationFails()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckInForGuestReqDto
             {
                 CardNumber = "123456789",
@@ -1766,6 +1785,7 @@ namespace FUParkingTesting
                 ImageIn = new FormFile(null, 0, 0, null, "plate.jpg"),
                 ImageBody = new FormFile(null, 0, 0, null, "body.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             var staff = new User
             {
@@ -2193,14 +2213,14 @@ namespace FUParkingTesting
             var expectedResult = new Return<IEnumerable<StatisticSessionAppResDto>>
             {
                 IsSuccess = true,
-                Data = new List<StatisticSessionAppResDto>
-                {
+                Data =
+                [
                     new StatisticSessionAppResDto
                     {
                         Date = DateTime.Now,
                         TotalSession = 10,
                     }
-                },
+                ],
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
             };
 
@@ -2301,8 +2321,7 @@ namespace FUParkingTesting
             var req = new GetListObjectWithFillerAttributeAndDateReqDto();
             var listSession = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Card = new Card { CardNumber = "123" },
                     Mode = "Test",
                     ImageOutUrl = "out.jpg",
@@ -3316,8 +3335,7 @@ namespace FUParkingTesting
 
             var expectedData = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Block = 30,
                     Mode = "MODE1",
@@ -3487,15 +3505,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
+                    Data =
+                    [
                         new PriceTable
                         {
                             Name = "PriceTable",
                             Priority = 1,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -3503,15 +3521,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -4295,7 +4313,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(CustomerTypeEnum.GUEST, result.Data.CustomerType);
+            Assert.Equal(CustomerTypeEnum.GUEST, result.Data?.CustomerType);
             Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
         }
 
@@ -4442,8 +4460,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
                     TimeIn = DateTime.UtcNow,
@@ -4502,15 +4519,15 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
+                    Data =
+                    [
                         new PriceTable
                         {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -4518,8 +4535,8 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             ApplyFromHour = 0,
@@ -4528,7 +4545,7 @@ namespace FUParkingTesting
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    }
+                    ]
                 });
 
             // Act
@@ -4548,8 +4565,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
                     TimeIn = DateTime.UtcNow,
@@ -4600,8 +4616,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
                     TimeIn = DateTime.UtcNow,
@@ -4661,8 +4676,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
                     TimeIn = DateTime.UtcNow,
@@ -4729,8 +4743,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
                     TimeIn = DateTime.UtcNow,
@@ -4808,7 +4821,7 @@ namespace FUParkingTesting
 
             var sessions = new List<Session>
             {
-                new Session
+                new()
                 {
                     Id = Guid.NewGuid(),
                     Status = SessionEnum.PARKED,
@@ -4868,15 +4881,15 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
+                    Data =
+                    [
                         new PriceTable
                         {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -4951,14 +4964,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    { new PriceTable
-                        {
+                    Data =
+                    [ 
+                        new() {                        
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -4966,15 +4979,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
+                    Data =
+                    [
+                        new ()
                         {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -5366,14 +5379,14 @@ namespace FUParkingTesting
             _priceRepositoryMock.Setup(x => x.GetListPriceTableActiveByVehicleTypeAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
-                    Data = new List<PriceTable>
-                    { new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 1,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
 
@@ -5441,14 +5454,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    { new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -5523,14 +5536,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    { new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -5724,15 +5737,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
+                    Data =
+                    [
                         new PriceTable
                         {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -5740,15 +5753,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
+                    Data =
+                    [
                         new PriceItem
                         {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6274,15 +6287,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
+                    Data =
+                    [
                         new PriceTable
                         {
                             Name = "Price Table",
                             Priority = 1,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6374,15 +6387,15 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                new PriceTable
-                {
-                    Name = "Price Table",
-                    Priority = 2,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                }
-                    },
+                    Data =
+                    [
+                        new PriceTable
+                        {
+                            Name = "Price Table",
+                            Priority = 2,
+                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6482,15 +6495,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6498,17 +6510,16 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000,
                             ApplyFromHour = 2,
                             ApplyToHour = 3
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6600,15 +6611,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6616,15 +6626,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6724,15 +6733,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price Table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6740,15 +6748,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    },
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6858,15 +6865,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                new PriceTable
-                {
-                    Name = "Price Table",
-                    Priority = 2,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            Name = "Price Table",
+                            Priority = 2,
+                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6874,15 +6880,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                new PriceItem
-                {
-                    BlockPricing = 1000,
-                    MinPrice = 1000,
-                    MaxPrice = 10000
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            BlockPricing = 1000,
+                            MinPrice = 1000,
+                            MaxPrice = 10000
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -6999,15 +7004,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                new PriceTable
-                {
-                    Name = "Price Table",
-                    Priority = 2,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            Name = "Price Table",
+                            Priority = 2,
+                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7015,15 +7019,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                new PriceItem
-                {
-                    BlockPricing = 1000,
-                    MinPrice = 1000,
-                    MaxPrice = 10000
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            BlockPricing = 1000,
+                            MinPrice = 1000,
+                            MaxPrice = 10000
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7151,15 +7154,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                new PriceTable
-                {
-                    Name = "Price Table",
-                    Priority = 2,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            Name = "Price Table",
+                            Priority = 2,
+                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7167,15 +7169,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                new PriceItem
-                {
-                    BlockPricing = 1000,
-                    MinPrice = 1000,
-                    MaxPrice = 10000
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            BlockPricing = 1000,
+                            MinPrice = 1000,
+                            MaxPrice = 10000
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7315,15 +7316,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                new PriceTable
-                {
-                    Name = "Price Table",
-                    Priority = 2,
-                    StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            Name = "Price Table",
+                            Priority = 2,
+                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7331,15 +7331,14 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceItem>>
                 {
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                new PriceItem
-                {
-                    BlockPricing = 1000,
-                    MinPrice = 1000,
-                    MaxPrice = 10000
-                }
-                    },
+                    Data =
+                    [
+                        new() {
+                            BlockPricing = 1000,
+                            MinPrice = 1000,
+                            MaxPrice = 10000
+                        }
+                    ],
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
@@ -7422,6 +7421,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnSuccess_WhenCustomerIsFree()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7431,6 +7431,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7568,6 +7569,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenInvalidUser()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7577,6 +7579,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7599,6 +7602,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenCardNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7608,6 +7612,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7645,6 +7650,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenNewsetSessionNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7654,6 +7660,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7702,6 +7709,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenGateOutNotFound()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7711,6 +7719,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7786,6 +7795,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenNotAPlateNumber()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7795,6 +7805,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7873,6 +7884,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenPlateNumberIsBelongToAnotherSession()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7882,6 +7894,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -7977,6 +7990,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenUploadImgFail()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -7986,6 +8000,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -8088,6 +8103,7 @@ namespace FUParkingTesting
         public async Task CheckOutAsync_ShouldReturnFailure_WhenUpdateSessionFail()
         {
             // Arrange
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -8097,6 +8113,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -8224,6 +8241,7 @@ namespace FUParkingTesting
             var price = 5000;
             var cusId = Guid.NewGuid();
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -8233,6 +8251,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -8345,15 +8364,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -8361,15 +8379,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    }
+                    ]
                 });
 
             _minioServiceMock.Setup(x => x.UploadObjectAsync(It.IsAny<UploadObjectReqDto>()))
@@ -8516,6 +8533,7 @@ namespace FUParkingTesting
             var price = 5000;
             var cusId = Guid.NewGuid();
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -8525,6 +8543,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -8637,15 +8656,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -8653,15 +8671,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    }
+                    ]
                 });
 
             _minioServiceMock.Setup(x => x.UploadObjectAsync(It.IsAny<UploadObjectReqDto>()))
@@ -8808,6 +8825,7 @@ namespace FUParkingTesting
             var price = 5000;
             var cusId = Guid.NewGuid();
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -8817,6 +8835,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -8929,15 +8948,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -8945,15 +8963,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    }
+                    ]
                 });
 
             _minioServiceMock.Setup(x => x.UploadObjectAsync(It.IsAny<UploadObjectReqDto>()))
@@ -9100,6 +9117,7 @@ namespace FUParkingTesting
             var price = 5000;
             var cusId = Guid.NewGuid();
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var req = new CheckOutAsyncReqDto
             {
                 CardNumber = "123456",
@@ -9109,6 +9127,7 @@ namespace FUParkingTesting
                 ImageOut = new FormFile(null, 0, 0, "test", "test.jpg"),
                 ImageBody = new FormFile(null, 0, 0, "test", "test.jpg")
             };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
                 .ReturnsAsync(new Return<User>
@@ -9221,15 +9240,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceTable>
-                    {
-                        new PriceTable
-                        {
+                    Data =
+                    [
+                        new() {
                             Name = "Price table",
                             Priority = 2,
                             StatusPriceTable = StatusPriceTableEnum.ACTIVE
                         }
-                    }
+                    ]
                 });
 
             _priceRepositoryMock.Setup(x => x.GetAllPriceItemByPriceTableAsync(It.IsAny<Guid>()))
@@ -9237,15 +9255,14 @@ namespace FUParkingTesting
                 {
                     Message = SuccessfullyEnumServer.FOUND_OBJECT,
                     IsSuccess = true,
-                    Data = new List<PriceItem>
-                    {
-                        new PriceItem
-                        {
+                    Data =
+                    [
+                        new() {
                             BlockPricing = 1000,
                             MinPrice = 1000,
                             MaxPrice = 10000
                         }
-                    }
+                    ]
                 });
 
             _minioServiceMock.Setup(x => x.UploadObjectAsync(It.IsAny<UploadObjectReqDto>()))

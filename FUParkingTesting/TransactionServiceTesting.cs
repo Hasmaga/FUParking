@@ -24,15 +24,17 @@ namespace FUParkingTesting
     {
         private readonly Mock<ITransactionRepository> _transactionRepositoryMock;
         private readonly Mock<IHelpperService> _helpperServiceMock;
-
+        private readonly Mock<ICustomerRepository> _customerRepositoryMock;
+        private readonly Mock<IWalletRepository> _walletRepositoryMock;
         private readonly TransactionService _transactionService;
 
         public TransactionServiceTesting()
         {
             _transactionRepositoryMock = new Mock<ITransactionRepository>();
             _helpperServiceMock = new Mock<IHelpperService>();
-
-            _transactionService = new TransactionService(_transactionRepositoryMock.Object, _helpperServiceMock.Object);
+            _customerRepositoryMock = new Mock<ICustomerRepository>();
+            _walletRepositoryMock = new Mock<IWalletRepository>();
+            _transactionService = new TransactionService(_transactionRepositoryMock.Object, _helpperServiceMock.Object, _customerRepositoryMock.Object, _walletRepositoryMock.Object);
         }
 
         // GetListTransactionPaymentAsync
@@ -68,8 +70,7 @@ namespace FUParkingTesting
 
             var transactions = new List<Transaction>
             {
-                new Transaction
-                {
+                new() {
                     Amount = 100,
                     Wallet = new Wallet
                     {
@@ -372,8 +373,7 @@ namespace FUParkingTesting
             // Arrange
             var list = new List<StatisticParkingAreaRevenueResDto>
             {
-                new StatisticParkingAreaRevenueResDto
-                {
+                new() {
                     ParkingArea = new GetParkingAreaOptionResDto
                     {
                         Name = "FPTU 1",
@@ -509,8 +509,8 @@ namespace FUParkingTesting
                 {
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
-                    Data = new List<StatisticRevenueParkingAreasDetailsResDto>
-                    {
+                    Data =
+                    [
                         new StatisticRevenueParkingAreasDetailsResDto
                         {
                             ParkingAreaName = "FPTU 1",
@@ -518,7 +518,7 @@ namespace FUParkingTesting
                             RevenueOther = 100,
                             RevenueTotal = 100
                         }
-                    }
+                    ]
                 });
 
             // Act

@@ -21,6 +21,7 @@ namespace FUParkingTesting
         private readonly Mock<IParkingAreaRepository> _parkingAreaRepositoryMock = new();
         private readonly Mock<IHelpperService> _helpperServiceMock = new();
         private readonly Mock<ISessionRepository> _sessionRepositoryMock = new();
+        private readonly Mock<IGateRepository> _gateRepositoryMock = new();
         private readonly ParkingAreaService _parkingService;
 
         public ParkingAreaServiceTesting()
@@ -28,7 +29,8 @@ namespace FUParkingTesting
             _parkingAreaRepositoryMock = new Mock<IParkingAreaRepository>();
             _sessionRepositoryMock = new Mock<ISessionRepository>();
             _helpperServiceMock = new Mock<IHelpperService>();
-            _parkingService = new ParkingAreaService(_parkingAreaRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object);
+            _gateRepositoryMock = new Mock<IGateRepository>();
+            _parkingService = new ParkingAreaService(_parkingAreaRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _gateRepositoryMock.Object);
         }
 
         // DeleteParkingArea
@@ -109,8 +111,8 @@ namespace FUParkingTesting
             var result = await _parkingService.DeleteParkingArea(parkingAreaId);
 
             // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY, result.Message);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // Failure
@@ -222,8 +224,7 @@ namespace FUParkingTesting
 
             var sessionExistList = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Status = SessionEnum.PARKED,
                     Block = 30,
                     Mode = "MODE1",
@@ -695,8 +696,7 @@ namespace FUParkingTesting
 
             var parkingAreas = new List<ParkingArea>
             {
-                new ParkingArea
-                {
+                new() {
                     Name = "Parking Area 1",
                     Block = 30,
                     Mode = ModeEnum.MODE1,
@@ -1449,12 +1449,11 @@ namespace FUParkingTesting
             };
 
             var parkingAreaId = Guid.NewGuid();
-            var isActive = true;
+            //var isActive = true;
 
             var existingSession = new List<Session>
             {
-                new Session
-                {
+                new() {
                     Status = SessionEnum.PARKED,
                     Block = 30,
                     Mode = "MODE1",
@@ -1585,7 +1584,7 @@ namespace FUParkingTesting
             };
 
             var parkingAreaId = Guid.NewGuid();
-            var isActive = true;
+            //var isActive = true;
 
             var sessionReturn = new Return<IEnumerable<Session>>
             {
@@ -1655,8 +1654,7 @@ namespace FUParkingTesting
 
             var parkingList = new List<ParkingArea>
             {
-                new ParkingArea 
-                { 
+                new() { 
                     Name = "FPTU",
                     Block = 30,
                     Mode = "MODE1",

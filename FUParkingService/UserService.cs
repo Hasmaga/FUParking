@@ -475,7 +475,7 @@ namespace FUParkingService
                 }                
                 if (!req.Password.IsNullOrEmpty())
                 {
-                    user.Data.PasswordHash = CreatePassHashAndPassSalt(req.Password, out byte[] passwordSalt);
+                    user.Data.PasswordHash = CreatePassHashAndPassSalt(req.Password ?? throw new Exception(ErrorEnumApplication.SERVER_ERROR), out byte[] passwordSalt);
                     user.Data.PasswordSalt = Convert.ToBase64String(passwordSalt);
                 }
                 user.Data.LastModifyById = user.Data.Id;

@@ -2454,7 +2454,7 @@ namespace FUParkingService
                         TimeIn = result.Data.TimeIn,
                         VehicleType = result.Data.VehicleType?.Name ?? "",
                         Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,        
-                        customerType = result.Data.Customer?.CustomerType?.Name ?? "",
+                        CustomerType = result.Data.Customer?.CustomerType?.Name ?? "",
                     }
                 };
             }
@@ -2994,7 +2994,7 @@ namespace FUParkingService
                     };
                 }                
 
-                if (result.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
+                if (result.Data?.StatusCustomer == (StatusCustomerEnum.INACTIVE))
                 {
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {

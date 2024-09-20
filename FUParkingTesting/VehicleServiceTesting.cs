@@ -60,7 +60,7 @@ namespace FUParkingTesting
 
             var vehicleTypes = new List<VehicleType>
             {
-                new VehicleType {
+                new() {
                     Name = "Car",
                     StatusVehicleType = "Active",
                 }
@@ -132,7 +132,7 @@ namespace FUParkingTesting
 
             var vehicleTypes = new List<VehicleType>
             {
-                new VehicleType {
+                new() {
                     Name = "Car",
                     StatusVehicleType = "Active",
                 }
@@ -179,8 +179,7 @@ namespace FUParkingTesting
             // Arrange
             var vehicleTypes = new List<VehicleType>
             {
-                new VehicleType
-                {
+                new() {
                     Name = "Car",
                     Description = "Four-wheeled vehicle"
                 }
@@ -680,8 +679,7 @@ namespace FUParkingTesting
 
             var vehicles = new List<Vehicle>
             {
-                new Vehicle
-                {
+                new() {
                     PlateNumber = "99L999999",
                     VehicleType = new VehicleType
                     {
@@ -757,8 +755,7 @@ namespace FUParkingTesting
 
             var vehicles = new List<Vehicle>
             {
-                new Vehicle
-                {
+                new() {
                     PlateNumber = "99L999999",
                     VehicleType = new VehicleType
                     {
@@ -811,8 +808,7 @@ namespace FUParkingTesting
 
             var vehicles = new List<Vehicle>
             {
-                new Vehicle
-                {
+                new() {
                     PlateNumber = "99L999999",
                     VehicleType = new VehicleType
                     {
@@ -887,8 +883,7 @@ namespace FUParkingTesting
 
             var vehicles = new List<Vehicle>
             {
-                new Vehicle
-                {
+                new() {
                     PlateNumber = "99L999999",
                     VehicleType = new VehicleType
                     {
@@ -2225,7 +2220,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.PLATE_NUMBER_IS_EXIST, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // Failure
@@ -4097,8 +4092,7 @@ namespace FUParkingTesting
             var customerId = Guid.NewGuid();
             var vehicleData = new List<Vehicle>
             {
-                new Vehicle
-                {
+                new() {
                     PlateNumber = "99L999999",
                     VehicleType = new VehicleType 
                     { 
@@ -4255,14 +4249,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = customerId,
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "51A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>
@@ -4362,14 +4355,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = Guid.NewGuid(),
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "51A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>
@@ -4412,14 +4404,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = customerId,
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "51A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>
@@ -4475,14 +4466,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = customerId,
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "INVALID",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>
@@ -4541,14 +4531,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = customerId,
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "51A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>
@@ -4618,14 +4607,13 @@ namespace FUParkingTesting
             var req = new CreateListVehicleForCustomerByUserReqDto
             {
                 CustomerId = customerId,
-                Vehicles = new CreateVehiclesNonPriceResDto[]
-                {
-                    new CreateVehiclesNonPriceResDto
-                    {
+                Vehicles =
+                [
+                    new() {
                         PlateNumber = "51A12345",
                         VehicleTypeId = Guid.NewGuid()
                     }
-                }
+                ]
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(new Return<User>

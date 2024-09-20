@@ -413,6 +413,7 @@ namespace FUParkingRepository
                     query = query.Where(t => t.CreatedDate <= endDate.Value);
                 }
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var revenueData = await query
                     .Join(_db.Payments,
                         t => t.PaymentId,
@@ -435,20 +436,21 @@ namespace FUParkingRepository
                         OtherRevenue = g.Sum(x => x.Payment.PaymentMethod.Name != PaymentMethods.WALLET ? x.Transaction.Amount : 0)
                     })
                     .ToListAsync();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
                 // Calculate total revenue and average revenue
                 int totalRevenue = revenueData.Sum(r => r.TotalRevenue);
-                int numberOfParkingAreas = parkingAreas.Count();
+                int numberOfParkingAreas = parkingAreas.Count;
                 int averageRevenue = numberOfParkingAreas > 0 ? totalRevenue / numberOfParkingAreas : 0;
 
                 // Join the revenue data with parking areas
                 var result = parkingAreas.Select(pa => new StatisticRevenueOfParkingSystemResDto
                 {
                     ParkingArea = pa,
-                    totalRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.TotalRevenue ?? 0,
-                    walletRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.WalletRevenue ?? 0,
-                    otherRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.OtherRevenue ?? 0,
-                    averageRevenue = averageRevenue
+                    TotalRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.TotalRevenue ?? 0,
+                    WalletRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.WalletRevenue ?? 0,
+                    OtherRevenue = revenueData.FirstOrDefault(r => r.ParkingAreaId == pa.Id)?.OtherRevenue ?? 0,
+                    AverageRevenue = averageRevenue
                 }).ToList();
 
                 return new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
@@ -515,7 +517,7 @@ namespace FUParkingRepository
                             Name = gateName,
                             Revenue = g.Where(x => x.GateName == gateName).Sum(x => x.Amount)
                         }).ToList(),
-                        total = g.Sum(x => x.Amount)
+                        Total = g.Sum(x => x.Amount)
                     }).ToList();
 
                 var paymentMethods = new[] { PaymentMethods.WALLET, PaymentMethods.CASH };
@@ -531,7 +533,7 @@ namespace FUParkingRepository
                                 Name = gateName,
                                 Revenue = 0
                             }).ToList(),
-                            total = 0
+                            Total = 0
                         });
                     }
                 }

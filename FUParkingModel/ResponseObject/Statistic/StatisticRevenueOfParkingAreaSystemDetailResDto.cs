@@ -11,7 +11,7 @@ namespace FUParkingModel.ResponseObject.Statistic
     {
         public required string PaymentMethod { get; set; }
         public List<GateDetailDto>? Gates { get; set; }
-        public int total { get; set; }
+        public int Total { get; set; }
     }
 
     public class GateDetailDto
