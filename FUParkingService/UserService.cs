@@ -4,7 +4,6 @@ using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.User;
 using FUParkingModel.ReturnCommon;
-using FUParkingRepository;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
 using Microsoft.IdentityModel.Tokens;

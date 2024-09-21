@@ -417,6 +417,20 @@ namespace FUParkingService
                     var updateNonePaidSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
                     if (!updateNonePaidSession.IsSuccess)
                         return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateNonePaidSession.InternalErrorMessage };
+                    if (sessionCard.Data.CustomerId.HasValue)
+                    {
+                        var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                        if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                        {
+                            var firebaseReq = new FirebaseReqDto
+                            {
+                                ClientTokens = [customer.Data.FCMToken],
+                                Title = "Check-out Successful",
+                                Body = $"Your vehicle has been checked out successfully."
+                            };
+                            var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                        }
+                    }
                     scope.Complete();
                     return new Return<dynamic>
                     {
@@ -607,41 +621,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
                 
                 if (sessionCard.Data.CustomerId is not null) 
-                {
-                    if (sessionCard.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE))
-                    {
-                        sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                        sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                        sessionCard.Data.TimeOut = req.TimeOut;
-                        sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                        sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                        sessionCard.Data.Status = SessionEnum.CLOSED;
-                        var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                        if (!updateSession.IsSuccess)
-                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateSession.InternalErrorMessage };
-
-                        // Firebase send notification
-                        if (sessionCard.Data.CustomerId.HasValue)
-                        {
-                            var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                            if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
-                            {
-                                var firebaseReq = new FirebaseReqDto
-                                {
-                                    ClientTokens = [customer.Data.FCMToken],
-                                    Title = "Check-out Successful",
-                                    Body = $"Your vehicle has been checked out successfully."
-                                };
-                                var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                            }
-                        }
-                        scope.Complete();
-                        return new Return<dynamic>
-                        {
-                            IsSuccess = true,
-                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                        };
-                    }
+                {                    
                     // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
