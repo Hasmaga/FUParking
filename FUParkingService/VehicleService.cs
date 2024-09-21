@@ -10,7 +10,9 @@ using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ResponseObject.VehicleType;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using FUParkingService.Helper;
 using FUParkingService.Interface;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -24,8 +26,9 @@ namespace FUParkingService
         private readonly IMinioService _minioService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IFirebaseService _firebaseService;
+        private readonly ILogger<VehicleService> _logger;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService, ILogger<VehicleService> logger)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
@@ -33,6 +36,7 @@ namespace FUParkingService
             _minioService = minioService;
             _customerRepository = customerRepository;
             _firebaseService = firebaseService;
+            _logger = logger;
         }
 
         public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
@@ -547,13 +551,19 @@ namespace FUParkingService
                 // Firebase send notification
                 if (!string.IsNullOrEmpty(checkAuth.Data.FCMToken))
                 {
+                    var plateNumber = Utilities.FormatPlateNumber(reqDto.PlateNumber);
+
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = [checkAuth.Data.FCMToken],
-                        Title = "Vehicle Registered Successfully",
-                        Body = $"Your vehicle with plate number {reqDto.PlateNumber} has been registered successfully. Please park your vehicle in our facility for the first time to activate it."
+                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        Title = "Vehicle Registration Complete!",
+                        Body = $"Your vehicle with the plate number {plateNumber} has been successfully registered. To activate your registration, please park your vehicle at our facility for the first time."
                     };
                     var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                    if (notificationResult.IsSuccess == false) {
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", checkAuth.Data.Id, notificationResult.InternalErrorMessage);
+                    }
                 }
 
                 scope.Complete();
@@ -660,16 +670,23 @@ namespace FUParkingService
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
 
-                // Firebase
+                // Firebase send notification
                 if (!string.IsNullOrEmpty(checkAuth.Data.FCMToken))
                 {
+                    var plateNumber = Utilities.FormatPlateNumber(vehicle.Data.PlateNumber);
+
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = [checkAuth.Data.FCMToken],
-                        Title = "Vehicle Information Updated",
-                        Body = $"Your vehicle information with plate number {vehicle.Data.PlateNumber} has been updated successfully."
+                        ClientTokens = new List<string> { checkAuth.Data.FCMToken },
+                        Title = "Vehicle Information Updated!",
+                        Body = $"The information for your vehicle with the plate number {plateNumber} has been successfully updated."
                     };
                     var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                    if (notificationResult.IsSuccess == false)
+                    {
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", checkAuth.Data.Id, notificationResult.InternalErrorMessage);
+                    }
                 }
 
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
