@@ -11,7 +11,11 @@ using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Vehicle;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using FUParkingService.Helper;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -32,8 +36,10 @@ namespace FUParkingService
         private readonly IPriceRepository _priceRepository;
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IFirebaseService _firebaseService;
+        private readonly IMailService _mailService;
+        private readonly ILogger<SessionService> _logger;
 
-        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository, IFirebaseService firebaseService)
+        public SessionService(ISessionRepository sessionRepository, IHelpperService helpperService, ICardRepository cardRepository, IGateRepository gateRepository, IMinioService minioService, IParkingAreaRepository parkingAreaRepository, ICustomerRepository customerRepository, IWalletRepository walletRepository, IPaymentRepository paymentRepository, ITransactionRepository transactionRepository, IPriceRepository priceRepository, IVehicleRepository vehicleRepository, IFirebaseService firebaseService, ILogger<SessionService> logger, IMailService mailService)
         {
             _sessionRepository = sessionRepository;
             _helpperService = helpperService;
@@ -49,6 +55,8 @@ namespace FUParkingService
             _vehicleRepository = vehicleRepository;
             _firebaseService = firebaseService;
             _firebaseService = firebaseService;
+            _mailService = mailService;
+            _logger = logger;
         }
 
         public async Task<Return<dynamic>> CheckInAsync(CreateSessionReqDto req)
@@ -72,13 +80,13 @@ namespace FUParkingService
                 if (card.Data.Status.Equals(CardStatusEnum.MISSING))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_MISSING };
                 if (card.Data.Status.Equals(CardStatusEnum.INACTIVE))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };   
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_INACTIVE };
                 if (!card.Data.Status.Equals(CardStatusEnum.ACTIVE))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };      
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
                 if (isSessionClosed.Data != null && isSessionClosed.Data.Status.Equals(SessionEnum.PARKED))
                     return new Return<dynamic> { Message = ErrorEnumApplication.CARD_IS_EXIST };
                 // Check this plate number is in another session
@@ -92,7 +100,7 @@ namespace FUParkingService
                 if (!gateIn.IsSuccess)
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = gateIn.InternalErrorMessage };
                 if (gateIn.Data == null || !gateIn.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };               
+                    return new Return<dynamic> { Message = ErrorEnumApplication.GATE_NOT_EXIST };
 
                 // Check parking area
                 var parkingArea = await _parkingAreaRepository.GetParkingAreaByGateIdAsync(req.GateInId);
@@ -105,10 +113,10 @@ namespace FUParkingService
                 // Check plateNumber is belong to any customer
                 var customer = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
                 if (!customer.IsSuccess)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };               
-                
+                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = customer.InternalErrorMessage };
+
                 if (!customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || customer.Data == null || customer.Data.StatusCustomer.Equals(StatusCustomerEnum.INACTIVE))
-                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };               
+                    return new Return<dynamic> { Message = ErrorEnumApplication.CUSTOMER_NOT_EXIST };
                 // Check vehicle type of plate number
                 var vehicle = await _vehicleRepository.GetVehicleByPlateNumberAsync(req.PlateNumber);
                 if (!vehicle.IsSuccess)
@@ -156,7 +164,7 @@ namespace FUParkingService
                 };
                 var imageBodyUrl = await _minioService.UploadObjectAsync(uploadImageBody);
                 if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
-                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };           
+                    return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
 
                 // Create session
                 var newSession = new Session
@@ -181,27 +189,39 @@ namespace FUParkingService
 
                 if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
                 {
+                    var plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+                    string title = "Vehicle Check-In Successful";
+                    string body = $"Your vehicle with plate number {plateNumber} has successfully checked in.\n" +
+                                  $"\u2022 Location: {parkingArea.Data?.Name}\n" +
+                                  $"\u2022 Gate: {newsession.Data?.GateIn}\n" +
+                                  $"\u2022 Checked-in by: {checkAuth.Data?.FullName}\n" +
+                                  $"\u2022 Time: {Utilities.FormatDateTime(newsession.Data?.TimeIn)}";
+
                     // Notification logic if Firebase token is available
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = [customer.Data.FCMToken],
-                        Title = "Vehicle Check-In",
-                        Body = $"Your vehicle with plate number {req.PlateNumber} has successfully checked in at {newsession.Data?.TimeIn}."
+                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        Title = title,
+                        Body = body
                     };
 
                     var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
                     if (!notificationResult.IsSuccess)
                     {
-                        return new Return<dynamic>
-                        {
-                            IsSuccess = false,
-                            Message = "Check-in successful but failed to send notification.",
-                            InternalErrorMessage = notificationResult.InternalErrorMessage
-                        };
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
                     }
+
+                    MailRequest mailRequest = new()
+                    {
+                        ToEmail = customer.Data.Email,
+                        ToUsername = customer.Data.FullName,
+                        Subject = title,
+                        Body = body
+                    };
+                    await _mailService.SendEmailAsync(mailRequest);
                 }
 
-                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };                
+                return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
             {
@@ -231,7 +251,7 @@ namespace FUParkingService
                 // Check newest session of this card, check this session is closed
                 var isSessionClosed = await _sessionRepository.GetNewestSessionByCardIdAsync(card.Data.Id);
                 if (!isSessionClosed.IsSuccess)
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };  
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = isSessionClosed.InternalErrorMessage };
                 if (isSessionClosed.Data != null && isSessionClosed.Data.Status.Equals(SessionEnum.PARKED))
                     return new Return<bool> { Message = ErrorEnumApplication.CARD_IS_EXIST };
                 // Check this plate number is in another session
@@ -619,9 +639,68 @@ namespace FUParkingService
                 var imageBodyUrl = await _minioService.UploadObjectAsync(uploadObjectBodyReqDto);
                 if (imageBodyUrl.IsSuccess == false || imageBodyUrl.Data == null)
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
-                
-                if (sessionCard.Data.CustomerId is not null) 
-                {                    
+
+                if (sessionCard.Data.CustomerId is not null)
+                {
+                    if (sessionCard.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE))
+                    {
+                        sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                        sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                        sessionCard.Data.TimeOut = req.TimeOut;
+                        sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                        sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                        sessionCard.Data.Status = SessionEnum.CLOSED;
+                        var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                        if (!updateSession.IsSuccess)
+                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateSession.InternalErrorMessage };
+
+                        // Firebase send notification
+                        if (sessionCard.Data.CustomerId.HasValue)
+                        {
+                            var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                            if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                            {
+                                var plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+                                var totalPrice = Utilities.FormatMoney(price);
+
+                                var title = "Vehicle Check-Out Successful";
+                                var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                           $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                           $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                           $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                           $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                           $"\u2022 Total price: {totalPrice}";
+
+                                var firebaseReq = new FirebaseReqDto
+                                {
+                                    ClientTokens = new List<string> { customer.Data.FCMToken },
+                                    Title = title,
+                                    Body = body
+                                };
+
+                                var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                if (!notificationResult.IsSuccess)
+                                {
+                                    _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                                }
+
+                                MailRequest mailRequest = new()
+                                {
+                                    ToEmail = customer.Data.Email,
+                                    ToUsername = customer.Data.FullName,
+                                    Subject = title,
+                                    Body = body
+                                };
+                                await _mailService.SendEmailAsync(mailRequest);
+                            }
+                        }
+                        scope.Complete();
+                        return new Return<dynamic>
+                        {
+                            IsSuccess = true,
+                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                        };
+                    }
                     // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
@@ -654,397 +733,533 @@ namespace FUParkingService
                     switch (balanceCondition)
                     {
                         case WalletBalanceCondition.WalletExtraSufficient:
-                        {
-                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                            {
+                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
 
-                            var payment = new Payment
-                            {
-                                PaymentMethodId = paymentMethod.Data.Id,
-                                SessionId = sessionCard.Data.Id,
-                                TotalPrice = price,
-                            };
-                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                            if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var transaction = new FUParkingModel.Object.Transaction
-                            {
-                                WalletId = walletExtra.Data.Id,
-                                PaymentId = createPayment.Data.Id,
-                                Amount = price,
-                                TransactionDescription = "Pay for parking",
-                                TransactionStatus = StatusTransactionEnum.SUCCEED,
-                            };
-                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                            if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            walletExtra.Data.Balance -= price;
-                            var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
-                            if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                            sessionCard.Data.GateOutId = req.GateOutId;
-                            sessionCard.Data.TimeOut = req.TimeOut;
-                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                            sessionCard.Data.Status = SessionEnum.CLOSED;
-                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Firebase send notification
-                            if (sessionCard.Data.CustomerId.HasValue)
-                            {
-                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                var payment = new Payment
                                 {
-                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                        ? paymentMethod.Data.Name
-                                        : "";
-
-                                    var firebaseReq = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Check-out Successful",
-                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                    };
-                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                    var firebaseReqDeduction = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Payment Debited",
-                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                    };
-                                    await Task.Delay(1000);
-                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                    PaymentMethodId = paymentMethod.Data.Id,
+                                    SessionId = sessionCard.Data.Id,
+                                    TotalPrice = price,
+                                };
+                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                                if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
+
+                                var transaction = new FUParkingModel.Object.Transaction
+                                {
+                                    WalletId = walletExtra.Data.Id,
+                                    PaymentId = createPayment.Data.Id,
+                                    Amount = price,
+                                    TransactionDescription = "Pay for parking",
+                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                                };
+                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                                if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                walletExtra.Data.Balance -= price;
+                                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+                                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                                sessionCard.Data.GateOutId = req.GateOutId;
+                                sessionCard.Data.TimeOut = req.TimeOut;
+                                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                                sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                                sessionCard.Data.Status = SessionEnum.CLOSED;
+                                var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                                if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string formattedPrice = Utilities.FormatMoney(price);
+                                        string plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+
+                                        var title = "Check-out Successful";
+                                        var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                                   $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                                   $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                                   $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                                   $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                                   $"\u2022 Total price: {formattedPrice} VND\n" +
+                                                   $"\u2022 Payment method: wallet";
+
+                                        // Gửi thông báo Check-out Successful
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = title,
+                                            Body = body
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequest = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = title,
+                                            Body = body
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequest);
+
+                                        await Task.Delay(1000);
+
+                                        var walletTitle = "Wallet Payment Deducted";
+                                        var walletBody = $"Dear {customer.Data.FullName}, {formattedPrice} bic has been deducted from your extra wallet for the recent transaction to pay parking fee. " +
+                                                         "We appreciate your trust and continued support!";
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = walletTitle,
+                                            Body = walletBody
+                                        };
+
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                        if (!notificationResultDeduction.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResultDeduction.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequestDeduction = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = walletTitle,
+                                            Body = walletBody
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequestDeduction);
+                                    }
+                                }
+
+                                scope.Complete();
+                                return new Return<dynamic>
+                                {
+                                    IsSuccess = true,
+                                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                                };
                             }
-                            scope.Complete();
-                            return new Return<dynamic>
-                            {
-                                IsSuccess = true,
-                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                            };
-                        }
 
                         case WalletBalanceCondition.WalletMainSufficient:
-                        {
-                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                            {
+                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
 
-                            var payment = new Payment
-                            {
-                                PaymentMethodId = paymentMethod.Data.Id,
-                                SessionId = sessionCard.Data.Id,
-                                TotalPrice = price,
-                            };
-                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                            if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var transaction = new FUParkingModel.Object.Transaction
-                            {
-                                WalletId = walletMain.Data.Id,
-                                PaymentId = createPayment.Data.Id,
-                                Amount = price,
-                                TransactionDescription = "Pay for parking",
-                                TransactionStatus = StatusTransactionEnum.SUCCEED,
-                            };
-                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                            if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            walletMain.Data.Balance -= price;
-                            var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
-                            if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                            sessionCard.Data.GateOutId = req.GateOutId;
-                            sessionCard.Data.TimeOut = req.TimeOut;
-                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                            sessionCard.Data.Status = SessionEnum.CLOSED;
-                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            // Firebase send notification
-                            if (sessionCard.Data.CustomerId.HasValue)
-                            {
-                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                var payment = new Payment
                                 {
-                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                        ? paymentMethod.Data.Name
-                                        : "";
-
-                                    var firebaseReq = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Check-out Successful",
-                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                    };
-                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                    var firebaseReqDeduction = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Payment Debited",
-                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                    };
-                                    await Task.Delay(1000);
-                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                    PaymentMethodId = paymentMethod.Data.Id,
+                                    SessionId = sessionCard.Data.Id,
+                                    TotalPrice = price,
+                                };
+                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                                if (!createPayment.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPayment.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
+
+                                var transaction = new FUParkingModel.Object.Transaction
+                                {
+                                    WalletId = walletMain.Data.Id,
+                                    PaymentId = createPayment.Data.Id,
+                                    Amount = price,
+                                    TransactionDescription = "Pay for parking",
+                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                                };
+                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                                if (!createTransaction.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransaction.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                walletMain.Data.Balance -= price;
+                                var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
+                                if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+                                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                                sessionCard.Data.GateOutId = req.GateOutId;
+                                sessionCard.Data.TimeOut = req.TimeOut;
+                                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                                sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                                sessionCard.Data.Status = SessionEnum.CLOSED;
+                                var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                                if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string formattedPrice = Utilities.FormatMoney(price);
+                                        string plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+
+                                        var title = "Check-out Successful";
+                                        var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                                   $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                                   $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                                   $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                                   $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                                   $"\u2022 Total price: {formattedPrice} VND\n" +
+                                                   $"\u2022 Payment method: Wallet";
+
+                                        // Gửi thông báo Check-out Successful
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = title,
+                                            Body = body
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                                        }
+
+                                        await Task.Delay(1000);
+
+                                        var walletTitle = "Wallet Payment Deducted";
+                                        var walletBody = $"Dear {customer.Data.FullName}, {formattedPrice} bic has been deducted from your main wallet for the recent transaction to pay parking fee. " +
+                                                         "We appreciate your trust and continued support!";
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = walletTitle,
+                                            Body = walletBody
+                                        };
+
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResultDeduction.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequestDeduction = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = walletTitle,
+                                            Body = walletBody
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequestDeduction);
+                                    }
+                                }
+                                scope.Complete();
+                                return new Return<dynamic>
+                                {
+                                    IsSuccess = true,
+                                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                                };
                             }
-                            scope.Complete();
-                            return new Return<dynamic>
-                            {
-                                IsSuccess = true,
-                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                            };
-                        }
 
                         case WalletBalanceCondition.CombinedSufficient:
-                        {
-                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
-                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
+                            {
+                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.WALLET);
+                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
 
-                            var paymentMain = new Payment
-                            {
-                                PaymentMethodId = paymentMethod.Data.Id,
-                                SessionId = sessionCard.Data.Id,
-                                TotalPrice = price - walletExtra.Data.Balance,
-                            };
-                            var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
-                            if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var paymentExtra = new Payment
-                            {
-                                PaymentMethodId = paymentMethod.Data.Id,
-                                SessionId = sessionCard.Data.Id,
-                                TotalPrice = walletExtra.Data.Balance,
-                            };
-                            var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
-                            if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var transactionMain = new FUParkingModel.Object.Transaction
-                            {
-                                WalletId = walletMain.Data.Id,
-                                PaymentId = createPaymentMain.Data.Id,
-                                Amount = price - walletExtra.Data.Balance,
-                                TransactionDescription = "Pay for parking",
-                                TransactionStatus = StatusTransactionEnum.SUCCEED,
-                            };
-                            var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
-                            if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var transactionExtra = new FUParkingModel.Object.Transaction
-                            {
-                                WalletId = walletExtra.Data.Id,
-                                PaymentId = createPaymentExtra.Data.Id,
-                                Amount = walletExtra.Data.Balance,
-                                TransactionDescription = "Pay for parking",
-                                TransactionStatus = StatusTransactionEnum.SUCCEED,
-                            };
-                            var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
-                            if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            walletExtra.Data.Balance = 0;
-                            walletMain.Data.Balance -= price - walletExtra.Data.Balance;
-                            var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
-                            if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
-                            if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                            sessionCard.Data.GateOutId = req.GateOutId;
-                            sessionCard.Data.TimeOut = req.TimeOut;
-                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                            sessionCard.Data.Status = SessionEnum.CLOSED;
-                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            // Firebase send notification
-                            if (sessionCard.Data.CustomerId.HasValue)
-                            {
-                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                var paymentMain = new Payment
                                 {
-                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                        ? paymentMethod.Data.Name
-                                        : "";
-
-                                    var firebaseReq = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Check-out Successful",
-                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                    };
-                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-
-                                    var firebaseReqDeduction = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Payment Debited",
-                                        Body = $"An amount of {price} has been debited from your account via {paymentMethodName}. Thank you for using our service!"
-                                    };
-                                    await Task.Delay(1000);
-                                    var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                    PaymentMethodId = paymentMethod.Data.Id,
+                                    SessionId = sessionCard.Data.Id,
+                                    TotalPrice = price - walletExtra.Data.Balance,
+                                };
+                                var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
+                                if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                                 }
-                            }
 
-                            scope.Complete();
-                            return new Return<dynamic>
-                            {
-                                IsSuccess = true,
-                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                            };
-                        }
+                                var paymentExtra = new Payment
+                                {
+                                    PaymentMethodId = paymentMethod.Data.Id,
+                                    SessionId = sessionCard.Data.Id,
+                                    TotalPrice = walletExtra.Data.Balance,
+                                };
+                                var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
+                                if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                var transactionMain = new FUParkingModel.Object.Transaction
+                                {
+                                    WalletId = walletMain.Data.Id,
+                                    PaymentId = createPaymentMain.Data.Id,
+                                    Amount = price - walletExtra.Data.Balance,
+                                    TransactionDescription = "Pay for parking",
+                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                                };
+                                var createTransactionMain = await _transactionRepository.CreateTransactionAsync(transactionMain);
+                                if (!createTransactionMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionMain.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                var transactionExtra = new FUParkingModel.Object.Transaction
+                                {
+                                    WalletId = walletExtra.Data.Id,
+                                    PaymentId = createPaymentExtra.Data.Id,
+                                    Amount = walletExtra.Data.Balance,
+                                    TransactionDescription = "Pay for parking",
+                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                                };
+                                var createTransactionExtra = await _transactionRepository.CreateTransactionAsync(transactionExtra);
+                                if (!createTransactionExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createTransactionExtra.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                walletExtra.Data.Balance = 0;
+                                walletMain.Data.Balance -= price - walletExtra.Data.Balance;
+                                var updateWalletExtra = await _walletRepository.UpdateWalletAsync(walletExtra.Data);
+                                if (!updateWalletExtra.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+                                var updateWalletMain = await _walletRepository.UpdateWalletAsync(walletMain.Data);
+                                if (!updateWalletMain.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+                                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                                sessionCard.Data.GateOutId = req.GateOutId;
+                                sessionCard.Data.TimeOut = req.TimeOut;
+                                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                                sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                                sessionCard.Data.Status = SessionEnum.CLOSED;
+                                var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                                if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string formattedPrice = Utilities.FormatMoney(price);
+                                        string plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+
+                                        var title = "Check-out Successful";
+                                        var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                                   $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                                   $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                                   $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                                   $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                                   $"\u2022 Total price: {formattedPrice} VND\n" +
+                                                   $"\u2022 Payment method: Wallet";
+
+                                        // Gửi thông báo Check-out Successful
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = title,
+                                            Body = body
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequest = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = title,
+                                            Body = body
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequest);
+
+                                        await Task.Delay(1000);
+
+                                        var walletTitle = "Wallet Payment Deducted";
+                                        var walletBody = $"Dear {customer.Data.FullName}, {formattedPrice} bic has been deducted from your wallet for the recent transaction to pay parking fee. " +
+                                                         "We appreciate your trust and continued support!";
+
+                                        var firebaseReqDeduction = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = walletTitle,
+                                            Body = walletBody
+                                        };
+
+                                        var notificationResultDeduction = await _firebaseService.SendNotificationAsync(firebaseReqDeduction);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResultDeduction.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequestDeduction = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = walletTitle,
+                                            Body = walletBody
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequestDeduction);
+                                    }
+                                }
+
+                                scope.Complete();
+                                return new Return<dynamic>
+                                {
+                                    IsSuccess = true,
+                                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                                };
+                            }
 
                         case WalletBalanceCondition.Insufficient:
-                        {
-                            var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
-                            if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                             {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
-                            }
-
-                            sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                            sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                            sessionCard.Data.GateOutId = req.GateOutId;
-                            sessionCard.Data.TimeOut = req.TimeOut;
-                            sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                            sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                            sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
-                            sessionCard.Data.Status = SessionEnum.CLOSED;
-                            var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                            if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var payment = new Payment
-                            {
-                                PaymentMethodId = paymentMethod.Data.Id,
-                                SessionId = sessionCard.Data.Id,
-                                TotalPrice = price,
-                            };
-                            var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
-                            if (!createPayment.IsSuccess || createPayment.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            var transaction = new FUParkingModel.Object.Transaction
-                            {
-                                PaymentId = createPayment.Data.Id,
-                                Amount = price,
-                                TransactionDescription = "Pay for parking",
-                                TransactionStatus = StatusTransactionEnum.SUCCEED,
-                            };
-                            var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
-                            if (!createTransaction.IsSuccess || createTransaction.Data == null)
-                            {
-                                scope.Dispose();
-                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-
-                            // Firebase send notification
-                            if (sessionCard.Data.CustomerId.HasValue)
-                            {
-                                var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                                if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                var paymentMethod = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
+                                if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 {
-                                    string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                                        ? paymentMethod.Data.Name
-                                        : "";
-
-                                    var firebaseReq = new FirebaseReqDto
-                                    {
-                                        ClientTokens = [customer.Data.FCMToken],
-                                        Title = "Check-out Successful",
-                                        Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                                    };
-                                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
                                 }
+
+                                sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
+                                sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
+                                sessionCard.Data.GateOutId = req.GateOutId;
+                                sessionCard.Data.TimeOut = req.TimeOut;
+                                sessionCard.Data.LastModifyById = checkAuth.Data.Id;
+                                sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                                sessionCard.Data.PaymentMethodId = paymentMethod.Data.Id;
+                                sessionCard.Data.Status = SessionEnum.CLOSED;
+                                var isUpdateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
+                                if (!isUpdateSession.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                var payment = new Payment
+                                {
+                                    PaymentMethodId = paymentMethod.Data.Id,
+                                    SessionId = sessionCard.Data.Id,
+                                    TotalPrice = price,
+                                };
+                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                                if (!createPayment.IsSuccess || createPayment.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                var transaction = new FUParkingModel.Object.Transaction
+                                {
+                                    PaymentId = createPayment.Data.Id,
+                                    Amount = price,
+                                    TransactionDescription = "Pay for parking",
+                                    TransactionStatus = StatusTransactionEnum.SUCCEED,
+                                };
+                                var createTransaction = await _transactionRepository.CreateTransactionAsync(transaction);
+                                if (!createTransaction.IsSuccess || createTransaction.Data == null)
+                                {
+                                    scope.Dispose();
+                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                }
+
+                                // Firebase send notification
+                                if (sessionCard.Data.CustomerId.HasValue)
+                                {
+                                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
+                                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                                    {
+                                        string formattedPrice = Utilities.FormatMoney(price);
+                                        string plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+
+                                        var title = "Check-out Successful";
+                                        var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                                   $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                                   $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                                   $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                                   $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                                   $"\u2022 Total price: {formattedPrice} VND\n" +
+                                                   $"\u2022 Payment method: Cash";
+
+                                        var firebaseReq = new FirebaseReqDto
+                                        {
+                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            Title = title,
+                                            Body = body
+                                        };
+                                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                                        if (!notificationResult.IsSuccess)
+                                        {
+                                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                                        }
+
+                                        MailRequest mailRequest = new()
+                                        {
+                                            ToEmail = customer.Data.Email,
+                                            ToUsername = customer.Data.FullName,
+                                            Subject = title,
+                                            Body = body
+                                        };
+                                        await _mailService.SendEmailAsync(mailRequest);
+                                    }
+                                }
+                                scope.Complete();
+                                return new Return<dynamic>
+                                {
+                                    IsSuccess = true,
+                                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                                };
                             }
-                            scope.Complete();
-                            return new Return<dynamic>
-                            {
-                                IsSuccess = true,
-                                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                            };
-                        }
                         default:
-                        {
-                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                        }
+                            {
+                                return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            }
                     }
                 }
                 var paymentMethodCash = await _paymentRepository.GetPaymentMethodByNameAsync(PaymentMethods.CASH);
@@ -1088,27 +1303,6 @@ namespace FUParkingService
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
-                // Firebase send notification
-                if (sessionCard.Data.CustomerId.HasValue)
-                {
-                    var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
-                    {
-                        var paymentMethod = await _paymentRepository.GetPaymentMethodByIdAsync(sessionCard.Data.PaymentMethodId ?? Guid.Empty);
-                        string paymentMethodName = paymentMethod.IsSuccess && paymentMethod.Data != null
-                            ? paymentMethod.Data.Name
-                            : "";
-
-                        var firebaseReq = new FirebaseReqDto
-                        {
-                            ClientTokens = [customer.Data.FCMToken],
-                            Title = "Check-out Successful",
-                            Body = $"Your vehicle has been checked out successfully. Total price: {price} paid by {paymentMethodName}"
-                        };
-                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                    }
                 }
 
                 scope.Complete();
@@ -1476,7 +1670,7 @@ namespace FUParkingService
                         InternalErrorMessage = isGateExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.GATE_NOT_EXIST
                     };
-                }    
+                }
                 // Check PlateNumber
                 var session = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
                 if (!session.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || session.Data is null)
@@ -1503,7 +1697,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
-                }               
+                }
 
                 string imagePlateOutUrl = "";
                 string imageBodyOutUrl = "";
@@ -1781,7 +1975,37 @@ namespace FUParkingService
                 {
                     scope.Dispose();
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateCard.InternalErrorMessage };
-                }                
+                }
+
+                if (session.Data.CustomerId.HasValue && !(session.Data.Customer?.CustomerType ?? new CustomerType() { Description = "", Name = "" }).Name.Equals(CustomerTypeEnum.FREE))
+                {
+                    var customer = await _customerRepository.GetCustomerByIdAsync(session.Data.CustomerId ?? Guid.NewGuid());
+                    if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
+                    {
+                        string formattedPrice = Utilities.FormatMoney(price);
+                        string plateNumber = Utilities.FormatPlateNumber(session.Data.PlateNumber);
+
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            Title = "Check-out Successful",
+                            Body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                   $"\u2022 Location: {isGateExist.Data?.ParkingArea?.Name}\n" +
+                                   $"\u2022 Gate: {isGateExist.Data?.Name}\n" +
+                                   $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                   $"\u2022 Time: {Utilities.FormatDateTime(session.Data.TimeOut)}\n" +
+                                   $"\u2022 Total price: {formattedPrice} VND\n" +
+                                   $"\u2022 Payment method: Cash"
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                        if (!notificationResult.IsSuccess)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                        }
+                    }
+                }
+
+
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -2232,7 +2456,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.TIME_OUT_IS_MUST_BE_GREATER_TIME_IN
                     };
-                }                
+                }
 
                 var amount = 0;
                 var totalBlockTime = (int)(TimeOut - result.Data.TimeIn).TotalMinutes / result.Data.Block;
@@ -2388,7 +2612,7 @@ namespace FUParkingService
                         }
                     default:
                         return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }                
+                }
                 // Check if customer is paid
                 if (result.Data.Customer is not null && result.Data.Customer.CustomerType?.Name == (CustomerTypeEnum.PAID))
                 {
@@ -2414,10 +2638,10 @@ namespace FUParkingService
                     }
 
                     if (customerWalletMain.Data is not null && customerWalletExtra.Data is not null)
-                    {                        
+                    {
                         amount = (customerWalletMain.Data.Balance + customerWalletExtra.Data.Balance) >= amount ? 0 : amount;
-                    }               
-                }                
+                    }
+                }
 
                 return new Return<GetSessionByCardNumberResDto>
                 {
@@ -2427,13 +2651,13 @@ namespace FUParkingService
                     {
                         Id = result.Data.Id,
                         CardId = result.Data.CardId,
-                        GateIn = result.Data.GateIn?.Name ?? "",                        
+                        GateIn = result.Data.GateIn?.Name ?? "",
                         ImageInBodyUrl = result.Data.ImageInBodyUrl,
                         ImageInUrl = result.Data.ImageInUrl,
                         PlateNumber = result.Data.PlateNumber,
                         TimeIn = result.Data.TimeIn,
                         VehicleType = result.Data.VehicleType?.Name ?? "",
-                        Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,        
+                        Amount = result.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE) ? 0 : amount,
                         CustomerType = result.Data.Customer?.CustomerType?.Name ?? "",
                     }
                 };
@@ -2721,7 +2945,7 @@ namespace FUParkingService
                     {
                         Message = ErrorEnumApplication.SESSION_CANCELLED
                     };
-                }            
+                }
 
                 // Check Plate Number is belong to another session
                 var checkPlateNumber = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
@@ -2733,7 +2957,7 @@ namespace FUParkingService
                         Message = checkPlateNumber.Message
                     };
                 }
-                
+
                 if (checkPlateNumber.Data != null && checkPlateNumber.Data.Id != req.SessionId)
                 {
                     if (checkPlateNumber.Data.Status.Equals(SessionEnum.PARKED))
@@ -2864,7 +3088,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.CARD_IS_MISSING
                     };
                 }
-                
+
 
                 // Check card previour sessoion
                 var checkCardPreviousSession = await _sessionRepository.GetNewestSessionByCardNumberAsync(req.CardNumber);
@@ -2885,7 +3109,7 @@ namespace FUParkingService
                         Data = new GetCustomerTypeByPlateNumberResDto
                         {
                             PreviousSessionInfo = new PreviousSessionInfo
-                            {                                
+                            {
                                 CardOrPlateNumber = "CARD"
                             }
                         },
@@ -2907,7 +3131,7 @@ namespace FUParkingService
                         IsSuccess = true
                     };
                 }
-                
+
                 if (vehicle.Data is not null && vehicle.Data.StatusVehicle.Equals(StatusVehicleEnum.REJECTED))
                     return new Return<GetCustomerTypeByPlateNumberResDto>
                     {
@@ -2955,13 +3179,13 @@ namespace FUParkingService
                         Data = new GetCustomerTypeByPlateNumberResDto
                         {
                             PreviousSessionInfo = new PreviousSessionInfo
-                            {                                
+                            {
                                 CardOrPlateNumber = "PLATENUMBER"
                             }
                         },
                         IsSuccess = true
                     };
-                }                    
+                }
 
                 // Get Customer Type By Plate Number
                 var result = await _customerRepository.GetCustomerByPlateNumberAsync(req.PlateNumber);
@@ -2972,7 +3196,7 @@ namespace FUParkingService
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = result.Message
                     };
-                }                
+                }
 
                 if (result.Data?.StatusCustomer == (StatusCustomerEnum.INACTIVE))
                 {
@@ -2995,7 +3219,7 @@ namespace FUParkingService
                     },
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY,
                     IsSuccess = true
-                };               
+                };
             }
             catch (Exception ex)
             {

@@ -1,12 +1,16 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.RequestObject.Transaction;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Transaction;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using FUParkingService.Helper;
 using FUParkingService.Interface;
+using Microsoft.Extensions.Logging;
 using System.Transactions;
 
 namespace FUParkingService
@@ -17,13 +21,17 @@ namespace FUParkingService
         private readonly IHelpperService _helpperService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IWalletRepository _walletRepository;
+        private readonly ILogger<TransactionService> _logger;
+        private readonly IFirebaseService _firebaseService;
 
-        public TransactionService(ITransactionRepository transactionRepository, IHelpperService helpperService, ICustomerRepository customerRepository, IWalletRepository walletRepository)
+        public TransactionService(ITransactionRepository transactionRepository, IHelpperService helpperService, ICustomerRepository customerRepository, IWalletRepository walletRepository, ILogger<TransactionService> logger, IFirebaseService firebaseService)
         {
             _transactionRepository = transactionRepository;
             _helpperService = helpperService;
             _customerRepository = customerRepository;
             _walletRepository = walletRepository;
+            _firebaseService = firebaseService;
+            _logger = logger;
         }
 
         public async Task<Return<IEnumerable<GetTransactionPaymentResDto>>> GetListTransactionPaymentAsync(GetListObjectWithFillerAttributeAndDateReqDto req)
@@ -256,6 +264,30 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR,
                     };
                 }
+
+                // Firebase send notification
+                if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                {
+                    string formatedMoney = Utilities.FormatMoney(req.Amount);
+
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        Title = "Top-up Successful",
+                        Body = $"Dear {customer.Data?.FullName}, your wallet has been successfully topped up with {formatedMoney} coin.\n" +
+                               $"\u2022 New Balance: {wallet.Data?.Balance:C}\n" +
+                               $"\u2022 Top-up processed by: {checkAuth.Data?.FullName}\n" +
+                               $"\u2022 Date: {Utilities.FormatDateTime(DateTime.Now)}"
+                    };
+
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                    if (!notificationResult.IsSuccess)
+                    {
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data?.Id, notificationResult.InternalErrorMessage);
+                    }
+                }
+
+
                 scope.Complete();
                 return new Return<dynamic>
                 {

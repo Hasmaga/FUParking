@@ -1,10 +1,16 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using FUParkingService.Helper;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Transactions;
 
@@ -19,6 +25,10 @@ namespace FUParkingService.VnPayService
         private readonly IDepositRepository _depositRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly IWalletRepository _walletRepository;
+        private readonly IFirebaseService _firebaseService;
+        private readonly IMailService _mailService;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly ILogger<VnPayService> _logger;
 
         public VnPayService(
             IPackageRepository packageRepository,
@@ -27,7 +37,11 @@ namespace FUParkingService.VnPayService
             IPaymentRepository paymentRepository,
             IDepositRepository depositRepository,
             ITransactionRepository transactionRepository,
-            IWalletRepository walletRepository)
+            IWalletRepository walletRepository,
+            IFirebaseService firebaseService,
+            IMailService mailService,
+            ICustomerRepository customerRepository,
+            ILogger<VnPayService> logger)
         {
             _configuration = configuration;
             _packageRepository = packageRepository;
@@ -36,6 +50,10 @@ namespace FUParkingService.VnPayService
             _depositRepository = depositRepository;
             _transactionRepository = transactionRepository;
             _walletRepository = walletRepository;
+            _firebaseService = firebaseService;
+            _mailService = mailService;
+            _customerRepository = customerRepository;
+            _logger = logger;
         }
 
         public async Task<Return<dynamic>> CustomerCreateRequestBuyPackageByVnPayAsync(Guid packageId, string vnp_BankCode, IPAddress ipAddress)
@@ -105,22 +123,6 @@ namespace FUParkingService.VnPayService
                 // Create secure hash and get payment URL
                 string paymentUrl = vnpay.CreateRequestUrl(vnp_Url ?? "", vnp_HashSecret ?? "");
 
-                // Create transaction
-                FUParkingModel.Object.Transaction newTransaction = new()
-                {
-                    Amount = package.Data.Price,
-                    TransactionDescription = $"Buy package {package.Data.Name} - Bai Parking",
-                    TransactionStatus = StatusTransactionEnum.PENDING,
-                    DepositId = deposit.Data.Id
-                };
-
-                var transaction = await _transactionRepository.CreateTransactionAsync(newTransaction);
-                if (transaction.IsSuccess == false || transaction.Data == null)
-                {
-                    scope.Dispose();
-                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -165,7 +167,7 @@ namespace FUParkingService.VnPayService
                 string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
                 string? vnp_SecureHash = queryStringParameters["vnp_SecureHash"];
 
-                if(vnp_SecureHash is null)
+                if (vnp_SecureHash is null)
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -185,13 +187,6 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                var transaction = await _transactionRepository.GetTransactionByDepositIdAsync(deposit.Data.Id);
-                if (!transaction.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || transaction.Data == null)
-                {
-                    scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
                 string vnp_HashSecret = _configuration.GetSection("VnPay:vnp_HashSecret").Value ?? "";
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (!checkSignature)
@@ -200,17 +195,16 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                if (transaction.Data.Amount != vnp_Amount)
+                if (deposit.Data.Amount != vnp_Amount)
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                transaction.Data.TransactionStatus = vnp_TransactionStatus.Equals("00") ? StatusTransactionEnum.SUCCEED : StatusTransactionEnum.FAILED;
-                var updateTransaction = await _transactionRepository.UpdateTransactionAsync(transaction.Data);
-                if (updateTransaction == null)
+                if (vnp_TransactionStatus.Equals("00") == false)
                 {
                     scope.Dispose();
+                    _logger.LogError("Transaction failed with status: {Status}", vnp_TransactionStatus);
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
@@ -221,6 +215,10 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
+                int mainAmount = 0;
+                int extraAmount = 0;
+                DateTime? expDate = null;
+
                 var walletMain = await _walletRepository.GetMainWalletByCustomerId(deposit.Data.CustomerId);
                 if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data == null)
                 {
@@ -228,6 +226,7 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
                 walletMain.Data.Balance += package.Data.CoinAmount;
+                mainAmount = walletMain.Data.Balance;
 
                 FUParkingModel.Object.Transaction newTransactionMain = new()
                 {
@@ -250,6 +249,7 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
+                var currentDateTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 if (package.Data.ExtraCoin > 1)
                 {
                     var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(deposit.Data.CustomerId);
@@ -259,7 +259,14 @@ namespace FUParkingService.VnPayService
                         return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
                     walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
-                    walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
+
+                    walletExtra.Data.EXPDate = (walletExtra.Data.EXPDate?.Date < currentDateTime.Date)
+                            ? currentDateTime.AddDays(package.Data.EXPPackage ?? 0)
+                            : walletExtra.Data.EXPDate?.AddDays(package.Data.EXPPackage ?? 0);
+
+                    extraAmount = walletExtra.Data.Balance;
+                    expDate = walletExtra.Data.EXPDate;
+
                     // Create transaction for wallet extra
                     if (package.Data.ExtraCoin is not null)
                     {
@@ -286,6 +293,68 @@ namespace FUParkingService.VnPayService
                     }
                 }
 
+                //Notification
+                var customer = await _customerRepository.GetCustomerByIdAsync(deposit.Data.CustomerId);
+                if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && customer.Data is not null)
+                {
+                    var title = "Top-up Successful!";
+                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet using VnPay Payment Gateway.\n";
+
+                    if (package.Data.ExtraCoin > 1)
+                    {
+                        body += $"You received an additional {Utilities.FormatMoney(package.Data.ExtraCoin ?? 0)} bic into your extra wallet.\n";
+                    }
+
+                    body += $"\nTotal balance in main wallet: {Utilities.FormatMoney(mainAmount)}.";
+
+                    if (extraAmount > 0)
+                    {
+                        body += $"\nTotal balance in extra wallet: {Utilities.FormatMoney(extraAmount)} bic.";
+                    }
+
+                    if (expDate?.Date >= currentDateTime.Date && expDate.HasValue)
+                    {
+                        body += $"\nExtra wallet expiration date: {Utilities.FormatDateTime(expDate)}.";
+                    }
+
+                    body += "\n\nIf you have any questions, please contact Bai Parking directly or visit the Support section in the Bai App.";
+
+                    // Send Firebase notification
+                    var fcmToken = deposit.Data.Customer?.FCMToken;
+                    if (!string.IsNullOrEmpty(fcmToken))
+                    {
+
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { fcmToken },
+                            Title = title,
+                            Body = body
+                        };
+
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                        if (!notificationResult.IsSuccess)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", deposit.Data.CustomerId, notificationResult.InternalErrorMessage);
+                        }
+                    }
+
+                    MailRequest mailRequest = new()
+                    {
+                        ToEmail = deposit.Data.Customer?.Email ?? "",
+                        ToUsername = deposit.Data.Customer?.FullName ?? "",
+                        Subject = title,
+                        Body = body
+                    };
+
+                    // Send Mail
+                    await _mailService.SendEmailAsync(mailRequest);
+                }
+                else
+                {
+                    _logger.LogError("Failed to retrieve customer with ID {CustomerId}. Error: {ErrorMessage}", deposit.Data.CustomerId, customer.Message);
+                }
+
                 scope.Complete();
                 return new Return<bool> { Data = true, Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
 
@@ -293,7 +362,7 @@ namespace FUParkingService.VnPayService
             catch (Exception ex)
             {
                 scope.Dispose();
-                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex};
+                return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = ex };
             }
         }
     }
