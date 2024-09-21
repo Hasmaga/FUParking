@@ -200,7 +200,7 @@ namespace FUParkingService
                     // Notification logic if Firebase token is available
                     var firebaseReq = new FirebaseReqDto
                     {
-                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        ClientTokens = [customer.Data.FCMToken],
                         Title = title,
                         Body = body
                     };
@@ -443,19 +443,16 @@ namespace FUParkingService
                         if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                         {
                             var plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
-                            var totalPrice = Utilities.FormatMoney(price);
-
                             var title = "Vehicle Check-Out Successful";
                             var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
                                        $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
                                        $"\u2022 Gate: {gateOut.Data?.Name}\n" +
                                        $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
-                                       $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
-                                       $"\u2022 Total price: {totalPrice}";
+                                       $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n";                                       
 
                             var firebaseReq = new FirebaseReqDto
                             {
-                                ClientTokens = new List<string> { customer.Data.FCMToken },
+                                ClientTokens = [customer.Data.FCMToken],
                                 Title = title,
                                 Body = body
                             };
@@ -774,7 +771,7 @@ namespace FUParkingService
                                         // Gửi thông báo Check-out Successful
                                         var firebaseReq = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = title,
                                             Body = body
                                         };
@@ -801,7 +798,7 @@ namespace FUParkingService
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = walletTitle,
                                             Body = walletBody
                                         };
@@ -908,7 +905,7 @@ namespace FUParkingService
                                         // Gửi thông báo Check-out Successful
                                         var firebaseReq = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = title,
                                             Body = body
                                         };
@@ -926,7 +923,7 @@ namespace FUParkingService
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = walletTitle,
                                             Body = walletBody
                                         };
@@ -1067,7 +1064,7 @@ namespace FUParkingService
                                         // Gửi thông báo Check-out Successful
                                         var firebaseReq = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = title,
                                             Body = body
                                         };
@@ -1094,7 +1091,7 @@ namespace FUParkingService
 
                                         var firebaseReqDeduction = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = walletTitle,
                                             Body = walletBody
                                         };
@@ -1195,7 +1192,7 @@ namespace FUParkingService
 
                                         var firebaseReq = new FirebaseReqDto
                                         {
-                                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                                            ClientTokens = [customer.Data.FCMToken],
                                             Title = title,
                                             Body = body
                                         };
@@ -1953,7 +1950,7 @@ namespace FUParkingService
 
                         var firebaseReq = new FirebaseReqDto
                         {
-                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            ClientTokens = [customer.Data.FCMToken],
                             Title = "Check-out Successful",
                             Body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
                                    $"\u2022 Location: {isGateExist.Data?.ParkingArea?.Name}\n" +

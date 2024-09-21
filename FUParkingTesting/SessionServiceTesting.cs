@@ -21,6 +21,8 @@ using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.RequestObject.Customer;
 using FirebaseAdmin.Messaging;
 using Org.BouncyCastle.Ocsp;
+using FUParkingService.MailService;
+using Microsoft.Extensions.Logging;
 
 namespace FUParkingTesting
 {
@@ -39,7 +41,8 @@ namespace FUParkingTesting
         private readonly Mock<IPriceRepository> _priceRepositoryMock = new();
         private readonly Mock<IVehicleRepository> _vehicleRepositoryMock = new();
         private readonly Mock<IFirebaseService> _firebaseServiceMock = new();
-
+        private readonly Mock<ILogger<SessionService>> _loggerMock = new();
+        private readonly Mock<IMailService> _mailServiceMock = new();
         private readonly SessionService _sessionService;
 
         public SessionServiceTesting()
@@ -57,7 +60,8 @@ namespace FUParkingTesting
             _priceRepositoryMock = new Mock<IPriceRepository>();
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
             _firebaseServiceMock = new Mock<IFirebaseService>();
-
+            _loggerMock = new Mock<ILogger<SessionService>>();
+            _mailServiceMock = new Mock<IMailService>();
             _sessionService = new SessionService(
                 _sessionRepositoryMock.Object,
                 _helpperServiceMock.Object,
@@ -71,7 +75,9 @@ namespace FUParkingTesting
                 _transactionRepositoryMock.Object,
                 _priceRepositoryMock.Object,
                 _vehicleRepositoryMock.Object,
-                _firebaseServiceMock.Object
+                _firebaseServiceMock.Object,
+                _loggerMock.Object,
+                _mailServiceMock.Object
             );
         }
 

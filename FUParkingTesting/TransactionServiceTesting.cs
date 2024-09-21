@@ -1,4 +1,5 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.ResponseObject.ParkingArea;
@@ -7,6 +8,7 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService;
 using FUParkingService.Interface;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Org.BouncyCastle.Ocsp;
 using System;
@@ -26,6 +28,8 @@ namespace FUParkingTesting
         private readonly Mock<IHelpperService> _helpperServiceMock;
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private readonly Mock<IWalletRepository> _walletRepositoryMock;
+        private readonly Mock<ILogger<TransactionService>> _loggerMock;
+        private readonly Mock<IFirebaseService> _firebaseServiceMock;
         private readonly TransactionService _transactionService;
 
         public TransactionServiceTesting()
@@ -34,7 +38,9 @@ namespace FUParkingTesting
             _helpperServiceMock = new Mock<IHelpperService>();
             _customerRepositoryMock = new Mock<ICustomerRepository>();
             _walletRepositoryMock = new Mock<IWalletRepository>();
-            _transactionService = new TransactionService(_transactionRepositoryMock.Object, _helpperServiceMock.Object, _customerRepositoryMock.Object, _walletRepositoryMock.Object);
+            _loggerMock = new Mock<ILogger<TransactionService>>();
+            _firebaseServiceMock = new Mock<IFirebaseService>();
+            _transactionService = new TransactionService(_transactionRepositoryMock.Object, _helpperServiceMock.Object, _customerRepositoryMock.Object, _walletRepositoryMock.Object, _loggerMock.Object, _firebaseServiceMock.Object);
         }
 
         // GetListTransactionPaymentAsync

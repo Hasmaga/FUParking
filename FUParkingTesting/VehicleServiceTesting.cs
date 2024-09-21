@@ -15,6 +15,7 @@ using FUParkingService;
 using FUParkingService.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Org.BouncyCastle.Ocsp;
 using System;
@@ -35,7 +36,7 @@ namespace FUParkingTesting
         private readonly Mock<IMinioService> _minioServiceMock = new();
         private readonly Mock<ICustomerRepository> _customerRepositoryMock = new();
         private readonly Mock<IFirebaseService> _firebaseServiceMock = new();
-
+        private readonly Mock<ILogger<VehicleService>> _loggerMock = new();
         private readonly VehicleService _vehicleService;
 
         public VehicleServiceTesting()
@@ -46,8 +47,8 @@ namespace FUParkingTesting
             _minioServiceMock = new Mock<IMinioService>();
             _customerRepositoryMock = new Mock<ICustomerRepository>();
             _firebaseServiceMock = new Mock<IFirebaseService>();
-
-            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object);
+            _loggerMock = new Mock<ILogger<VehicleService>>();
+            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object, _loggerMock.Object);
         }
 
         // GetVehicleTypesAsync

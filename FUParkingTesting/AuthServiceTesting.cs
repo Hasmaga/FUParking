@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using System.Text;
 using Xunit;
+using FUParkingService.MailService;
 
 namespace FUParkingTesting
 {
@@ -20,6 +21,7 @@ namespace FUParkingTesting
         private readonly Mock<IWalletRepository> _walletRepositoryMock = new();
         private readonly Mock<IUserRepository> _userRepositoryMock = new();
         private readonly Mock<IHelpperService> _helpperServiceMock = new();
+        private readonly Mock<IMailService> _mailServiceMock = new();
         private readonly AuthService _authService;
 
         public AuthServiceTesting()
@@ -28,8 +30,9 @@ namespace FUParkingTesting
             _configurationMock = new Mock<IConfiguration>();
             _walletRepositoryMock = new Mock<IWalletRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
+            _mailServiceMock = new Mock<IMailService>();
             _helpperServiceMock = new Mock<IHelpperService>();
-            _authService = new AuthService(_customerRepositoryMock.Object, _configurationMock.Object, _walletRepositoryMock.Object, _userRepositoryMock.Object, _helpperServiceMock.Object);
+            _authService = new AuthService(_customerRepositoryMock.Object, _configurationMock.Object, _walletRepositoryMock.Object, _userRepositoryMock.Object, _helpperServiceMock.Object, _mailServiceMock.Object);
         }
 
         // LoginWithCredentialAsync
