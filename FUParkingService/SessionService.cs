@@ -442,13 +442,38 @@ namespace FUParkingService
                         var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
                         if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
                         {
+                            var plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
+                            var totalPrice = Utilities.FormatMoney(price);
+
+                            var title = "Vehicle Check-Out Successful";
+                            var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
+                                       $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
+                                       $"\u2022 Gate: {gateOut.Data?.Name}\n" +
+                                       $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
+                                       $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
+                                       $"\u2022 Total price: {totalPrice}";
+
                             var firebaseReq = new FirebaseReqDto
                             {
-                                ClientTokens = [customer.Data.FCMToken],
-                                Title = "Check-out Successful",
-                                Body = $"Your vehicle has been checked out successfully."
+                                ClientTokens = new List<string> { customer.Data.FCMToken },
+                                Title = title,
+                                Body = body
                             };
+
                             var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                            if (!notificationResult.IsSuccess)
+                            {
+                                _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                            }
+
+                            MailRequest mailRequest = new()
+                            {
+                                ToEmail = customer.Data.Email,
+                                ToUsername = customer.Data.FullName,
+                                Subject = title,
+                                Body = body
+                            };
+                            await _mailService.SendEmailAsync(mailRequest);
                         }
                     }
                     scope.Complete();
@@ -641,66 +666,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
 
                 if (sessionCard.Data.CustomerId is not null)
-                {
-                    if (sessionCard.Data.Customer?.CustomerType?.Name == (CustomerTypeEnum.FREE))
-                    {
-                        sessionCard.Data.ImageOutUrl = imageOutUrl.Data.ObjUrl;
-                        sessionCard.Data.ImageOutBodyUrl = imageBodyUrl.Data.ObjUrl;
-                        sessionCard.Data.TimeOut = req.TimeOut;
-                        sessionCard.Data.LastModifyById = checkAuth.Data.Id;
-                        sessionCard.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-                        sessionCard.Data.Status = SessionEnum.CLOSED;
-                        var updateSession = await _sessionRepository.UpdateSessionAsync(sessionCard.Data);
-                        if (!updateSession.IsSuccess)
-                            return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = updateSession.InternalErrorMessage };
-
-                        // Firebase send notification
-                        if (sessionCard.Data.CustomerId.HasValue)
-                        {
-                            var customer = await _customerRepository.GetCustomerByIdAsync(sessionCard.Data.CustomerId.Value);
-                            if (customer.IsSuccess && customer.Data != null && !string.IsNullOrEmpty(customer.Data.FCMToken))
-                            {
-                                var plateNumber = Utilities.FormatPlateNumber(req.PlateNumber);
-                                var totalPrice = Utilities.FormatMoney(price);
-
-                                var title = "Vehicle Check-Out Successful";
-                                var body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
-                                           $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
-                                           $"\u2022 Gate: {gateOut.Data?.Name}\n" +
-                                           $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
-                                           $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n" +
-                                           $"\u2022 Total price: {totalPrice}";
-
-                                var firebaseReq = new FirebaseReqDto
-                                {
-                                    ClientTokens = new List<string> { customer.Data.FCMToken },
-                                    Title = title,
-                                    Body = body
-                                };
-
-                                var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
-                                if (!notificationResult.IsSuccess)
-                                {
-                                    _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
-                                }
-
-                                MailRequest mailRequest = new()
-                                {
-                                    ToEmail = customer.Data.Email,
-                                    ToUsername = customer.Data.FullName,
-                                    Subject = title,
-                                    Body = body
-                                };
-                                await _mailService.SendEmailAsync(mailRequest);
-                            }
-                        }
-                        scope.Complete();
-                        return new Return<dynamic>
-                        {
-                            IsSuccess = true,
-                            Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
-                        };
-                    }
+                {                    
                     // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
