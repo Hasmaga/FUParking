@@ -6,6 +6,8 @@ using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,14 +26,16 @@ namespace FUParkingService
         private readonly IWalletRepository _walletRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHelpperService _helpperService;
+        private readonly IMailService _mailService;
 
-        public AuthService(ICustomerRepository customerRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository, IHelpperService helpperService)
+        public AuthService(ICustomerRepository customerRepository, IConfiguration configuration, IWalletRepository walletRepository, IUserRepository userRepository, IHelpperService helpperService, IMailService mailService)
         {
             _customerRepository = customerRepository;
             _configuration = configuration;
             _walletRepository = walletRepository;
             _userRepository = userRepository;
             _helpperService = helpperService;
+            _mailService = mailService;
         }
 
         public async Task<Return<LoginResDto>> LoginWithGoogleAsync(GoogleReturnAuthenticationResDto login)
@@ -42,7 +46,7 @@ namespace FUParkingService
                 if (login.IsAuthentication == false)
                 {
                     return new Return<LoginResDto> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
-                }                
+                }
                 // Check if the user is already registered
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(login.Email);
                 // If the user is not registered, create a new user
@@ -115,8 +119,8 @@ namespace FUParkingService
         public async Task<Return<LoginResDto>> LoginWithCredentialAsync(LoginWithCredentialReqDto req)
         {
             try
-            {                
-                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());                
+            {
+                var isUserRegistered = await _userRepository.GetUserByEmailAsync(req.Email.ToLower());
                 if (!isUserRegistered.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isUserRegistered.Data is null)
                 {
                     return new Return<LoginResDto>
@@ -235,7 +239,7 @@ namespace FUParkingService
                     {
                         Role = accountLogged.Data.Role?.Name ?? "",
                         Email = accountLogged.Data.Email,
-                        Name = accountLogged.Data.FullName                        
+                        Name = accountLogged.Data.FullName
                     },
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY
@@ -266,7 +270,7 @@ namespace FUParkingService
                 if (payload == null)
                 {
                     return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.GOOGLE_LOGIN_FAILED };
-                }                
+                }
                 var isUserRegistered = await _customerRepository.GetCustomerByEmailAsync(payload.Email);
                 if (isUserRegistered.Message.Equals(ErrorEnumApplication.NOT_FOUND_OBJECT))
                 {
@@ -312,6 +316,17 @@ namespace FUParkingService
                         transaction.Dispose();
                         return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
                     }
+
+                    // Send mail
+                    MailRequest mailRequest = new()
+                    {
+                        ToEmail = newCustomer.Email,
+                        ToUsername = newCustomer.FullName,
+                        Subject = "Welcome to Bai Parking! Your account has been successfully created",
+                        Body = RegisteredNewCustomerMailTemplate(newCustomer.FullName, newCustomer.Email)
+                    };
+                    await _mailService.SendEmailAsync(mailRequest);
+
                     transaction.Complete();
                     return new Return<LoginWithGoogleMoblieResDto>
                     {
@@ -331,7 +346,7 @@ namespace FUParkingService
                     if (isUserRegistered.Data.StatusCustomer == StatusCustomerEnum.INACTIVE)
                     {
                         return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.ACCOUNT_IS_BANNED };
-                    }                    
+                    }
                     transaction.Complete();
                     return new Return<LoginWithGoogleMoblieResDto>
                     {
@@ -388,6 +403,19 @@ namespace FUParkingService
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return token == null ? throw new Exception(ErrorEnumApplication.SERVER_ERROR) : tokenHandler.WriteToken(token);
+        }
+        private string RegisteredNewCustomerMailTemplate(string customerName, string customerEmail)
+        {
+            return $@"
+            <p>We are thrilled to have you as part of our Bai Parking community! Your Google account has been successfully used to create a new account in our system.</p>
+            <p>Here are your account details:</p>
+            <ul>
+                <li><strong>Name:</strong> {customerName}</li>
+                <li><strong>Email:</strong> {customerEmail}</li>
+            </ul>
+            <p>While your wallet currently has no balance, we encourage you to top up your wallet for a smoother and faster parking experience. By having a balance in your wallet, our system will automatically deduct the parking fee when you check out, reducing wait times and enhancing your overall convenience.</p>
+            <p>Going cashless also helps protect the environment by reducing the need for physical transactions.</p></br>
+            <p>If this account was not created by you, please contact us immediately via email at <a href=""mailto:baiparking.system@gmail.com"">baiparking.system@gmail.com</a> or call our hotline at <a href=""tel:+842873005588"">(028) 7300 5588</a>.</p></br>";
         }
         #endregion
     }

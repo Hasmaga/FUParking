@@ -2,13 +2,6 @@
 using FUParkingService.MailObject;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace FUParkingService.MailService
 {
@@ -138,8 +131,8 @@ namespace FUParkingService.MailService
                             <h2>Dear {username},</h2>
                             {body}
                             <p>If you have any questions or need further assistance, please do not hesitate to contact us.</p>
-                            <p>Thank you for using our service.</p>
-                            <p>Bai Parking team.</p>
+                            <p>Thank you for choosing Bai Parking! We look forward to serving you.</p>
+                            <p>Best regards,<br/>The Bai Parking Team</p>
                         </div>
 
                         <!-- Footer -->

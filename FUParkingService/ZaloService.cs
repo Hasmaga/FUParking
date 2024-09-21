@@ -1,9 +1,14 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.RequestObject.Zalo;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
+using FUParkingService.Helper;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -21,9 +26,13 @@ namespace FUParkingService
         private readonly IDepositRepository _depositRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly IHttpClientFactory _httpClient;
-        private readonly IWalletRepository _walletRepository;       
+        private readonly IWalletRepository _walletRepository;
+        private readonly IFirebaseService _firebaseService;
+        private readonly IMailService _mailService;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly ILogger<ZaloService> _logger;
 
-        public ZaloService(IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository)
+        public ZaloService(IHelpperService helperService, IPackageRepository packageRepository, IConfiguration configuration, IPaymentRepository paymentRepository, IDepositRepository depositRepository, ITransactionRepository transactionRepository, IHttpClientFactory httpClient, IWalletRepository walletRepository, ILogger<ZaloService> logger, IFirebaseService firebaseService, IMailService mailService, ICustomerRepository customerRepository)
         {
             _helperService = helperService;
             _packageRepository = packageRepository;
@@ -32,7 +41,11 @@ namespace FUParkingService
             _depositRepository = depositRepository;
             _transactionRepository = transactionRepository;
             _httpClient = httpClient;
-            _walletRepository = walletRepository;            
+            _walletRepository = walletRepository;
+            _firebaseService = firebaseService;
+            _mailService = mailService;
+            _customerRepository = customerRepository;
+            _logger = logger;
         }
 
         public async Task<Return<ZaloResDto>> CustomerCreateRequestBuyPackageByZaloPayAsync(Guid packageId)
@@ -114,7 +127,7 @@ namespace FUParkingService
                     { "email", "khangbpak2001@gmail.com" }
                 };
                 var data = appid + "|" + param["app_trans_id"] + "|" + param["app_user"] + "|" + param["amount"] + "|" + param["app_time"] + "|" + param["embed_data"] + "|" + param["item"];
-                param.Add("mac", Compute(ZaloPayHMAC.HMACSHA256, key1, data));                
+                param.Add("mac", Compute(ZaloPayHMAC.HMACSHA256, key1, data));
                 var response = await PostFormAsync(createOrderUrl, param);
                 string result = JsonConvert.SerializeObject(response);
                 // Convert result to ZaloPayResDto object
@@ -143,7 +156,7 @@ namespace FUParkingService
                 {
                     scope.Dispose();
                     return new Return<ZaloResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }                
+                }
                 scope.Complete();
                 return new Return<ZaloResDto> { Data = zaloPayResDto, Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
             }
@@ -170,7 +183,7 @@ namespace FUParkingService
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }                
+                }
                 var walletMain = await _walletRepository.GetMainWalletByCustomerId(deposit.Data.CustomerId);
                 if (!walletMain.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || walletMain.Data == null)
                 {
@@ -199,6 +212,10 @@ namespace FUParkingService
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
+
+                int extraAmount = 0;
+                DateTime? expDate = null;
+                var currentDateTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 if (package.Data.ExtraCoin > 1)
                 {
                     var walletExtra = await _walletRepository.GetExtraWalletByCustomerId(deposit.Data.CustomerId);
@@ -207,8 +224,18 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
+
                     walletExtra.Data.Balance += package.Data.ExtraCoin ?? 0;
-                    walletExtra.Data.EXPDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).AddDays(package.Data.EXPPackage ?? 0);
+                    walletExtra.Data.EXPDate = (walletExtra.Data.EXPDate?.Date < currentDateTime.Date)
+                            ? currentDateTime.AddDays(package.Data.EXPPackage ?? 0)
+                            : walletExtra.Data.EXPDate?.AddDays(package.Data.EXPPackage ?? 0);
+
+                    extraAmount = walletExtra.Data.Balance;
+                    expDate = walletExtra.Data.EXPDate;
+
+                    extraAmount = walletExtra.Data.Balance;
+                    expDate = walletExtra.Data.EXPDate;
+
                     // Create transaction for wallet extra
                     if (package.Data.ExtraCoin is not null)
                     {
@@ -233,7 +260,67 @@ namespace FUParkingService
                         scope.Dispose();
                         return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                     }
-                }                
+                }
+
+                // Notification
+                var customer = await _customerRepository.GetCustomerByIdAsync(deposit.Data.CustomerId);
+                if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && customer.Data is not null)
+                {
+                    var title = "Top-up Successful!";
+                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet using ZaloPay E-Wallet.\n";
+
+                    if (package.Data.ExtraCoin > 1)
+                    {
+                        body += $"You received an additional {Utilities.FormatMoney(package.Data.ExtraCoin ?? 0)} bic into your extra wallet.\n";
+                    }
+
+                    body += $"\nTotal balance in main wallet: {Utilities.FormatMoney(walletMain.Data.Balance)}.";
+
+                    if (extraAmount > 0)
+                    {
+                        body += $"\nTotal balance in extra wallet: {Utilities.FormatMoney(extraAmount)} bic.";
+                    }
+
+                    if (expDate?.Date >= currentDateTime.Date && expDate.HasValue)
+                    {
+                        body += $"\nExtra wallet expiration date: {Utilities.FormatDateTime(expDate)}.";
+                    }
+
+                    body += "\n\nIf you have any questions, please contact Bai Parking directly or visit the Support section in the Bai App.";
+
+                    // Send Firebase notification
+                    var fcmToken = customer.Data?.FCMToken;
+                    if (!string.IsNullOrEmpty(fcmToken))
+                    {
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { fcmToken },
+                            Title = title,
+                            Body = body
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+                        if (!notificationResult.IsSuccess)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data?.Id, notificationResult.InternalErrorMessage);
+                        }
+                    }
+                    _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: FCM Token is null", customer.Data?.Id);
+
+                    // Send Mail
+                    MailRequest mailRequest = new()
+                    {
+                        ToEmail = deposit.Data.Customer?.Email ?? "",
+                        ToUsername = deposit.Data.Customer?.FullName ?? "",
+                        Subject = title,
+                        Body = body
+                    };
+                    await _mailService.SendEmailAsync(mailRequest);
+                }
+                else
+                {
+                    _logger.LogError("Failed to retrieve customer with ID {CustomerId}. Error: {ErrorMessage}", deposit.Data.CustomerId, customer.Message);
+                }
+
                 scope.Complete();
                 return new Return<bool> { Message = SuccessfullyEnumServer.SUCCESSFULLY, IsSuccess = true };
             }
@@ -247,7 +334,7 @@ namespace FUParkingService
         private static long GetTimeStamp(DateTime date)
         {
             return (long)(date.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds;
-        }        
+        }
 
         private enum ZaloPayHMAC
         {
