@@ -1738,7 +1738,7 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceTable.InternalErrorMessage };
                             if (listPriceTable.Data == null || !listPriceTable.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Check which package is have higher piority
+                            // Check which package is have higher priority
                             var priceTable = listPriceTable.Data.OrderByDescending(x => x.Priority).FirstOrDefault();
                             if (priceTable == null)
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
