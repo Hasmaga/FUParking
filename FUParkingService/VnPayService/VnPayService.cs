@@ -173,23 +173,16 @@ namespace FUParkingService.VnPayService
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
-                var deposit = await _depositRepository.GetDepositByIdAsync(depositId);
-                if (!deposit.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || deposit.Data == null)
-                {
-                    scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
-                var package = await _packageRepository.GetPackageByPackageIdAsync(deposit.Data.PackageId);
-                if (!package.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || package.Data == null)
-                {
-                    scope.Dispose();
-                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
-                }
-
                 string vnp_HashSecret = _configuration.GetSection("VnPay:vnp_HashSecret").Value ?? "";
                 bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
                 if (!checkSignature)
+                {
+                    scope.Dispose();
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var deposit = await _depositRepository.GetDepositByIdAsync(depositId);
+                if (!deposit.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || deposit.Data == null)
                 {
                     scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -205,6 +198,13 @@ namespace FUParkingService.VnPayService
                 {
                     scope.Dispose();
                     _logger.LogError("Transaction failed with status: {Status}", vnp_TransactionStatus);
+                    return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
+                }
+
+                var package = await _packageRepository.GetPackageByPackageIdAsync(deposit.Data.PackageId);
+                if (!package.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || package.Data == null)
+                {
+                    scope.Dispose();
                     return new Return<bool> { Message = ErrorEnumApplication.SERVER_ERROR };
                 }
 
