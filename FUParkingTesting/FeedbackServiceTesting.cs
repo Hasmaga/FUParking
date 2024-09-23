@@ -449,5 +449,147 @@ namespace FUParkingTesting
             Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
             Assert.Null(result.Data);
         }
+
+        // GetFeedbacksAsync
+        // ReturnFailure
+        [Fact]
+        public async Task GetFeedbacksAsync_ShouldReturnError_WhenAuthorizationFails()
+        {
+            // Arrange
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _feedbackService.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // ReturnFailure
+        [Fact]
+        public async Task GetFeedbacksAsync_ShouldReturnError_WhenGetFails()
+        {
+            // Arrange
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _feedbackRepositoryMock.Setup(x => x.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1"))
+                .ReturnsAsync(new Return<IEnumerable<Feedback>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _feedbackService.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Successsful
+        [Fact]
+        public async Task GetFeedbacksAsync_ShouldReturnNotFound_WhenNoFeedbacksFound()
+        {
+            // Arrange
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _feedbackRepositoryMock.Setup(x => x.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1"))
+                .ReturnsAsync(new Return<IEnumerable<Feedback>>
+                {
+                    IsSuccess = true,
+                    Data = null,
+                    TotalRecord = 0,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _feedbackService.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1");
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetFeedbacksAsync_ShouldReturnSuccess_WhenFeedbacksRetrieved()
+        {
+            // Arrange
+            var feedbacks = new List<Feedback>
+            {
+                new Feedback
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Good service",
+                    Description = "Very satisfied",
+                    CreatedDate = DateTime.Now,
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _feedbackRepositoryMock.Setup(x => x.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1"))
+                .ReturnsAsync(new Return<IEnumerable<Feedback>>
+                {
+                    IsSuccess = true,
+                    Data = feedbacks,
+                    TotalRecord = feedbacks.Count,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _feedbackService.GetFeedbacksAsync(10, 1, "KhangBPA", "FPTU1");
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
     }
 }

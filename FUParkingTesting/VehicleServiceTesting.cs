@@ -3946,8 +3946,8 @@ namespace FUParkingTesting
 
             var updateReturn = new Return<Vehicle>
             {
-                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
-                IsSuccess = true
+                Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST,
+                IsSuccess = false
             };
 
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER)).ReturnsAsync(new Return<User>

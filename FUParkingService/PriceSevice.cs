@@ -158,7 +158,7 @@ namespace FUParkingService
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = priceItemDefault.InternalErrorMessage,
-                        Message = ErrorEnumApplication.PRICE_ITEM_NOT_EXIST
+                        Message = ErrorEnumApplication.DEFAULT_PRICE_ITEM_NOT_EXIST
                     };
                 }
                 var listTime = new List<CreatePriceItemReqDto>(req.PriceItems);

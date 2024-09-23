@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Gate;
 using FUParkingModel.ResponseObject.Gate;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -33,7 +34,7 @@ namespace FUParkingTesting
         // GetAllGateAsync
         // Successful
         [Fact]
-        public async Task GetAllGateAsync_ShouldReturnsSuccess()
+        public async Task GetAllGateAsync_ShouldReturnsSuccess_WhenGateFound()
         {
             // Arrange
             var req = new GetListObjectWithFiller();
@@ -91,6 +92,50 @@ namespace FUParkingTesting
             Assert.NotNull(result.Data);
         }
 
+        // Successful
+        [Fact]
+        public async Task GetAllGateAsync_ShouldReturnsSuccess_WhenGateNotFound()
+        {
+            // Arrange
+            var req = new GetListObjectWithFiller();
+
+            var user = new User
+            {
+                Email = "staff@localhost.com",
+                FullName = "Staff",
+                StatusUser = StatusUserEnum.ACTIVE,
+                PasswordHash = "",
+                PasswordSalt = "",
+            };
+
+            var userReturn = new Return<User>
+            {
+                IsSuccess = true,
+                Data = user,
+                Message = SuccessfullyEnumServer.FOUND_OBJECT
+            };
+
+            var gates = new List<Gate>();
+
+            var gateReturn = new Return<IEnumerable<Gate>>
+            {
+                IsSuccess = true,
+                Data = gates,
+                Message = ErrorEnumApplication.NOT_FOUND_OBJECT,
+                TotalRecord = gates.Count
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF)).ReturnsAsync(userReturn);
+            _gateRepositoryMock.Setup(x => x.GetAllGateAsync(req)).ReturnsAsync(gateReturn);
+
+            // Act
+            var result = await _gateService.GetAllGateAsync(req);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
         // Failure
         [Fact]
         public async Task GetAllGateAsync_ShoulReturnsFailure_WhenInvalidUser()
@@ -113,6 +158,46 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
             Assert.Null(result.Data);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllGateAsync_ShouldReturnsSuccess_WhenGetFail()
+        {
+            // Arrange
+            var req = new GetListObjectWithFiller();
+
+            var user = new User
+            {
+                Email = "staff@localhost.com",
+                FullName = "Staff",
+                StatusUser = StatusUserEnum.ACTIVE,
+                PasswordHash = "",
+                PasswordSalt = "",
+            };
+
+            var userReturn = new Return<User>
+            {
+                IsSuccess = true,
+                Data = user,
+                Message = SuccessfullyEnumServer.FOUND_OBJECT
+            };
+
+            var gateReturn = new Return<IEnumerable<Gate>>
+            {
+                IsSuccess = false,
+                Message = ErrorEnumApplication.SERVER_ERROR,
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF)).ReturnsAsync(userReturn);
+            _gateRepositoryMock.Setup(x => x.GetAllGateAsync(req)).ReturnsAsync(gateReturn);
+
+            // Act
+            var result = await _gateService.GetAllGateAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
 
         // CreateGateAsync
@@ -1503,7 +1588,7 @@ namespace FUParkingTesting
         // GetListGateByParkingAreaAsync
         // Successful
         [Fact]
-        public async Task GetListGateByParkingAreaAsync_ShouldReturnSuccess()
+        public async Task GetListGateByParkingAreaAsync_ShouldReturnSuccess_WhenGateFound()
         {
             // Arrange
             var parkingAreaId = Guid.NewGuid();
@@ -1573,6 +1658,72 @@ namespace FUParkingTesting
             // Assert
             Assert.True(result.IsSuccess);
             Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetListGateByParkingAreaAsync_ShouldReturnSuccess_WhenGateNotFound()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+
+            var user = new User
+            {
+                Id = userId,
+                Email = "staff@localhost.com",
+                FullName = "staff",
+                PasswordHash = "",
+                PasswordSalt = "",
+                StatusUser = StatusUserEnum.ACTIVE
+            };
+
+            _helpperServiceMock
+                .Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = user,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            var parking = new ParkingArea
+            {
+                Id = parkingAreaId,
+                Name = "FPTU1",
+                Description = "Main Parking",
+                StatusParkingArea = StatusParkingEnum.ACTIVE,
+                Mode = "MODE1",
+                Block = 30,
+            };
+
+            _parkingRepositoryMock
+                .Setup(x => x.GetParkingAreaByIdAsync(parkingAreaId))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Data = parking,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            var gateList = new List<Gate>();
+
+            var gateReturn = new Return<IEnumerable<Gate>>
+            {
+                IsSuccess = true,
+                Data = gateList,
+                TotalRecord = gateList.Count,
+                Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+            };
+
+            _gateRepositoryMock.Setup(x => x.GetListGateByParkingAreaAsync(parkingAreaId)).ReturnsAsync(gateReturn);
+
+            // Act
+            var result = await _gateService.GetListGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
         }
 
         // Failure
@@ -1710,5 +1861,491 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
+
+        // CreateGatesForParkingAreaByStaffAsync
+        // Failure
+        [Fact]
+        public async Task CreateGatesForParkingAreaByStaffAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var req = new CreateGatesForParkingAreaByStaffReqDto ();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateGatesForParkingAreaByStaffAsync_ShouldReturnFailure_WhenParkingAreaDoesNotExist()
+        {
+            // Arrange
+            var req = new CreateGatesForParkingAreaByStaffReqDto();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST,
+                });
+
+            // Act
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.PARKING_AREA_NOT_EXIST, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateGatesForParkingAreaByStaffAsync_ShouldReturnFailure_WhenGateNameAlreadyExists()
+        {
+            // Arrange
+            var req = new CreateGatesForParkingAreaByStaffReqDto
+            {
+                ParkingAreaId = Guid.NewGuid(),
+                Gates = new ListGateRegister[] 
+                { 
+                    new ListGateRegister
+                    { 
+                        Name = "Gate A" 
+                    } 
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetGateByNameAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<Gate>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.OBJECT_EXISTED, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task CreateGatesForParkingAreaByStaffAsync_ShouldReturnSuccess()
+        {
+            // Arrange
+            var req = new CreateGatesForParkingAreaByStaffReqDto
+            {
+                ParkingAreaId = Guid.NewGuid(),
+                Gates = new ListGateRegister[]
+               {
+                    new ListGateRegister
+                    {
+                        Name = "Gate A"
+                    }
+               }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetGateByNameAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<Gate>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _gateRepositoryMock.Setup(x => x.CreateGateAsync(It.IsAny<Gate>()))
+                .ReturnsAsync(new Return<Gate>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                });
+
+            // Act
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, result.Message);
+        }
+
+        //Failure
+        [Fact]
+        public async Task CreateGatesForParkingAreaByStaffAsync_ShouldReturnFailure_WhenCreateFail()
+        {
+            // Arrange
+            var req = new CreateGatesForParkingAreaByStaffReqDto
+            {
+                ParkingAreaId = Guid.NewGuid(),
+                Gates = new ListGateRegister[]
+               {
+                    new ListGateRegister
+                    {
+                        Name = "Gate A"
+                    }
+               }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetGateByNameAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<Gate>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _gateRepositoryMock.Setup(x => x.CreateGateAsync(It.IsAny<Gate>()))
+                .ReturnsAsync(new Return<Gate>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _gateService.CreateGatesForParkingAreaByStaffAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // GetAllGateByParkingAreaAsync
+        // Successful
+        [Fact]
+        public async Task GetAllGateByParkingAreaAsync_ShouldReturnSuccess_WhenGateFound()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+            var gates = new List<Gate>
+            {
+                new Gate
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Gate A",
+                    Description = "Main Gate",
+                    StatusGate = StatusParkingEnum.ACTIVE
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(parkingAreaId))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetAllGateByParkingAreaAsync(parkingAreaId))
+                .ReturnsAsync(new Return<IEnumerable<Gate>>
+                {
+                    IsSuccess = true,
+                    Data = gates,
+                    TotalRecord = gates.Count,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _gateService.GetAllGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetAllGateByParkingAreaAsync_ShouldReturnSuccess_WhenGateNotFound()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+            var gates = new List<Gate>();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(parkingAreaId))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetAllGateByParkingAreaAsync(parkingAreaId))
+                .ReturnsAsync(new Return<IEnumerable<Gate>>
+                {
+                    IsSuccess = true,
+                    Data = gates,
+                    TotalRecord = gates.Count,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _gateService.GetAllGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllGateByParkingAreaAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _gateService.GetAllGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllGateByParkingAreaAsync_ShouldReturnError_WhenParkingAreaDoesNotExist()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(parkingAreaId))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.PARKING_AREA_NOT_EXIST,
+                });
+
+            // Act
+            var result = await _gateService.GetAllGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.PARKING_AREA_NOT_EXIST, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllGateByParkingAreaAsync_ShouldReturnFailure_WhenGetFail()
+        {
+            // Arrange
+            var parkingAreaId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    }
+                });
+
+            _parkingRepositoryMock.Setup(x => x.GetParkingAreaByIdAsync(parkingAreaId))
+                .ReturnsAsync(new Return<ParkingArea>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new ParkingArea
+                    {
+                        Block = 30,
+                        Mode = ModeEnum.MODE1,
+                        Name = "FPTU1",
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                    }
+                });
+
+            _gateRepositoryMock.Setup(x => x.GetAllGateByParkingAreaAsync(parkingAreaId))
+                .ReturnsAsync(new Return<IEnumerable<Gate>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _gateService.GetAllGateByParkingAreaAsync(parkingAreaId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
     }
 }
