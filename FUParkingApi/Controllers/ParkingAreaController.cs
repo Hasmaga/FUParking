@@ -128,5 +128,20 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetParkingAreaByIdAsync([FromRoute] Guid id)
+        {
+            var result = await _parkingAreaService.GetParkingAreaByParkingIdAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get parking area by id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }
