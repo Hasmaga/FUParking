@@ -118,7 +118,7 @@ namespace FUParkingService
                     };
                 }
                 // Check price item is exist base on pricetableId
-                var isPriceItemExist = await _priceRepository.GetAllPriceItemByPriceTableAsync(req.PriceTableId);
+                var isPriceItemExist = await _priceRepository.GetAllPriceItemByPriceTableAsync(isPriceTableExist.Data.Id);
                 if (!isPriceItemExist.IsSuccess)
                 {
                     scope.Dispose();
@@ -127,38 +127,15 @@ namespace FUParkingService
                         InternalErrorMessage = isPriceItemExist.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
-                }
-                if (isPriceItemExist.Data != null && isPriceItemExist.Data.Any())
-                {
-                    foreach (var item in isPriceItemExist.Data)
-                    {
-                        if (item.ApplyFromHour != null && item.ApplyToHour != null)
-                        {
-                            return new Return<dynamic>
-                            {
-                                Message = ErrorEnumApplication.PRICE_ITEM_IS_EXIST
-                            };
-                        }
-                    }
-                }
-                // Get default price table
-                var isDefaultPriceTableExist = await _priceRepository.GetDefaultPriceTableByVehicleTypeAsync(isPriceTableExist.Data.VehicleTypeId);
-                if (!isDefaultPriceTableExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || isDefaultPriceTableExist.Data is null)
-                {
-                    return new Return<dynamic>
-                    {
-                        InternalErrorMessage = isDefaultPriceTableExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.DEFAULT_PRICE_TABLE_IS_NOT_EXIST
-                    };
-                }
+                }                
                 // Get price item default
-                var priceItemDefault = await _priceRepository.GetDefaultPriceItemByPriceTableIdAsync(isDefaultPriceTableExist.Data.Id);
-                if (!priceItemDefault.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || priceItemDefault.Data is null)
+                var priceItemDefault = isPriceItemExist.Data?.Where( x => x.ApplyFromHour == null && x.ApplyToHour == null).FirstOrDefault();
+                if (priceItemDefault is null)
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
-                        InternalErrorMessage = priceItemDefault.InternalErrorMessage,
-                        Message = ErrorEnumApplication.DEFAULT_PRICE_ITEM_NOT_EXIST
+                        Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
                 var listTime = new List<CreatePriceItemReqDto>(req.PriceItems);
@@ -172,9 +149,9 @@ namespace FUParkingService
                     {
                         From = 0,
                         To = listTime[0].From,
-                        MaxPrice = priceItemDefault.Data.MaxPrice,
-                        MinPrice = priceItemDefault.Data.MinPrice,
-                        BlockPricing = priceItemDefault.Data.BlockPricing,
+                        MaxPrice = priceItemDefault.MaxPrice,
+                        MinPrice = priceItemDefault.MinPrice,
+                        BlockPricing = priceItemDefault.BlockPricing,
                     });
                 }
                 // To avoid modifying the collection while iterating, we'll collect required changes first
@@ -187,9 +164,9 @@ namespace FUParkingService
                         {
                             From = listTime[i - 1].To,
                             To = listTime[i].From,
-                            MaxPrice = priceItemDefault.Data.MaxPrice,
-                            MinPrice = priceItemDefault.Data.MinPrice,
-                            BlockPricing = priceItemDefault.Data.BlockPricing,
+                            MaxPrice = priceItemDefault.MaxPrice,
+                            MinPrice = priceItemDefault.MinPrice,
+                            BlockPricing = priceItemDefault.BlockPricing,
                         };
                         inserts.Add((i, newItem));
                     }
@@ -207,9 +184,9 @@ namespace FUParkingService
                     {
                         From = listTime[^1].To,
                         To = 24,
-                        MaxPrice = priceItemDefault.Data.MaxPrice,
-                        MinPrice = priceItemDefault.Data.MinPrice,
-                        BlockPricing = priceItemDefault.Data.BlockPricing,
+                        MaxPrice = priceItemDefault.MaxPrice,
+                        MinPrice = priceItemDefault.MinPrice,
+                        BlockPricing = priceItemDefault.BlockPricing,
                     });
                 }
                 // Create PriceItem
