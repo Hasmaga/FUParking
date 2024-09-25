@@ -27,8 +27,9 @@ namespace FUParkingService
         private readonly ICustomerRepository _customerRepository;
         private readonly IFirebaseService _firebaseService;
         private readonly ILogger<VehicleService> _logger;
+        private readonly IPriceRepository _priceRepository;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService, ILogger<VehicleService> logger)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService, ILogger<VehicleService> logger, IPriceRepository priceRepository)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
@@ -37,6 +38,7 @@ namespace FUParkingService
             _customerRepository = customerRepository;
             _firebaseService = firebaseService;
             _logger = logger;
+            _priceRepository = priceRepository;
         }
 
         public async Task<Return<IEnumerable<GetVehicleTypeByUserResDto>>> GetVehicleTypesAsync(GetListObjectWithFiller req)
@@ -127,6 +129,7 @@ namespace FUParkingService
 
         public async Task<Return<bool>> CreateVehicleTypeAsync(CreateVehicleTypeReqDto reqDto)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
@@ -157,14 +160,57 @@ namespace FUParkingService
                 };
 
                 var result = await _vehicleRepository.CreateVehicleTypeAsync(vehicleType);
-                if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                if (!result.IsSuccess || result.Data is null)
                 {
+                    scope.Dispose();
                     return new Return<bool>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+
+                // Create default price table
+                var priceTable = new PriceTable
+                {
+                    Name = "Default",
+                    Priority = 1,
+                    StatusPriceTable = StatusPriceTableEnum.ACTIVE,
+                    VehicleTypeId = result.Data.Id
+                };
+
+                var resultPriceTable = await _priceRepository.CreatePriceTableAsync(priceTable);
+                if (!resultPriceTable.IsSuccess || resultPriceTable.Data is null)
+                {
+                    scope.Dispose();
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = resultPriceTable.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+
+                // Create price item for default price table
+                var priceItem = new PriceItem
+                {
+                    BlockPricing = reqDto.BlockPricing,
+                    MaxPrice = reqDto.MaxPrice,
+                    MinPrice = reqDto.MinPrice,
+                    CreatedById = checkAuth.Data.Id,
+                    PriceTableId = resultPriceTable.Data.Id,                    
+                };
+
+                var resultPriceItem = await _priceRepository.CreatePriceItemAsync(priceItem);
+                if (!resultPriceItem.IsSuccess || resultPriceItem.Data is null)
+                {
+                    scope.Dispose();
+                    return new Return<bool>
+                    {
+                        InternalErrorMessage = resultPriceItem.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                scope.Complete();
                 return new Return<bool>
                 {
                     IsSuccess = true,
