@@ -557,12 +557,6 @@ namespace FUParkingService
                         Id = result.Data.Id,
                         Name = result.Data.Name,
                         Description = result.Data.Description ?? "",
-                        ParkingArea = new GetParkingAreaOptionResDto
-                        {
-                            Id = result.Data.ParkingArea?.Id ?? Guid.Empty,
-                            Name = result.Data.ParkingArea?.Name ?? "",
-                            Description = result.Data.ParkingArea?.Description ?? ""
-                        },
                         StatusGate = result.Data.StatusGate.ToString(),
                         CreatedBy = result.Data.CreateBy?.Email ?? "",
                         LastModifyBy = result.Data.LastModifyBy?.Email ?? ""
