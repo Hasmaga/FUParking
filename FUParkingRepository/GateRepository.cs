@@ -222,7 +222,6 @@ namespace FUParkingRepository
             try
             {
                 var result = await _db.Gates
-                    .Include(p => p.ParkingArea)
                     .Where(p => p.Id.Equals(id) && p.DeletedDate == null)
                     .OrderByDescending(p => p.StatusGate == StatusGateEnum.ACTIVE)
                     .ThenByDescending(p => p.CreatedDate)
@@ -244,6 +243,5 @@ namespace FUParkingRepository
                 };
             }
         }
-
     }
 }
