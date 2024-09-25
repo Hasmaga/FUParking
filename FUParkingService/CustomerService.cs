@@ -637,7 +637,7 @@ namespace FUParkingService
 
                 // Get list vehicle own by user
                 var listVehicle = await _vehicleRepository.GetAllCustomerVehicleByCustomerIdAsync(id);
-                if (listVehicle.Data == null || !listVehicle.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                if (!listVehicle.IsSuccess)
                 {
                     scope.Dispose();
                     return new Return<dynamic>
@@ -647,6 +647,7 @@ namespace FUParkingService
                     };
                 }
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 foreach (var vehicle in listVehicle.Data)
                 {
                     vehicle.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -664,6 +665,7 @@ namespace FUParkingService
                         };
                     }
                 }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 var result = await _customerRepository.UpdateCustomerAsync(customer.Data);
                 if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
@@ -698,6 +700,7 @@ namespace FUParkingService
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.SUPERVISOR);
                 if (!checkAuth.IsSuccess || checkAuth.Data is null)
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = checkAuth.InternalErrorMessage,
@@ -708,6 +711,7 @@ namespace FUParkingService
                 var customer = await _customerRepository.GetCustomerByIdAsync(req.CustomerId);
                 if (customer.Data == null || !customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = customer.InternalErrorMessage,
@@ -720,6 +724,7 @@ namespace FUParkingService
                     var customerType = await _customerRepository.GetCustomerTypeByIdAsync(req.CustomerTypeId.Value);
                     if (customerType.Data == null || !customerType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
+                        scope.Dispose();
                         return new Return<dynamic>
                         {
                             InternalErrorMessage = customerType.InternalErrorMessage,
@@ -746,6 +751,7 @@ namespace FUParkingService
                         var resultWalletMain = await _walletRepository.CreateWalletAsync(walletMain);
                         if (resultWalletMain.Data == null || !resultWalletMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                         {
+                            scope.Dispose();
                             return new Return<dynamic>
                             {
                                 InternalErrorMessage = resultWalletMain.InternalErrorMessage,
@@ -756,6 +762,7 @@ namespace FUParkingService
                         var resultWalletExtra = await _walletRepository.CreateWalletAsync(walletExtra);
                         if (resultWalletExtra.Data == null || !resultWalletExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                         {
+                            scope.Dispose();
                             return new Return<dynamic>
                             {
                                 InternalErrorMessage = resultWalletExtra.InternalErrorMessage,
@@ -776,6 +783,7 @@ namespace FUParkingService
                     var isEmailCustomerExist = await _customerRepository.GetCustomerByEmailAsync(req.Email);
                     if (isEmailCustomerExist.Data != null && isEmailCustomerExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                     {
+                        scope.Dispose();
                         return new Return<dynamic>
                         {
                             Message = ErrorEnumApplication.EMAIL_IS_EXIST
@@ -788,12 +796,14 @@ namespace FUParkingService
                 var result = await _customerRepository.UpdateCustomerAsync(customer.Data);
                 if (result.Data == null || !result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                scope.Complete();
                 return new Return<dynamic>
                 {
                     IsSuccess = true,

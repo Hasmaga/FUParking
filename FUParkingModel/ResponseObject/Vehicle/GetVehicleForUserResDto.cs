@@ -12,6 +12,6 @@
         public string StaffApproval { get; set; } = null!;
         public string? LastModifyBy { get; set; }
         public DateTime? LastModifyDate { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }        
     }
 }

@@ -8,5 +8,6 @@
         public string PlateImage { get; set; } = null!;
         public string StatusVehicle { get; set; } = null!;
         public DateTime CreateDate { get; set; }
+        public Guid VehicleTypeId { get; set; }
     }
 }

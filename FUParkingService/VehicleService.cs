@@ -376,7 +376,8 @@ namespace FUParkingService
                     VehicleTypeName = x.VehicleType?.Name ?? "",
                     PlateImage = x.PlateImage ?? "",
                     StatusVehicle = x.StatusVehicle,
-                    CreateDate = x.CreatedDate
+                    CreateDate = x.CreatedDate,
+                    VehicleTypeId = x.VehicleTypeId
                 });
                 res.TotalRecord = result.TotalRecord;
                 res.IsSuccess = true;
@@ -898,7 +899,7 @@ namespace FUParkingService
 
                 // Check vehicle is any session
                 var newestSession = await _sessionRepository.GetNewestSessionByPlateNumberAsync(vehicle.Data.PlateNumber);
-                if (!newestSession.IsSuccess)
+                if (!newestSession.IsSuccess || newestSession.Data is null)
                 {
                     return new Return<dynamic>
                     {
@@ -906,7 +907,7 @@ namespace FUParkingService
                         InternalErrorMessage = newestSession.InternalErrorMessage
                     };
                 }
-                if (newestSession.Data?.GateOut is not null)
+                if (newestSession.Data.Status.Equals(SessionEnum.PARKED))
                 {
                     return new Return<dynamic>
                     {
@@ -1040,7 +1041,7 @@ namespace FUParkingService
                         InternalErrorMessage = newestSession.InternalErrorMessage
                     };
                 }
-                if (newestSession.Data?.GateOut is not null)
+                if (newestSession.Data?.Status == (SessionEnum.PARKED))
                 {
                     return new Return<dynamic>
                     {
@@ -1101,6 +1102,7 @@ namespace FUParkingService
                     }
                     vehicle.Data.VehicleTypeId = req.VehicleTypeId.Value;
                 }
+                vehicle.Data.StatusVehicle = StatusVehicleEnum.ACTIVE;
                 vehicle.Data.LastModifyById = checkAuth.Data.Id;
                 vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
@@ -1194,7 +1196,8 @@ namespace FUParkingService
                         Email = x.Customer?.Email ?? "",
                         LastModifyBy = x.LastModifyBy?.Email ?? "",
                         LastModifyDate = x.LastModifyDate,
-                        StaffApproval = x.Staff?.Email ?? ""
+                        StaffApproval = x.Staff?.Email ?? "",
+                        VehicleTypeId = x.VehicleTypeId
                     }),
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     IsSuccess = true,

@@ -478,6 +478,7 @@ namespace FUParkingService
                     user.Data.PasswordSalt = Convert.ToBase64String(passwordSalt);
                 }
                 user.Data.LastModifyById = user.Data.Id;
+                user.Data.WrongPassword = 0;
                 user.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _userRepository.UpdateUserAsync(user.Data);
                 if (!result.IsSuccess)

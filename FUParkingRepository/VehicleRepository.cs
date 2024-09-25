@@ -213,6 +213,7 @@ namespace FUParkingRepository
                     .Include(v => v.VehicleType)
                     .Include(v => v.Staff)
                     .Include(v => v.LastModifyBy)
+                    .Where(v => v.DeletedDate == null)
                     .AsQueryable();
 
                 if (req.SearchInput is not null && req.Attribute is not null)
