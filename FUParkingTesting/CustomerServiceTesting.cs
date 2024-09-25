@@ -588,35 +588,24 @@ namespace FUParkingTesting
 
         // ReturnFailure
         [Fact]
-        public async Task CreateCustomerAsync_ShouldReturnFailure_WhenCustomerEmailAlreadyExists()
+        public async Task CreateCustomerAsync_ShouldReturnError_WhenCustomerTypeNotFound()
         {
             // Arrange
             var customerReq = new CustomerReqDto
             {
-                Name = "Customer",
-                Email = "customer@localhost.com"
+                Email = "newcustomer@gmail.com",
+                Name = "New Customer"
             };
-
-            var existingCustomer = new Customer
-            {
-                Email = customerReq.Email,
-                FullName = "Existing Customer",
-                StatusCustomer = StatusCustomerEnum.ACTIVE
-            };
-
-            var role = new Role { Name = RoleEnum.SUPERVISOR.ToString() };
             var userEmail = "supervisor@localhost.com";
             var userName = "supervisor";
             var user = new User
             {
                 Email = userEmail,
                 FullName = userName,
-                RoleId = role.Id,
                 PasswordHash = "",
                 PasswordSalt = "",
                 StatusUser = StatusUserEnum.ACTIVE
             };
-
             var userReturn = new Return<User>
             {
                 IsSuccess = true,
@@ -624,25 +613,31 @@ namespace FUParkingTesting
                 Message = SuccessfullyEnumServer.FOUND_OBJECT
             };
 
-            var existingCustomerReturn = new Return<Customer>
-            {
-                IsSuccess = true,
-                Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                Data = existingCustomer
-            };
-
             _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
                 .ReturnsAsync(userReturn);
+
             _customerRepositoryMock.Setup(x => x.GetCustomerByEmailAsync(customerReq.Email))
-                .ReturnsAsync(existingCustomerReturn);
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerTypeByNameAsync(CustomerTypeEnum.FREE))
+                .ReturnsAsync(new Return<CustomerType>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
 
             // Act
             var result = await _customerService.CreateCustomerAsync(customerReq);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.EMAIL_IS_EXIST, result.Message);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
+
 
         // GetCustomerByIdAsync
         // ReturnFailure
@@ -2980,6 +2975,51 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
             Assert.Null(result.Data);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetCustomerTypeOptionAsync_ShouldReturnFailure_WhenGetFail()
+        {
+            // Arrange
+            var role = new Role { Name = RoleEnum.SUPERVISOR.ToString() };
+            var userEmail = "supervisor@localhost.com";
+            var userName = "supervisor";
+            var user = new User
+            {
+                Email = userEmail,
+                FullName = userName,
+                RoleId = role.Id,
+                PasswordHash = "",
+                PasswordSalt = "",
+                StatusUser = StatusUserEnum.ACTIVE
+            };
+
+            var userReturn = new Return<User>
+            {
+                IsSuccess = true,
+                Data = user,
+                Message = SuccessfullyEnumServer.FOUND_OBJECT
+            };
+
+            _helpperServiceMock.Setup(s => s.ValidateUserAsync(RoleEnum.SUPERVISOR)).ReturnsAsync(userReturn);
+
+
+            var repositoryResult = new Return<IEnumerable<CustomerType>>
+            {
+                IsSuccess = false,
+                Data = null,
+                Message = ErrorEnumApplication.SERVER_ERROR
+            };
+
+            _customerRepositoryMock.Setup(x => x.GetAllCustomerTypeAsync()).ReturnsAsync(repositoryResult);
+
+            // Act
+            var result = await _customerService.GetCustomerTypeOptionAsync();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
     }
 }

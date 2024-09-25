@@ -1717,7 +1717,7 @@ namespace FUParkingTesting
             Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
         }
 
-        // ReturnErrors
+        // Successfully
         [Fact]
         public async Task GetCardByCardNumberAsync_ShouldReturnSuccess_WhenWithoutSession()
         {

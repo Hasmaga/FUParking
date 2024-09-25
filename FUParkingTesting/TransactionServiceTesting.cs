@@ -2,6 +2,8 @@
 using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.Firebase;
+using FUParkingModel.RequestObject.Transaction;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
@@ -598,5 +600,468 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
+
+        // TopUpCustomerWalletByUserAsync
+        // Successful
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnSuccess()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(req.CustomerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer 
+                    { 
+                        Id = req.CustomerId, 
+                        FullName = "customer",
+                        Email = "customer@gmail.com",
+                        StatusCustomer = StatusUserEnum.ACTIVE
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(req.CustomerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet 
+                    { 
+                        Balance = 5000,
+                        WalletType = WalletType.MAIN
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.UpdateWalletAsync(It.IsAny<Wallet>()))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                });
+
+            _transactionRepositoryMock.Setup(x => x.CreateTransactionAsync(It.IsAny<Transaction>()))
+                .ReturnsAsync(new Return<Transaction>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY
+                });
+
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnFailure_WhenTransactionCreationFails()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(req.CustomerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        Id = req.CustomerId,
+                        FullName = "customer",
+                        Email = "customer@gmail.com",
+                        StatusCustomer = StatusUserEnum.ACTIVE
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(req.CustomerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet
+                    {
+                        Balance = 5000,
+                        WalletType = WalletType.MAIN
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.UpdateWalletAsync(It.IsAny<Wallet>()))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                });
+
+            _transactionRepositoryMock.Setup(x => x.CreateTransactionAsync(It.IsAny<FUParkingModel.Object.Transaction>()))
+                .ReturnsAsync(new Return<FUParkingModel.Object.Transaction>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnFailure_WhenWalletUpdateFails()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(req.CustomerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        Id = req.CustomerId,
+                        FullName = "customer",
+                        Email = "customer@gmail.com",
+                        StatusCustomer = StatusUserEnum.ACTIVE
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(req.CustomerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet
+                    {
+                        Balance = 5000,
+                        WalletType = WalletType.MAIN
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.UpdateWalletAsync(It.IsAny<Wallet>()))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnFailure_WhenWalletNotFound()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(req.CustomerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        Id = req.CustomerId,
+                        FullName = "customer",
+                        Email = "customer@gmail.com",
+                        StatusCustomer = StatusUserEnum.ACTIVE
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(req.CustomerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnFailure_WhenCustomerNotFound()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(req.CustomerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task TopUpCustomerWalletByUserAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var req = new TopUpCustomerWalletByUserReqDto { CustomerId = Guid.NewGuid(), Amount = 1000 };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _transactionService.TopUpCustomerWalletByUserAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // GetListStatisticRevenueOfParkingSystemAsync
+        // Failure
+        [Fact]
+        public async Task GetListStatisticRevenueOfParkingSystemAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var startDate = DateTime.Now.AddMonths(-1);
+            var endDate = DateTime.Now;
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetListStatisticRevenueOfParkingSystemAsync_ShouldReturnFailure_WhenGetFails()
+        {
+            // Arrange
+            var startDate = DateTime.Now.AddMonths(-1);
+            var endDate = DateTime.Now;
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _transactionRepositoryMock.Setup(x => x.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate))
+                .ReturnsAsync(new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                });
+
+            // Act
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetListStatisticRevenueOfParkingSystemAsync_ShouldReturnSuccess_WhenNoStatisticsFound()
+        {
+            // Arrange
+            var startDate = DateTime.Now.AddMonths(-1);
+            var endDate = DateTime.Now;
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _transactionRepositoryMock.Setup(x => x.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate))
+                .ReturnsAsync(new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                {
+                    IsSuccess = true,
+                    Data = null,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetListStatisticRevenueOfParkingSystemAsync_ShouldReturnSuccess_WhenStatisticsFound()
+        {
+            // Arrange
+            var startDate = DateTime.Now.AddMonths(-1);
+            var endDate = DateTime.Now;
+            var statistics = new List<StatisticRevenueOfParkingSystemResDto>
+            {
+                new StatisticRevenueOfParkingSystemResDto
+                {
+                    AverageRevenue = 10000,
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _transactionRepositoryMock.Setup(x => x.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate))
+                .ReturnsAsync(new Return<IEnumerable<StatisticRevenueOfParkingSystemResDto>>
+                {
+                    IsSuccess = true,
+                    Data = statistics,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _transactionService.GetListStatisticRevenueOfParkingSystemAsync(startDate, endDate);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
     }
 }

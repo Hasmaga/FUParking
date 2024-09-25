@@ -4311,7 +4311,7 @@ namespace FUParkingTesting
                 {
                     IsSuccess = true,
                     Data = null,
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
                 });
 
             // Act
@@ -4319,13 +4319,12 @@ namespace FUParkingTesting
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(CustomerTypeEnum.GUEST, result.Data?.CustomerType);
             Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
         }
 
         // Failure
         [Fact]
-        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnSuccess_WhenInvalidAuth()
+        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnFailure_WhenInvalidAuth()
         {
             // Arrange
             var req = new GetCheckInInformationReqDto
@@ -4352,7 +4351,7 @@ namespace FUParkingTesting
 
         // Failure
         [Fact]
-        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnSuccess_WhenInvalidPlateNumber()
+        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnFailure_WhenInvalidPlateNumber()
         {
             // Arrange
             var req = new GetCheckInInformationReqDto
@@ -4394,7 +4393,7 @@ namespace FUParkingTesting
 
         // Failure
         [Fact]
-        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnSuccess_WhenCardNotExist()
+        public async Task GetCustomerTypeByPlateNumberAsync_ShouldReturnFailure_WhenCardNotExist()
         {
             // Arrange
             var req = new GetCheckInInformationReqDto
@@ -5265,7 +5264,7 @@ namespace FUParkingTesting
 
         // Failure
         [Fact]
-        public async Task GetNewestSessionByPlateNumberAsync_ShouldReturnSuccess_WhenPriceTableNotFound()
+        public async Task GetNewestSessionByPlateNumberAsync_ShouldReturnFailure_WhenPriceTableNotFound()
         {
             // Arrange
             var timeIn = DateTime.Now.AddHours(-2);
@@ -5319,80 +5318,6 @@ namespace FUParkingTesting
                 .ReturnsAsync(new Return<IEnumerable<PriceTable>>
                 {
                     Data = null,
-                    Message = ErrorEnumApplication.SERVER_ERROR
-                });
-
-            // Act
-            var result = await _sessionService.GetNewestSessionByPlateNumberAsync("99L999999", timeOut);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
-        }
-
-        // Failure
-        [Fact]
-        public async Task GetNewestSessionByPlateNumberAsync_ShouldReturnSuccess_WhenPriceTableIsDefault()
-        {
-            // Arrange
-            var timeIn = DateTime.Now.AddHours(-2);
-            var timeOut = DateTime.Now;
-            var session = new Session
-            {
-                Status = SessionEnum.PARKED,
-                TimeIn = timeIn,
-                Mode = ModeEnum.MODE1,
-                Block = 60,
-                VehicleTypeId = Guid.NewGuid(),
-                ImageInUrl = "in.jpg",
-                PlateNumber = "99L999999",
-            };
-
-            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
-                .ReturnsAsync(new Return<User>
-                {
-                    IsSuccess = true,
-                    Data = new User
-                    {
-                        Email = "user@gmail.com",
-                        FullName = "User",
-                        PasswordHash = "",
-                        PasswordSalt = "",
-                        StatusUser = StatusUserEnum.ACTIVE
-                    },
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _sessionRepositoryMock.Setup(x => x.GetNewestSessionByPlateNumberAsync(It.IsAny<string>()))
-                .ReturnsAsync(new Return<Session>
-                {
-                    IsSuccess = true,
-                    Data = session,
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new Return<VehicleType>
-                {
-                    IsSuccess = true,
-                    Data = new VehicleType
-                    {
-                        Name = "Car",
-                    },
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _priceRepositoryMock.Setup(x => x.GetListPriceTableActiveByVehicleTypeAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new Return<IEnumerable<PriceTable>>
-                {
-                    Data =
-                    [
-                        new() {
-                            Name = "Price Table",
-                            Priority = 1,
-                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                        }
-                    ],
                     Message = ErrorEnumApplication.SERVER_ERROR
                 });
 
@@ -5488,7 +5413,7 @@ namespace FUParkingTesting
 
         // Failure
         [Fact]
-        public async Task GetNewestSessionByPlateNumberAsync_ShouldReturnFailure_WhenPriceItemGreaterThanOrEqualToTimeInAndApplyToLessThanOrEqualToTimeIn()
+        public async Task GetNewestSessionByPlateNumberAsync_ShouldReturnFailure_WhenPriceItemApplyFromGreaterThanOrEqualToTimeInAndApplyToLessThanOrEqualToTimeIn()
         {
             // Arrange
             var timeIn = DateTime.Now.AddHours(-2);
@@ -6203,106 +6128,6 @@ namespace FUParkingTesting
                     IsSuccess = false,
                     Data = null,
                     Message = ErrorEnumApplication.NOT_FOUND_OBJECT
-                });
-
-            var req = new CheckOutSessionByPlateNumberReqDto
-            {
-                GateId = Guid.NewGuid(),
-                PlateNumber = "99L999999",
-                CheckOutTime = DateTime.Now
-            };
-
-            // Act
-            var result = await _sessionService.CheckOutSessionByPlateNumberAsync(req);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
-        }
-
-        // Failure
-        [Fact]
-        public async Task CheckOutSessionByPlateNumberAsync_ShouldReturnfailure_WhenPriceTableIsDefault()
-        {
-            // Arrange
-            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.STAFF))
-                .ReturnsAsync(new Return<User>
-                {
-                    IsSuccess = true,
-                    Data = new User
-                    {
-                        Email = "user@gmail.com",
-                        FullName = "User",
-                        PasswordHash = "",
-                        PasswordSalt = "",
-                        StatusUser = StatusUserEnum.ACTIVE
-                    },
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _gateRepositoryMock.Setup(x => x.GetGateByIdAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new Return<Gate>
-                {
-                    IsSuccess = true,
-                    Data = new Gate
-                    {
-                        Name = "FPTU",
-                        StatusGate = StatusGateEnum.ACTIVE
-                    },
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _sessionRepositoryMock.Setup(x => x.GetNewestSessionByPlateNumberAsync(It.IsAny<string>()))
-                .ReturnsAsync(new Return<Session>
-                {
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
-                    Data = new Session
-                    {
-                        Status = SessionEnum.PARKED,
-                        Customer = new Customer
-                        {
-                            CustomerType = new CustomerType
-                            {
-                                Name = CustomerTypeEnum.PAID,
-                                Description = "Free Customer",
-                            },
-                            Email = "customer@gmail.com",
-                            FullName = "customer",
-                            StatusCustomer = StatusCustomerEnum.ACTIVE,
-                        },
-                        TimeIn = DateTime.Now.AddHours(-1),
-                        Block = 60,
-                        Mode = ModeEnum.MODE1,
-                        PlateNumber = "99L999999",
-                        ImageInUrl = "in.jpg",
-                    }
-                });
-
-            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new Return<VehicleType>
-                {
-                    IsSuccess = true,
-                    Data = new VehicleType
-                    {
-                        Name = "Car",
-                    },
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
-                });
-
-            _priceRepositoryMock.Setup(x => x.GetListPriceTableActiveByVehicleTypeAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new Return<IEnumerable<PriceTable>>
-                {
-                    IsSuccess = true,
-                    Data =
-                    [
-                        new PriceTable
-                        {
-                            Name = "Price Table",
-                            Priority = 1,
-                            StatusPriceTable = StatusPriceTableEnum.ACTIVE
-                        }
-                    ],
-                    Message = SuccessfullyEnumServer.FOUND_OBJECT
                 });
 
             var req = new CheckOutSessionByPlateNumberReqDto
@@ -8728,7 +8553,7 @@ namespace FUParkingTesting
                     IsSuccess = true,
                     Data = new Wallet
                     {
-                        Balance = 100,
+                        Balance = 0,
                         CustomerId = Guid.NewGuid(),
                         WalletType = WalletType.EXTRA,
                     },

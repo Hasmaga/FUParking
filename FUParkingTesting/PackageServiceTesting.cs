@@ -422,7 +422,7 @@ namespace FUParkingTesting
 
         // Successful
         [Fact]
-        public async Task CreateCoinPackage_ShouldReturnSuccess_WhenPackageExists()
+        public async Task CreateCoinPackage_ShouldReturnFailure_WhenPackageExists()
         {
             // Arrange
             var reqDto = new CreateCoinPackageReqDto
@@ -479,7 +479,7 @@ namespace FUParkingTesting
 
         // Failure
         [Fact]
-        public async Task CreateCoinPackage_ShouldReturnFailure_WhenExceptionThrown()
+        public async Task CreateCoinPackage_ShouldReturnFailure_WhenCreateFail()
         {
             // Arrange
             var reqDto = new CreateCoinPackageReqDto

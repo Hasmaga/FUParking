@@ -214,7 +214,7 @@ namespace FUParkingService
                     };
                 }
                 var result = await _parkingAreaRepository.GetAllParkingAreasAsync(req);
-                if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                if (!result.IsSuccess)
                 {
                     return new Return<IEnumerable<GetParkingAreaReqDto>>
                     {

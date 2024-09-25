@@ -533,5 +533,308 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
         }
+
+        // GetBalanceWalletMainExtraAsync
+        // Failure
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnFailure_WhenCustomerNotFound()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(customerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnFailure_WhenCustomerIsNotPaidType()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(customerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer 
+                    { 
+                        CustomerType = new CustomerType 
+                        { 
+                            Name = CustomerTypeEnum.FREE,
+                            Description = "Free Customer"
+                        },
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
+                        Email = "customer@gmail.com",
+                        FullName = "Customer",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.MUST_BE_CUSTOMER_PAID, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnFailure_WhenMainWalletNotFound()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(customerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        CustomerType = new CustomerType
+                        {
+                            Name = CustomerTypeEnum.PAID,
+                            Description = "Paid Customer"
+                        },
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
+                        Email = "customer@gmail.com",
+                        FullName = "Customer",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(customerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnFailure_WhenExtraWalletNotFound()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(customerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        CustomerType = new CustomerType
+                        {
+                            Name = CustomerTypeEnum.PAID,
+                            Description = "Paid Customer"
+                        },
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
+                        Email = "customer@gmail.com",
+                        FullName = "Customer",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(customerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet 
+                    { 
+                        Balance = 1000,
+                        WalletType = WalletType.MAIN
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetExtraWalletByCustomerId(customerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetBalanceWalletMainExtraAsync_ShouldReturnSuccess_WhenWalletBalancesRetrievedSuccessfully()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _customerRepositoryMock.Setup(x => x.GetCustomerByIdAsync(customerId))
+                .ReturnsAsync(new Return<Customer>
+                {
+                    IsSuccess = true,
+                    Data = new Customer
+                    {
+                        CustomerType = new CustomerType
+                        {
+                            Name = CustomerTypeEnum.PAID,
+                            Description = "Paid Customer"
+                        },
+                        StatusCustomer = StatusCustomerEnum.ACTIVE,
+                        Email = "customer@gmail.com",
+                        FullName = "Customer",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetMainWalletByCustomerId(customerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet 
+                    { 
+                        Balance = 1000,
+                        WalletType = WalletType.MAIN
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _walletRepositoryMock.Setup(x => x.GetExtraWalletByCustomerId(customerId))
+                .ReturnsAsync(new Return<Wallet>
+                {
+                    IsSuccess = true,
+                    Data = new Wallet 
+                    { 
+                        Balance = 500, 
+                        EXPDate = DateTime.Now.AddYears(1),
+                        WalletType = WalletType.EXTRA
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _walletService.GetBalanceWalletMainExtraAsync(customerId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.GET_INFORMATION_SUCCESSFULLY, result.Message);
+        }
     }
 }
