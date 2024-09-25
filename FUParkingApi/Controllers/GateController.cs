@@ -170,5 +170,21 @@ namespace FUParkingApi.Controllers
             }
             return StatusCode(200, result);
         }
+
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetGateByGateId([FromRoute] Guid id)
+        {
+            var result = await _gateService.GetGateByGateIdAsync(id);
+            if (!result.IsSuccess)
+            {
+                if (result.InternalErrorMessage is not null)
+                {
+                    _logger.LogError("Error when get gate by gate id: {ex}", result.InternalErrorMessage);
+                }
+                return Helper.GetErrorResponse(result.Message);
+            }
+            return StatusCode(200, result);
+        }
     }
 }

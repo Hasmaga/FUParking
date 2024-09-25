@@ -15,5 +15,6 @@ namespace FUParkingService.Interface
         Task<Return<dynamic>> UpdateStatusParkingAreaAsync(Guid parkingId, bool isActive);
         Task<Return<IEnumerable<GetParkingAreaOptionResDto>>> GetParkingAreaOptionAsync();
         Task<Return<dynamic>> CreateParkingAreaAndGateAsync(CreateParkingAreaAndGateReqDto req);
+        Task<Return<GetParkingAreaReqDto>> GetParkingAreaByParkingIdAsync(Guid id);
     }
 }

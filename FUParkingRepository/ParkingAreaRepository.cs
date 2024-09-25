@@ -207,5 +207,32 @@ namespace FUParkingRepository
                 };
             }
         }
+
+        public async Task<Return<ParkingArea>> GetParkingAreaByParkingIdAsync(Guid id)
+        {
+            try
+            {
+                var result = await _db.ParkingAreas
+                    .Where(p => p.Id.Equals(id) && p.DeletedDate == null)
+                    .OrderByDescending(p => p.StatusParkingArea == StatusGateEnum.ACTIVE)
+                    .ThenByDescending(p => p.CreatedDate)
+                    .FirstOrDefaultAsync();
+
+                return new Return<ParkingArea>
+                {
+                    Data = result,
+                    IsSuccess = true,
+                    Message = result == null ? ErrorEnumApplication.NOT_FOUND_OBJECT : SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception e)
+            {
+                return new Return<ParkingArea>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = e
+                };
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
 using FUParkingModel.RequestObject.ParkingArea;
+using FUParkingModel.ResponseObject.Gate;
 using FUParkingModel.ResponseObject.ParkingArea;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
@@ -552,6 +553,65 @@ namespace FUParkingService
                 {
                     InternalErrorMessage = ex,
                     Message = ErrorEnumApplication.SERVER_ERROR
+                };
+            }
+        }
+
+        public async Task<Return<GetParkingAreaReqDto>> GetParkingAreaByParkingIdAsync(Guid id)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetParkingAreaReqDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+
+                var result = await _parkingAreaRepository.GetParkingAreaByParkingIdAsync(id);
+                if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || result.Data == null)
+                {
+                    return new Return<GetParkingAreaReqDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.GATE_NOT_EXIST
+                    };
+                }
+                return new Return<GetParkingAreaReqDto>
+                {
+                    Data = new GetParkingAreaReqDto
+                    {
+                        Id = result.Data.Id,
+                        Block = result.Data.Block,
+                        CreateBy = result.Data.CreateBy?.Email ?? "",
+                        CreateDate = result.Data.CreatedDate,
+                        Description = result.Data.Description ?? "",
+                        Mode = result.Data.Mode switch
+                        {
+                            ModeEnum.MODE1 => 1,
+                            ModeEnum.MODE2 => 2,
+                            ModeEnum.MODE3 => 3,
+                            ModeEnum.MODE4 => 4,
+                            _ => 0
+                        },
+                        LastModifyBy = result.Data.LastModifyBy?.Email,
+                        LastModifyDate = result.Data.LastModifyDate,
+                        MaxCapacity = result.Data.MaxCapacity,
+                        Name = result.Data.Name,
+                        StatusParkingArea = result.Data.StatusParkingArea
+                    },
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            } catch (Exception ex)
+            {
+                return new Return<GetParkingAreaReqDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
                 };
             }
         }

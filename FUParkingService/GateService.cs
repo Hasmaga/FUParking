@@ -527,5 +527,58 @@ namespace FUParkingService
                 };
             }
         }
+
+        public async Task<Return<GetGateResDto>> GetGateByGateIdAsync(Guid id)
+        {
+            try
+            {
+                var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.STAFF);
+                if (!checkAuth.IsSuccess || checkAuth.Data is null)
+                {
+                    return new Return<GetGateResDto>
+                    {
+                        InternalErrorMessage = checkAuth.InternalErrorMessage,
+                        Message = checkAuth.Message
+                    };
+                }
+                var result = await _gateRepository.GetGateByIdAsync(id);
+                if (!result.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) || result.Data == null)
+                {
+                    return new Return<GetGateResDto>
+                    {
+                        InternalErrorMessage = result.InternalErrorMessage,
+                        Message = ErrorEnumApplication.GATE_NOT_EXIST
+                    };
+                }
+                return new Return<GetGateResDto>
+                {
+                    Data = new GetGateResDto
+                    {
+                        Id = result.Data.Id,
+                        Name = result.Data.Name,
+                        Description = result.Data.Description ?? "",
+                        ParkingArea = new GetParkingAreaOptionResDto
+                        {
+                            Id = result.Data.ParkingArea?.Id ?? Guid.Empty,
+                            Name = result.Data.ParkingArea?.Name ?? "",
+                            Description = result.Data.ParkingArea?.Description ?? ""
+                        },
+                        StatusGate = result.Data.StatusGate.ToString(),
+                        CreatedBy = result.Data.CreateBy?.Email ?? "",
+                        LastModifyBy = result.Data.LastModifyBy?.Email ?? ""
+                    },
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Return<GetGateResDto>
+                {
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                    InternalErrorMessage = ex
+                };
+            }
+        }
     }
 }
