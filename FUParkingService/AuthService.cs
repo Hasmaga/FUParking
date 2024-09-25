@@ -335,7 +335,8 @@ namespace FUParkingService
                             BearerToken = CreateBearerTokenAccount(resultCreateCus.Data.Id),
                             Name = resultCreateCus.Data.FullName,
                             Email = resultCreateCus.Data.Email,
-                            Avatar = payload.Picture
+                            Avatar = payload.Picture,
+                            CustomerType = isUserRegistered.Data?.CustomerType?.Name == CustomerTypeEnum.PAID ? "PAID" : "NONPAID"
                         },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
@@ -355,7 +356,8 @@ namespace FUParkingService
                             BearerToken = CreateBearerTokenAccount(isUserRegistered.Data.Id),
                             Name = isUserRegistered.Data.FullName,
                             Email = isUserRegistered.Data.Email,
-                            Avatar = payload.Picture
+                            Avatar = payload.Picture,
+                            CustomerType = isUserRegistered.Data.CustomerType?.Name == CustomerTypeEnum.PAID ? "PAID" : "NONPAID"
                         },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
