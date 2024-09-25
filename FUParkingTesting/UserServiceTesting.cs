@@ -2,6 +2,7 @@
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Common;
+using FUParkingModel.RequestObject.User;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService;
@@ -179,6 +180,13 @@ namespace FUParkingTesting
                 FullName = "Staff",
             };
 
+            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.EMAIL_IS_EXIST
+                });
+
             // Act
             var result = await _userService.CreateStaffAsync(req);
 
@@ -308,6 +316,7 @@ namespace FUParkingTesting
         }
 
         // CreateSupervisorAsync
+        //Successful
         [Fact]
         public async Task CreateSupervisorAsync_ShouldReturnSuccess()
         {
@@ -562,6 +571,7 @@ namespace FUParkingTesting
         }
 
         // CreateManagerAsync 
+        // Successful
         [Fact]
         public async Task CreateManagerAsync_ShouldReturnSuccess()
         {
@@ -1210,6 +1220,7 @@ namespace FUParkingTesting
         }
 
         // ResetWrongPasswordCountAsync
+        // Successful
         [Fact]
         public async Task ResetWrongPasswordCountAsync_ShouldReturnSuccess_WhenCountReset()
         {
@@ -2046,6 +2057,412 @@ namespace FUParkingTesting
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // GetAllRoleAsync()
+        // Successful
+        [Fact]
+        public async Task GetAllRoleAsync_ShouldReturnSuccess_WhenRolesRetrievedSuccessfully()
+        {
+            // Arrange
+            var roles = new List<Role>
+            {
+                new Role { Id = Guid.NewGuid(), Name = RoleEnum.MANAGER, Description = "Manager" },
+                new Role { Id = Guid.NewGuid(), Name = RoleEnum.STAFF, Description = "Staff" },
+                new Role { Id = Guid.NewGuid(), Name = RoleEnum.SUPERVISOR, Description = "Supervisor" }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _roleRepositoryMock.Setup(x => x.GetAllRoleAsync())
+                .ReturnsAsync(new Return<IEnumerable<Role>>
+                {
+                    IsSuccess = true,
+                    Data = roles,
+                    TotalRecord = roles.Count,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _userService.GetAllRoleAsync();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllRoleAsync_ShouldReturnFailure_WhenAuthFails()
+        {
+            // Arrange
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _userService.GetAllRoleAsync();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllRoleAsync_ShouldReturnFailure_WhenGetFails()
+        {
+            // Arrange
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _roleRepositoryMock.Setup(x => x.GetAllRoleAsync())
+                .ReturnsAsync(new Return<IEnumerable<Role>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                });
+
+            // Act
+            var result = await _userService.GetAllRoleAsync();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // CreateListUserAsync
+        // Successful
+        [Fact]
+        public async Task CreateListUserAsync_ShouldReturnSuccess_WhenAllUsersCreatedSuccessfully()
+        {
+            // Arrange
+            var request = new CreateListUserReqDto
+            {
+                Users = new[]
+                {
+                    new CreateUsersReqDto
+                    {
+                        Email = "new@gmail.com",
+                        FullName = "New",
+                        Password = "password123",
+                        RoleId = Guid.NewGuid()
+                    },
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _roleRepositoryMock.Setup(x => x.GetRoleByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<Role>
+                {
+                    IsSuccess = true,
+                    Data = new Role 
+                    { 
+                        Name = RoleEnum.STAFF
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY,
+                    Data = new User
+                    {
+                        Email = request.Users[0].Email,
+                        FullName = request.Users[0].FullName,
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            // Act
+            var result = await _userService.CreateListUserAsync(request);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateListUserAsync_ShouldReturnFailure_WhenEmailAlreadyExists()
+        {
+            // Arrange
+            var request = new CreateListUserReqDto
+            {
+                Users = new[]
+                {
+                    new CreateUsersReqDto
+                    {
+                        Email = "new@gmail.com",
+                        FullName = "New",
+                        Password = "password123",
+                        RoleId = Guid.NewGuid()
+                    },
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = request.Users[0].Email,
+                        FullName = request.Users[0].FullName,
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.EMAIL_IS_EXIST,
+                });
+
+            // Act
+            var result = await _userService.CreateListUserAsync(request);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.EMAIL_IS_EXIST, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateListUserAsync_ShouldReturnFailure_WhenRoleNotFound()
+        {
+            // Arrange
+            var request = new CreateListUserReqDto
+            {
+                Users = new[]
+                {
+                    new CreateUsersReqDto
+                    {
+                        Email = "new@gmail.com",
+                        FullName = "New",
+                        Password = "password123",
+                        RoleId = Guid.NewGuid()
+                    },
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _roleRepositoryMock.Setup(x => x.GetRoleByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<Role>
+                {
+                    IsSuccess = false,
+                    Data = null,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.GET_OBJECT_ERROR,
+                });
+
+            // Act
+            var result = await _userService.CreateListUserAsync(request);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.GET_OBJECT_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateListUserAsync_ShouldReturnFailure_WhenUserCreationFails()
+        {
+            // Arrange
+            var request = new CreateListUserReqDto
+            {
+                Users = new[]
+                {
+                    new CreateUsersReqDto
+                    {
+                        Email = "user1@example.com",
+                        FullName = "User 1",
+                        Password = "password123",
+                        RoleId = Guid.NewGuid()
+                    }
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "User",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = ""
+                    }
+                });
+
+            _userRepositoryMock.Setup(x => x.GetUserByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            _roleRepositoryMock.Setup(x => x.GetRoleByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new Return<Role>
+                {
+                    IsSuccess = true,
+                    Data = new Role
+                    {
+                        Name = RoleEnum.STAFF
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>()))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR,
+                });
+
+            // Act
+            var result = await _userService.CreateListUserAsync(request);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task CreateListUserAsync_ShouldReturnFailure_WhenAuthFails()
+        {
+            // Arrange
+            var request = new CreateListUserReqDto
+            {
+                Users = new[]
+                {
+                    new CreateUsersReqDto
+                    {
+                        Email = "new@example.com",
+                        FullName = "New",
+                        Password = "password123",
+                        RoleId = Guid.NewGuid()
+                    }
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION
+                });
+
+            // Act
+            var result = await _userService.CreateListUserAsync(request);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
         }
 
     }

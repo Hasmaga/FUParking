@@ -760,7 +760,7 @@ namespace FUParkingTesting
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(ErrorEnumApplication.PRICE_ITEM_NOT_EXIST, result.Message);
+            Assert.Equal(ErrorEnumApplication.DEFAULT_PRICE_ITEM_NOT_EXIST, result.Message);
         }
 
         // Failure
@@ -980,7 +980,7 @@ namespace FUParkingTesting
 
             var priceTableReturn = new Return<PriceTable>
             {
-                IsSuccess = true,
+                IsSuccess = false,
                 Data = null,
                 Message = ErrorEnumApplication.NOT_FOUND_OBJECT
             };
@@ -1857,6 +1857,7 @@ namespace FUParkingTesting
 
             var createPriceItemResult = new Return<PriceItem> 
             { 
+                IsSuccess = true,
                 Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY 
             };
 
@@ -2062,6 +2063,7 @@ namespace FUParkingTesting
             var createPriceTableResult = new Return<PriceTable>
             {
                 Message = ErrorEnumApplication.SERVER_ERROR,
+                IsSuccess = false
             };
 
             _helpperServiceMock
@@ -2607,7 +2609,6 @@ namespace FUParkingTesting
                 .Setup(x => x.UpdatePriceTableAsync(It.IsAny<PriceTable>()))
                 .ReturnsAsync(new Return<PriceTable>
                 {
-                    IsSuccess = true,
                     Message = ErrorEnumApplication.STATUS_IS_ALREADY_APPLY,
                 });
 
@@ -2769,7 +2770,7 @@ namespace FUParkingTesting
 
             var updateReturn = new Return<PriceTable>
             {
-                Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY,
                 IsSuccess = true,
                 Data = new PriceTable
                 {
@@ -2995,5 +2996,443 @@ namespace FUParkingTesting
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorEnumApplication.CAN_NOT_DELETE_DEFAULT_PRICE_TABLE, result.Message);
         }
+
+        // UpdatePriceTableAsync
+        // Successful
+        [Fact]
+        public async Task UpdatePriceTableAsync_ShouldReturnSuccess_WhenPriceTableUpdatedSuccessfully()
+        {
+            // Arrange
+            var req = new UpdatePriceTableReqDto
+            {
+                PriceTableId = Guid.NewGuid(),
+                Name = "Updated Price Table",
+                ApplyFromDate = DateTime.Now,
+                ApplyToDate = DateTime.Now.AddYears(1)
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _priceRepositoryMock.Setup(x => x.GetPriceTableByIdAsync(req.PriceTableId))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new PriceTable 
+                    { 
+                        Id = req.PriceTableId,
+                        Priority = 2,
+                        Name = "Price Table",
+                        StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                    }
+                });
+
+            _priceRepositoryMock.Setup(x => x.UpdatePriceTableAsync(It.IsAny<PriceTable>()))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
+                });
+
+            // Act
+            var result = await _priceService.UpdatePriceTableAsync(req);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task UpdatePriceTableAsync_ShouldReturnFailure_WhenPriceTableUpdateFails()
+        {
+            // Arrange
+            var req = new UpdatePriceTableReqDto
+            {
+                PriceTableId = Guid.NewGuid(),
+                Name = "Updated Price Table",
+                ApplyFromDate = DateTime.Now,
+                ApplyToDate = DateTime.Now.AddYears(1)
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _priceRepositoryMock.Setup(x => x.GetPriceTableByIdAsync(req.PriceTableId))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT,
+                    Data = new PriceTable
+                    {
+                        Id = req.PriceTableId,
+                        Priority = 2,
+                        Name = "Price Table",
+                        StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                    }
+                });
+
+            _priceRepositoryMock.Setup(x => x.UpdatePriceTableAsync(It.IsAny<PriceTable>()))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _priceService.UpdatePriceTableAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task UpdatePriceTableAsync_ShouldReturnFailure_WhenTryingToUpdateDefaultPriceTable()
+        {
+            // Arrange
+            var req = new UpdatePriceTableReqDto { PriceTableId = Guid.NewGuid(), Name = "New Price Table" };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                 .ReturnsAsync(new Return<User>
+                 {
+                     IsSuccess = true,
+                     Data = new User
+                     {
+                         Email = "user@gmail.com",
+                         FullName = "user",
+                         StatusUser = StatusUserEnum.ACTIVE,
+                         PasswordHash = "",
+                         PasswordSalt = "",
+                     },
+                     Message = SuccessfullyEnumServer.FOUND_OBJECT
+                 });
+
+            _priceRepositoryMock.Setup(x => x.GetPriceTableByIdAsync(req.PriceTableId))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = true,
+                    Data = new PriceTable 
+                    { 
+                        Id = req.PriceTableId, Priority = 1,
+                        Name = "Price Table",
+                        StatusPriceTable = StatusPriceTableEnum.ACTIVE
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _priceService.UpdatePriceTableAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.CAN_NOT_UPDATE_DEFAULT_PRICE_TABLE, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task UpdatePriceTableAsync_ShouldReturnFailure_WhenPriceTableDoesNotExist()
+        {
+            // Arrange
+            var req = new UpdatePriceTableReqDto { PriceTableId = Guid.NewGuid(), Name = "New Price Table" };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                 .ReturnsAsync(new Return<User>
+                 {
+                     IsSuccess = true,
+                     Data = new User
+                     {
+                         Email = "user@gmail.com",
+                         FullName = "user",
+                         StatusUser = StatusUserEnum.ACTIVE,
+                         PasswordHash = "",
+                         PasswordSalt = "",
+                     },
+                     Message = SuccessfullyEnumServer.FOUND_OBJECT
+                 });
+
+            _priceRepositoryMock.Setup(x => x.GetPriceTableByIdAsync(req.PriceTableId))
+                .ReturnsAsync(new Return<PriceTable>
+                {
+                    IsSuccess = false,
+                    Data = null,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _priceService.UpdatePriceTableAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.PRICE_TABLE_NOT_EXIST, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task UpdatePriceTableAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var req = new UpdatePriceTableReqDto { PriceTableId = Guid.NewGuid(), Name = "New Price Table" };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.MANAGER))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _priceService.UpdatePriceTableAsync(req);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
+        // GetAllPriceTableByVehicleTypeAsync
+        // Successful
+        [Fact]
+        public async Task GetAllPriceTableByVehicleTypeAsync_ShouldReturnSuccess_WhenPriceTablesFound()
+        {
+            // Arrange
+            var vehicleTypeId = Guid.NewGuid();
+            var priceTables = new List<PriceTable>
+            {
+                new PriceTable
+                {
+                    Name = "Price Table 1",
+                    ApplyFromDate = DateTime.Now,
+                    ApplyToDate = DateTime.Now.AddYears(1),
+                    Priority = 2,
+                    StatusPriceTable = StatusPriceTableEnum.ACTIVE,
+                    VehicleType = new VehicleType { Id = vehicleTypeId, Name = "Car" }
+                }
+            };
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<VehicleType>
+                {
+                    IsSuccess = true,
+                    Data = new VehicleType 
+                    { 
+                        Id = vehicleTypeId, 
+                        Name = "Car" 
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _priceRepositoryMock.Setup(x => x.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<IEnumerable<PriceTable>>
+                {
+                    IsSuccess = true,
+                    Data = priceTables,
+                    TotalRecord = priceTables.Count,
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(SuccessfullyEnumServer.FOUND_OBJECT, result.Message);
+        }
+
+        // Successful
+        [Fact]
+        public async Task GetAllPriceTableByVehicleTypeAsync_ShouldReturnSuccess_WhenNoPriceTablesFound()
+        {
+            // Arrange
+            var vehicleTypeId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<VehicleType>
+                {
+                    IsSuccess = true,
+                    Data = new VehicleType
+                    {
+                        Id = vehicleTypeId,
+                        Name = "Car"
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _priceRepositoryMock.Setup(x => x.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<IEnumerable<PriceTable>>
+                {
+                    IsSuccess = true,
+                    Data = null,
+                    TotalRecord = 0,
+                    Message = ErrorEnumApplication.NOT_FOUND_OBJECT
+                });
+
+            // Act
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_FOUND_OBJECT, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllPriceTableByVehicleTypeAsync_ShouldReturnFailure_WhenPriceTableGetFails()
+        {
+            // Arrange
+            var vehicleTypeId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<VehicleType>
+                {
+                    IsSuccess = true,
+                    Data = new VehicleType { Id = vehicleTypeId, Name = "Car" },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _priceRepositoryMock.Setup(x => x.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<IEnumerable<PriceTable>>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.SERVER_ERROR
+                });
+
+            // Act
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.SERVER_ERROR, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllPriceTableByVehicleTypeAsync_ShouldReturnFailure_WhenVehicleTypeDoesNotExist()
+        {
+            // Arrange
+            var vehicleTypeId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = true,
+                    Data = new User
+                    {
+                        Email = "user@gmail.com",
+                        FullName = "user",
+                        StatusUser = StatusUserEnum.ACTIVE,
+                        PasswordHash = "",
+                        PasswordSalt = "",
+                    },
+                    Message = SuccessfullyEnumServer.FOUND_OBJECT
+                });
+
+            _vehicleRepositoryMock.Setup(x => x.GetVehicleTypeByIdAsync(vehicleTypeId))
+                .ReturnsAsync(new Return<VehicleType>
+                {
+                    IsSuccess = true,
+                    Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                });
+
+            // Act
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST, result.Message);
+        }
+
+        // Failure
+        [Fact]
+        public async Task GetAllPriceTableByVehicleTypeAsync_ShouldReturnFailure_WhenAuthorizationFails()
+        {
+            // Arrange
+            var vehicleTypeId = Guid.NewGuid();
+
+            _helpperServiceMock.Setup(x => x.ValidateUserAsync(RoleEnum.SUPERVISOR))
+                .ReturnsAsync(new Return<User>
+                {
+                    IsSuccess = false,
+                    Message = ErrorEnumApplication.NOT_AUTHENTICATION,
+                });
+
+            // Act
+            var result = await _priceService.GetAllPriceTableByVehicleTypeAsync(vehicleTypeId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorEnumApplication.NOT_AUTHENTICATION, result.Message);
+        }
+
     }
 }
