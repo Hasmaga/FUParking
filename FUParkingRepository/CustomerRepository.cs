@@ -70,7 +70,10 @@ namespace FUParkingRepository
         {
             try
             {
-                var customer = await _db.Customers.Where(p => p.DeletedDate == null).FirstOrDefaultAsync(c => c.Email == email);
+                var customer = await _db.Customers
+                    .Include(c => c.CustomerType)
+                    .Where(p => p.DeletedDate == null)
+                    .FirstOrDefaultAsync(c => c.Email == email);
                 return new Return<Customer>
                 {
                     Data = customer,
