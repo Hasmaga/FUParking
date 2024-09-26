@@ -599,7 +599,7 @@ namespace FUParkingService
                     };
                 }
 
-                if (req.PriceItems is not null)
+                if (req.PriceItems is not null && req.PriceItems.Count > 0)
                 {
                     var createListPriceItem = new CreateListPriceItemReqDto
                     {
