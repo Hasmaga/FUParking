@@ -120,6 +120,10 @@ namespace FUParkingApi.Controllers
         [HttpPut("checkout/plateNumber")]
         public async Task<IActionResult> CheckOutSessionByPlateNumberAsync([FromForm] CheckOutSessionByPlateNumberReqDto req)
         {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(422, Helper.GetValidationErrors(ModelState));
+            }
             var result = await _sessionService.CheckOutSessionByPlateNumberAsync(req);
             if (!result.IsSuccess)
             {

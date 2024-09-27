@@ -15,6 +15,6 @@ namespace FUParkingModel.RequestObject.Session
         
         public IFormFile? ImageBody { get; set; }
         
-        public Guid GateId { get; set; }
+        public Guid? GateId { get; set; }
     }
 }

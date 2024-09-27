@@ -37,9 +37,10 @@ namespace FUParkingTesting
         private readonly Mock<ICustomerRepository> _customerRepositoryMock = new();
         private readonly Mock<IFirebaseService> _firebaseServiceMock = new();
         private readonly Mock<ILogger<VehicleService>> _loggerMock = new();
+        private readonly Mock<IPriceRepository> _priceRepository = new();
         private readonly VehicleService _vehicleService;
 
-        public VehicleServiceTesting()
+        public VehicleServiceTesting(Mock<IPriceRepository> priceRepository)
         {
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
             _helpperServiceMock = new Mock<IHelpperService>();
@@ -48,9 +49,9 @@ namespace FUParkingTesting
             _customerRepositoryMock = new Mock<ICustomerRepository>();
             _firebaseServiceMock = new Mock<IFirebaseService>();
             _loggerMock = new Mock<ILogger<VehicleService>>();
-            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object, _loggerMock.Object);
+            _priceRepository = new Mock<IPriceRepository>();
+            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object, _loggerMock.Object, _priceRepository.Object);            
         }
-
         // GetVehicleTypesAsync
         // Successful
         [Fact]

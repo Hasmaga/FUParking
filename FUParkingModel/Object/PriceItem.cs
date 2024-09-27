@@ -19,7 +19,7 @@ namespace FUParkingModel.Object
         public int? ApplyToHour { get; set; }
 
         [Column("MaxPrice")]
-        public int MaxPrice { get; set; }
+        public int? MaxPrice { get; set; }
 
         [Column("BlockPricing")]
         public int BlockPricing { get; set; }

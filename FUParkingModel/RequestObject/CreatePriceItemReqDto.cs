@@ -11,7 +11,7 @@ namespace FUParkingModel.RequestObject
         public int To { get; set; } // Hour
 
         [Range(0, int.MaxValue, ErrorMessage = "MaxPrice must be greater than or equal to 0")]
-        public int MaxPrice { get; set; }
+        public int? MaxPrice { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "MinPrice must be greater than or equal to 0")]
         public int MinPrice { get; set; }
@@ -26,6 +26,12 @@ namespace FUParkingModel.RequestObject
                 yield return new ValidationResult(
                     "The 'From' hour must be less than the 'To' hour.",
                     [nameof(From), nameof(To)]);
+            }
+            if (MaxPrice < MinPrice)
+            {
+                yield return new ValidationResult(
+                    "The 'MaxPrice' must be greater than or equal to the 'MinPrice'.",
+                    [nameof(MaxPrice), nameof(MinPrice)]);
             }
         }
     }

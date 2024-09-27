@@ -16,6 +16,7 @@ using FUParkingService.Interface;
 using FUParkingService.MailObject;
 using FUParkingService.MailService;
 using Microsoft.Extensions.Logging;
+using Minio.DataModel;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -448,7 +449,7 @@ namespace FUParkingService
                                        $"\u2022 Location: {gateOut.Data?.ParkingArea?.Name}\n" +
                                        $"\u2022 Gate: {gateOut.Data?.Name}\n" +
                                        $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
-                                       $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n";                                       
+                                       $"\u2022 Time: {Utilities.FormatDateTime(sessionCard.Data.TimeOut)}\n";
 
                             var firebaseReq = new FirebaseReqDto
                             {
@@ -522,7 +523,7 @@ namespace FUParkingService
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE2:
@@ -559,7 +560,7 @@ namespace FUParkingService
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE3:
@@ -586,17 +587,10 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
-                                if (priceItem == null)
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Max();
                             break;
                         }
                     case ModeEnum.MODE4:
@@ -623,17 +617,10 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
-                                if (priceItem == null)
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Max();
                             break;
                         }
                     default:
@@ -663,7 +650,7 @@ namespace FUParkingService
                     return new Return<dynamic> { Message = ErrorEnumApplication.UPLOAD_IMAGE_FAILED };
 
                 if (sessionCard.Data.CustomerId is not null)
-                {                    
+                {
                     // Try minus balance of customer wallet
                     var walletMain = await _walletRepository.GetMainWalletByCustomerId(sessionCard.Data.CustomerId.Value);
                     if (!walletMain.IsSuccess)
@@ -681,14 +668,14 @@ namespace FUParkingService
                     {
                         balanceCondition = WalletBalanceCondition.WalletExtraSufficient;
                     }
-                    else if (walletMain.Data.Balance >= price)
-                    {
-                        balanceCondition = WalletBalanceCondition.WalletMainSufficient;
-                    }
                     else if (walletExtra.Data.Balance + walletMain.Data.Balance >= price)
                     {
                         balanceCondition = WalletBalanceCondition.CombinedSufficient;
                     }
+                    else if (walletMain.Data.Balance >= price)
+                    {
+                        balanceCondition = WalletBalanceCondition.WalletMainSufficient;
+                    }                    
                     else
                     {
                         balanceCondition = WalletBalanceCondition.Insufficient;
@@ -1428,7 +1415,7 @@ namespace FUParkingService
                                             return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                                     }
                                     // Calculate price
-                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                                     break;
                                 }
                             case ModeEnum.MODE2:
@@ -1465,7 +1452,7 @@ namespace FUParkingService
                                             return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                                     }
                                     // Calculate price
-                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                                     break;
                                 }
                             case ModeEnum.MODE3:
@@ -1493,16 +1480,20 @@ namespace FUParkingService
                                     if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                                     // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
-                                    if (priceItem == null)
-                                    {
-                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
-                                        if (priceItem == null)
-                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                    }
-                                    // Calculate price
-                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    //if (priceItem == null)
+                                    //{
+                                    //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                    //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                                    //    if (priceItem == null)
+                                    //        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    //}
+                                    //// Calculate price
+                                    //moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    moneyEstimatedNeedToPay = listPriceItem.Data
+                                        .Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour)
+                                        .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                        .Max();
                                     break;
                                 }
                             case ModeEnum.MODE4:
@@ -1529,17 +1520,21 @@ namespace FUParkingService
                                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                                     if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                    // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
-                                    if (priceItem == null)
-                                    {
-                                        // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                        priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
-                                        if (priceItem == null)
-                                            return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                    }
-                                    // Calculate price
-                                    moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                                    //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    //if (priceItem == null)
+                                    //{
+                                    //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                                    //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                                    //    if (priceItem == null)
+                                    //        return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
+                                    //}
+                                    //// Calculate price
+                                    //moneyEstimatedNeedToPay = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                                    moneyEstimatedNeedToPay = listPriceItem.Data
+                                        .Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour)
+                                        .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                        .Min();
                                     break;
                                 }
                             default:
@@ -1623,16 +1618,34 @@ namespace FUParkingService
                         Message = checkAuth.Message
                     };
                 }
-                // Check Gate         
-                var isGateExist = await _gateRepository.GetGateByIdAsync(req.GateId);
-                if (!isGateExist.IsSuccess || isGateExist.Data == null)
+                if (req.GateId != null)
                 {
-                    scope.Dispose();
-                    return new Return<dynamic>
+                    // Check Gate         
+                    var isGateExist = await _gateRepository.GetGateByIdAsync(req.GateId.Value);
+                    if (!isGateExist.IsSuccess || isGateExist.Data is null)
                     {
-                        InternalErrorMessage = isGateExist.InternalErrorMessage,
-                        Message = ErrorEnumApplication.GATE_NOT_EXIST
-                    };
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = isGateExist.InternalErrorMessage,
+                            Message = ErrorEnumApplication.GATE_NOT_EXIST
+                        };
+                    }
+                    req.GateId = isGateExist.Data.Id;
+                } else
+                {
+                    // Get virtual gate
+                    var virtualGate = await _gateRepository.GetGateByNameAsync(GateTypeEnum.VIRUTAL);
+                    if (!virtualGate.IsSuccess || virtualGate.Data is null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = virtualGate.InternalErrorMessage,
+                            Message = ErrorEnumApplication.GATE_NOT_EXIST
+                        };
+                    }
+                    req.GateId = virtualGate.Data.Id;
                 }
                 // Check PlateNumber
                 var session = await _sessionRepository.GetNewestSessionByPlateNumberAsync(req.PlateNumber);
@@ -1758,7 +1771,7 @@ namespace FUParkingService
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE2:
@@ -1795,7 +1808,7 @@ namespace FUParkingService
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE3:
@@ -1822,17 +1835,21 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
-                                if (priceItem == null)
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Max();
                             break;
                         }
                     case ModeEnum.MODE4:
@@ -1859,17 +1876,21 @@ namespace FUParkingService
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
-                                if (priceItem == null)
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //price = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            price = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Min();
                             break;
                         }
                     default:
@@ -1953,8 +1974,8 @@ namespace FUParkingService
                             ClientTokens = [customer.Data.FCMToken],
                             Title = "Check-out Successful",
                             Body = $"Your vehicle with plate number {plateNumber} has successfully checked out.\n" +
-                                   $"\u2022 Location: {isGateExist.Data?.ParkingArea?.Name}\n" +
-                                   $"\u2022 Gate: {isGateExist.Data?.Name}\n" +
+                                   $"\u2022 Location: {isUpdateSession.Data?.GateIn?.ParkingArea?.Name}\n" +
+                                   $"\u2022 Gate: {isUpdateSession.Data?.GateOut?.Name}\n" +
                                    $"\u2022 Checked-out by: {checkAuth.Data?.FullName}\n" +
                                    $"\u2022 Time: {Utilities.FormatDateTime(session.Data.TimeOut)}\n" +
                                    $"\u2022 Total price: {formattedPrice} VND\n" +
@@ -1967,8 +1988,6 @@ namespace FUParkingService
                         }
                     }
                 }
-
-
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -2459,7 +2478,7 @@ namespace FUParkingService
                                     return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE2:
@@ -2496,7 +2515,7 @@ namespace FUParkingService
                                     return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE3:
@@ -2523,17 +2542,21 @@ namespace FUParkingService
                                 return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
-                                if (priceItem == null)
-                                    return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Min();
                             break;
                         }
                     case ModeEnum.MODE4:
@@ -2560,17 +2583,21 @@ namespace FUParkingService
                                 return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
-                                if (priceItem == null)
-                                    return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Max();
                             break;
                         }
                     default:
@@ -2731,7 +2758,7 @@ namespace FUParkingService
                                     return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE2:
@@ -2768,7 +2795,7 @@ namespace FUParkingService
                                     return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             }
                             // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice ?? int.MaxValue);
                             break;
                         }
                     case ModeEnum.MODE3:
@@ -2795,17 +2822,21 @@ namespace FUParkingService
                                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
-                                if (priceItem == null)
-                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).FirstOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Min();
                             break;
                         }
                     case ModeEnum.MODE4:
@@ -2832,17 +2863,21 @@ namespace FUParkingService
                                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = listPriceItem.InternalErrorMessage };
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
-                            if (priceItem == null)
-                            {
-                                // Use default price item have ApplyFromHour is null and ApplyToHour is null
-                                priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
-                                if (priceItem == null)
-                                    return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
-                            }
-                            // Calculate price
-                            amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            //// Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
+                            //var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            //if (priceItem == null)
+                            //{
+                            //    // Use default price item have ApplyFromHour is null and ApplyToHour is null
+                            //    priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour == null && x.ApplyToHour == null).OrderByDescending(t => t.MaxPrice).LastOrDefault();
+                            //    if (priceItem == null)
+                            //        return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
+                            //}
+                            //// Calculate price
+                            //amount = Math.Min(Math.Max(priceItem.BlockPricing * totalBlockTime, priceItem.MinPrice), priceItem.MaxPrice);
+                            amount = listPriceItem.Data
+                                .Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour)
+                                .Select(item => Math.Min(Math.Max(item.BlockPricing * totalBlockTime, item.MinPrice), item.MaxPrice ?? int.MaxValue))
+                                .Min();
                             break;
                         }
                     default:

@@ -7,7 +7,7 @@ namespace FUParkingModel.ResponseObject.Price
         public Guid Id { get; set; }        
         public int? ApplyFromHour { get; set; }
         public int? ApplyToHour { get; set; }
-        public int MaxPrice { get; set; }
+        public int? MaxPrice { get; set; }
         public int BlockPricing { get; set; }
         public int MinPrice { get; set; }
         public string CreatedBy { get; set; } = null!;

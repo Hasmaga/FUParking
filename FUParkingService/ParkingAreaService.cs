@@ -122,6 +122,7 @@ namespace FUParkingService
 
         public async Task<Return<dynamic>> CreateParkingAreaAsync(CreateParkingAreaReqDto req)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 var checkAuth = await _helpperService.ValidateUserAsync(RoleEnum.MANAGER);
@@ -178,12 +179,66 @@ namespace FUParkingService
                 var result = await _parkingAreaRepository.CreateParkingAreaAsync(parkingArea);
                 if (!result.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
                 {
+                    scope.Dispose();
                     return new Return<dynamic>
                     {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+                // Create virtual parkingArea if have
+                var isExistVirtual = await _parkingAreaRepository.GetParkingAreaByNameAsync(GateTypeEnum.VIRUTAL);
+                if (!isExistVirtual.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isExistVirtual.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                if (isExistVirtual.Data is null)
+                {
+                    var virtualParkingArea = new ParkingArea
+                    {
+                        Mode = ModeEnum.MODE1,
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                        Name = GateTypeEnum.VIRUTAL,
+                        Description = "Virtual parking area",
+                        MaxCapacity = 100000,
+                        Block = 0,
+                        CreatedById = checkAuth.Data.Id,
+                    };
+                    var resultVirtual = await _parkingAreaRepository.CreateParkingAreaAsync(virtualParkingArea);
+                    if (!resultVirtual.IsSuccess || resultVirtual.Data is null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultVirtual.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                    // Create virtual gate
+                    var virtualGate = new Gate
+                    {
+                        Name = GateTypeEnum.VIRUTAL,
+                        ParkingAreaId = resultVirtual.Data.Id,
+                        StatusGate = StatusGateEnum.ACTIVE,
+                        CreatedById = checkAuth.Data.Id
+                    };
+                    var resultGate = await _gateRepository.CreateGateAsync(virtualGate);
+                    if (!resultGate.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultGate.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }                
+                scope.Complete();
                 return new Return<dynamic>
                 {
                     IsSuccess = true,
@@ -539,7 +594,58 @@ namespace FUParkingService
                         }
                     }
                 }
-
+                // Create virtual parkingArea if have
+                var isExistVirtual = await _parkingAreaRepository.GetParkingAreaByNameAsync(GateTypeEnum.VIRUTAL);
+                if (!isExistVirtual.IsSuccess)
+                {
+                    scope.Dispose();
+                    return new Return<dynamic>
+                    {
+                        InternalErrorMessage = isExistVirtual.InternalErrorMessage,
+                        Message = ErrorEnumApplication.SERVER_ERROR
+                    };
+                }
+                if (isExistVirtual.Data is null)
+                {
+                    var virtualParkingArea = new ParkingArea
+                    {
+                        Mode = ModeEnum.MODE1,
+                        StatusParkingArea = StatusParkingEnum.ACTIVE,
+                        Name = GateTypeEnum.VIRUTAL,
+                        Description = "Virtual parking area",
+                        MaxCapacity = 100000,
+                        Block = 0,
+                        CreatedById = checkAuth.Data.Id,
+                    };
+                    var resultVirtual = await _parkingAreaRepository.CreateParkingAreaAsync(virtualParkingArea);
+                    if (!resultVirtual.IsSuccess || resultVirtual.Data is null)
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultVirtual.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                    // Create virtual gate
+                    var virtualGate = new Gate
+                    {
+                        Name = GateTypeEnum.VIRUTAL,
+                        ParkingAreaId = resultVirtual.Data.Id,
+                        StatusGate = StatusGateEnum.ACTIVE,
+                        CreatedById = checkAuth.Data.Id
+                    };
+                    var resultGate = await _gateRepository.CreateGateAsync(virtualGate);
+                    if (!resultGate.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY))
+                    {
+                        scope.Dispose();
+                        return new Return<dynamic>
+                        {
+                            InternalErrorMessage = resultGate.InternalErrorMessage,
+                            Message = ErrorEnumApplication.SERVER_ERROR
+                        };
+                    }
+                }
                 scope.Complete();
                 return new Return<dynamic>
                 {
