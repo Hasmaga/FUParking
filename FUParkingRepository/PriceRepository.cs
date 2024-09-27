@@ -244,8 +244,8 @@ namespace FUParkingRepository
                         t.VehicleTypeId.Equals(vehicleTypeId) &&
                         (
                             (t.ApplyFromDate == null && t.ApplyToDate == null) || // Active forever
-                            (t.ApplyFromDate != null && t.ApplyToDate == null && t.ApplyFromDate <= datetimenow || // Check ApplyFromDate
-                            (t.ApplyFromDate == null && t.ApplyToDate != null && t.ApplyToDate >= datetimenow)) // Check ApplyToDate
+                            (t.ApplyFromDate == null || t.ApplyFromDate <= datetimenow) || // Active from date
+                            (t.ApplyToDate == null || t.ApplyToDate >= datetimenow) // Active to date
                         )
                     ).ToListAsync();
                 return new Return<IEnumerable<PriceTable>>

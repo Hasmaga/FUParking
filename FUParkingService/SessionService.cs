@@ -551,7 +551,7 @@ namespace FUParkingService
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= sessionCard.Data.TimeIn.Hour && x.ApplyToHour >= sessionCard.Data.TimeIn.Hour).FirstOrDefault();
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= req.TimeOut.Hour && x.ApplyToHour >= req.TimeOut.Hour).FirstOrDefault();
                             if (priceItem == null)
                             {
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
@@ -1443,7 +1443,8 @@ namespace FUParkingService
                                     if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                         return new Return<IEnumerable<GetHistorySessionResDto>> { Message = ErrorEnumApplication.SERVER_ERROR };
                                     // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= item.TimeIn.Hour && x.ApplyToHour >= item.TimeIn.Hour).FirstOrDefault();
+                                    var dateTimeNow = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+                                    var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= dateTimeNow.Hour && x.ApplyToHour >= dateTimeNow.Hour).FirstOrDefault();
                                     if (priceItem == null)
                                     {
                                         // Use default price item have ApplyFromHour is null and ApplyToHour is null
@@ -1799,7 +1800,7 @@ namespace FUParkingService
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= session.Data.TimeIn.Hour && x.ApplyToHour >= session.Data.TimeIn.Hour).FirstOrDefault();
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= req.CheckOutTime.Hour && x.ApplyToHour >= req.CheckOutTime.Hour).FirstOrDefault();
                             if (priceItem == null)
                             {
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
@@ -2506,7 +2507,7 @@ namespace FUParkingService
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByCardNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= TimeOut.Hour && x.ApplyToHour >= TimeOut.Hour).FirstOrDefault();
                             if (priceItem == null)
                             {
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
@@ -2786,7 +2787,7 @@ namespace FUParkingService
                             if (listPriceItem.Data == null || !listPriceItem.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                 return new Return<GetSessionByPlateNumberResDto> { Message = ErrorEnumApplication.SERVER_ERROR };
                             // Get price item have ApplyFromHour is <= TimeIn and ApplyToHour is >= TimeIn
-                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= result.Data.TimeIn.Hour && x.ApplyToHour >= result.Data.TimeIn.Hour).FirstOrDefault();
+                            var priceItem = listPriceItem.Data.Where(x => x.ApplyFromHour <= TimeOut.Hour && x.ApplyToHour >= TimeOut.Hour).FirstOrDefault();
                             if (priceItem == null)
                             {
                                 // Use default price item have ApplyFromHour is null and ApplyToHour is null
