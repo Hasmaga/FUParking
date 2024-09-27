@@ -283,7 +283,9 @@ namespace FUParkingRepository
             try
             {
                 // Get total customer
-                var totalCustomer = await _db.Customers.CountAsync();
+                var totalCustomer = await _db.Customers
+                    .Where(c => c.DeletedDate == null)
+                    .CountAsync();
 
                 // Get total new customer in this month
                 var totalNewCustomer = await _db.Customers

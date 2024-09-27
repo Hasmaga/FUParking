@@ -406,7 +406,9 @@ namespace FUParkingRepository
         {
             try
             {
-                var totalVehicle = await _db.Vehicles.CountAsync();
+                var totalVehicle = await _db.Vehicles
+                    .Where(c => c.DeletedDate == null)
+                    .CountAsync();
 
                 var totalNewResgisterVehicleInMonth = await _db.Vehicles
                     .Where(v => v.CreatedDate.Month == DateTime.Now.Month && v.CreatedDate.Year == DateTime.Now.Year && v.DeletedDate == null)
