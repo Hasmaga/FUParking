@@ -242,6 +242,7 @@ namespace FUParkingRepository
                     .Include(r => r.VehicleType)
                     .Where(t => t.DeletedDate == null &&
                         t.VehicleTypeId.Equals(vehicleTypeId) &&
+                        t.StatusPriceTable.Equals(StatusPriceTableEnum.ACTIVE) &&
                         (
                             (t.ApplyFromDate == null && t.ApplyToDate == null) || // Active forever
                             (t.ApplyFromDate == null || t.ApplyFromDate <= datetimenow) || // Active from date
