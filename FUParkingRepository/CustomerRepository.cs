@@ -287,7 +287,7 @@ namespace FUParkingRepository
 
                 // Get total new customer in this month
                 var totalNewCustomer = await _db.Customers
-                    .Where(c => c.CreatedDate.Month == DateTime.Now.Month && c.CreatedDate.Year == DateTime.Now.Year)
+                    .Where(c => c.CreatedDate.Month == DateTime.Now.Month && c.CreatedDate.Year == DateTime.Now.Year && c.DeletedDate == null)
                     .CountAsync();
 
                 var result = new StatisticCustomerResDto
