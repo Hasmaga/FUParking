@@ -317,13 +317,23 @@ namespace FUParkingService
                         return new Return<LoginWithGoogleMoblieResDto> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = resultWalletExtra.InternalErrorMessage };
                     }
 
-                    // Send mail
+                    // Send mail to new customer
                     MailRequest mailRequest = new()
                     {
                         ToEmail = newCustomer.Email,
                         ToUsername = newCustomer.FullName,
-                        Subject = "Welcome to Bai Parking! Your account has been successfully created",
-                        Body = RegisteredNewCustomerMailTemplate(newCustomer.FullName, newCustomer.Email)
+                        Subject = "Welcome to Bai Parking - Your account has been successfully created",
+                        Body = $@"
+                            <p>We are thrilled to have you as part of our Bai Parking community! Your Google account has been successfully used to create a new account in our system.</p>
+                            <p>Here are your account details:</p>
+                            <ul>
+                                <li><strong>Name:</strong> {newCustomer.FullName}</li>
+                                <li><strong>Email:</strong> {newCustomer.Email}</li>
+                                <li><strong>Account Type:</strong> {customerType.Data.Name}</li>
+                            </ul>
+                            <p>While your wallet currently has no balance, we encourage you to top up your wallet for a smoother and faster parking experience. By having a balance in your wallet, our system will automatically deduct the parking fee when you check out, reducing wait times and enhancing your overall convenience.</p>
+                            <p>Going cashless also helps protect the environment by reducing the need for physical transactions.</p></br>
+                            </br><p>If you did not request this account, please disregard this email.</p>"
                     };
                     await _mailService.SendEmailAsync(mailRequest);
 
@@ -405,19 +415,6 @@ namespace FUParkingService
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return token == null ? throw new Exception(ErrorEnumApplication.SERVER_ERROR) : tokenHandler.WriteToken(token);
-        }
-        private string RegisteredNewCustomerMailTemplate(string customerName, string customerEmail)
-        {
-            return $@"
-            <p>We are thrilled to have you as part of our Bai Parking community! Your Google account has been successfully used to create a new account in our system.</p>
-            <p>Here are your account details:</p>
-            <ul>
-                <li><strong>Name:</strong> {customerName}</li>
-                <li><strong>Email:</strong> {customerEmail}</li>
-            </ul>
-            <p>While your wallet currently has no balance, we encourage you to top up your wallet for a smoother and faster parking experience. By having a balance in your wallet, our system will automatically deduct the parking fee when you check out, reducing wait times and enhancing your overall convenience.</p>
-            <p>Going cashless also helps protect the environment by reducing the need for physical transactions.</p></br>
-            <p>If this account was not created by you, please contact us immediately via email at <a href=""mailto:baiparking.system@gmail.com"">baiparking.system@gmail.com</a> or call our hotline at <a href=""tel:+842873005588"">(028) 7300 5588</a>.</p></br>";
         }
         #endregion
     }

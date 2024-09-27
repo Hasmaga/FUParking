@@ -1,13 +1,18 @@
-﻿using FUParkingModel.Enum;
+﻿using FirebaseService;
+using FUParkingModel.Enum;
 using FUParkingModel.Object;
 using FUParkingModel.RequestObject;
 using FUParkingModel.RequestObject.Customer;
+using FUParkingModel.RequestObject.Firebase;
 using FUParkingModel.ResponseObject.Customer;
 using FUParkingModel.ResponseObject.Session;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -15,17 +20,23 @@ namespace FUParkingService
 {
     public class CustomerService : ICustomerService
     {
-        private readonly ICustomerRepository _customerRepository;        
+        private readonly ICustomerRepository _customerRepository;
         private readonly IHelpperService _helpperService;
-        private readonly IVehicleRepository _vehicleRepository;     
+        private readonly IVehicleRepository _vehicleRepository;
         private readonly IWalletRepository _walletRepository;
+        private readonly IFirebaseService _firebaseService;
+        private readonly IMailService _mailService;
+        private readonly ILogger<CustomerService> _logger;
 
-        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository, IWalletRepository walletRepository)
+        public CustomerService(ICustomerRepository customerRepository, IHelpperService helpperService, IVehicleRepository vehicleRepository, IWalletRepository walletRepository, IFirebaseService firebaseService, IMailService mailService, ILogger<CustomerService> logger)
         {
             _customerRepository = customerRepository;
             _helpperService = helpperService;
             _vehicleRepository = vehicleRepository;
             _walletRepository = walletRepository;
+            _firebaseService = firebaseService;
+            _mailService = mailService;
+            _logger = logger;
         }
 
         public async Task<Return<dynamic>> ChangeStatusCustomerAsync(ChangeStatusCustomerReqDto req)
@@ -75,6 +86,18 @@ namespace FUParkingService
                                 Message = ErrorEnumApplication.SERVER_ERROR
                             };
                         }
+
+                        // Send mail to customer
+                        MailRequest mailRequest = new()
+                        {
+                            ToEmail = isCustomerExist.Data.Email,
+                            ToUsername = isCustomerExist.Data.FullName,
+                            Subject = "Account Activation",
+                            Body = "Your account has been activated!"
+                        };
+
+                        await _mailService.SendEmailAsync(mailRequest);
+
                         return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
                     }
                 }
@@ -102,6 +125,18 @@ namespace FUParkingService
                                 Message = ErrorEnumApplication.SERVER_ERROR
                             };
                         }
+
+                        // Send mail to customer
+                        MailRequest mailRequest = new()
+                        {
+                            ToEmail = isCustomerExist.Data.Email,
+                            ToUsername = isCustomerExist.Data.FullName,
+                            Subject = "Account Deactivation",
+                            Body = "Your account has been deactivated!"
+                        };
+
+                        await _mailService.SendEmailAsync(mailRequest);
+
                         return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
                     }
                 }
@@ -157,6 +192,28 @@ namespace FUParkingService
                 }
                 res.Message = SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY;
                 res.IsSuccess = true;
+
+                // Send mail to new customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = newCustomer.Email,
+                    ToUsername = newCustomer.FullName,
+                    Subject = "Welcome to Bai Parking - Your account has been successfully created",
+                    Body = $@"
+                    <p>We are thrilled to have you as part of our Bai Parking community! Your account has been successfully created.</p>
+                    <p>Here are your account details:</p>
+                    <ul>
+                        <li><strong>Name:</strong> {newCustomer.FullName}</li>
+                        <li><strong>Email:</strong> {newCustomer.Email}</li>
+                        <li><strong>Account Type:</strong> {typeFreeRes.Data.Name}</li>
+                    </ul>
+                    <p>Your account has been successfully created, and you're now ready to explore all the features we have to offer.</p>
+                    <p>If you did not request this account, please disregard this email.</p>
+                    "
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
                 return res;
             }
             catch (Exception ex)
@@ -322,11 +379,42 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
-                return new Return<bool> 
-                { 
+
+                // Send notification to customer
+                var fcmToken = account.FCMToken;
+                if (fcmToken != null)
+                {
+                    FirebaseReqDto firebaseReq = new()
+                    {
+                        ClientTokens = new List<string> { fcmToken },
+                        Title = "Account Information Updated",
+                        Body = "Your account information has been updated successfully."
+                    };
+
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                    if (notificationResult.IsSuccess == false)
+                    {
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", checkAuth.Data.Id, notificationResult.InternalErrorMessage);
+                    }
+                }
+
+                // Send mail to customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = account.Email,
+                    ToUsername = account.FullName,
+                    Subject = "Account Information Updated",
+                    Body = "Your account information has been updated successfully."
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
+                return new Return<bool>
+                {
                     Data = true,
-                    IsSuccess = true, 
-                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY 
+                    IsSuccess = true,
+                    Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY
                 };
             }
             catch (Exception ex)
@@ -389,65 +477,106 @@ namespace FUParkingService
                 {
                     scope.Dispose();
                     return new Return<dynamic>
-                    {                        
+                    {
                         InternalErrorMessage = result.InternalErrorMessage,
                         Message = result.Message
                     };
                 }
 
-                foreach (var vehicle in req.Vehicles ?? [])
+                var vehicleTypeDictionary = new Dictionary<string, string?>();
+
+                if (req.Vehicles != null && req.Vehicles.Any())
                 {
-                    if (string.IsNullOrEmpty(vehicle.PlateNumber) && vehicle.PlateNumber == null)
+                    foreach (var vehicle in req.Vehicles)
                     {
-                        return new Return<dynamic>
+                        if (string.IsNullOrEmpty(vehicle.PlateNumber) && vehicle.PlateNumber == null)
                         {
-                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
-                        };
-                    }
-                    // Check Plate Number is valid
-                    vehicle.PlateNumber = vehicle.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER,
+                            };
+                        }
+                        // Check Plate Number is valid
+                        vehicle.PlateNumber = vehicle.PlateNumber.Trim().Replace("-", "").Replace(".", "").Replace(" ", "");
 #pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-                    Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
+                        Regex regex = new(@"^[0-9]{2}[A-ZĐ]{1,2}[0-9]{4,6}$");
 #pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-                    if (!regex.IsMatch(vehicle.PlateNumber))
-                    {
-                        return new Return<dynamic>
+                        if (!regex.IsMatch(vehicle.PlateNumber))
                         {
-                            Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
-                        };
-                    }
-                    // Check plate number is exist
-                    var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(vehicle.PlateNumber);
-                    if (isPlateNumberExist.Data != null && isPlateNumberExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.NOT_A_PLATE_NUMBER
+                            };
+                        }
+                        // Check plate number is exist
+                        var isPlateNumberExist = await _vehicleRepository.GetVehicleByPlateNumberAsync(vehicle.PlateNumber);
+                        if (isPlateNumberExist.Data != null && isPlateNumberExist.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                         {
-                            Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
-                        };
-                    }
+                            scope.Dispose();
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.PLATE_NUMBER_IS_EXIST
+                            };
+                        }
 
-                    var newVehicle = new Vehicle
-                    {
-                        PlateNumber = vehicle.PlateNumber,
-                        VehicleTypeId = vehicle.VehicleTypeId,
-                        CustomerId = customer.Id,
-                        StatusVehicle = StatusVehicleEnum.ACTIVE,
-                        StaffId = checkAuth.Data.Id
-                    };
-
-                    var vehicleResult = await _vehicleRepository.CreateVehicleAsync(newVehicle);
-                    if (!vehicleResult.IsSuccess)
-                    {
-                        scope.Dispose();
-                        return new Return<dynamic>
+                        var vehicleType = await _vehicleRepository.GetVehicleTypeByIdAsync(vehicle.VehicleTypeId);
+                        if (vehicleType.Data == null || !vehicleType.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                         {
-                            InternalErrorMessage = vehicleResult.InternalErrorMessage,
-                            Message = vehicleResult.Message
+                            scope.Dispose();
+                            return new Return<dynamic>
+                            {
+                                Message = ErrorEnumApplication.VEHICLE_TYPE_NOT_EXIST
+                            };
+                        }
+
+                        var newVehicle = new Vehicle
+                        {
+                            PlateNumber = vehicle.PlateNumber,
+                            VehicleTypeId = vehicle.VehicleTypeId,
+                            CustomerId = customer.Id,
+                            StatusVehicle = StatusVehicleEnum.ACTIVE,
+                            StaffId = checkAuth.Data.Id
                         };
+
+                        var vehicleResult = await _vehicleRepository.CreateVehicleAsync(newVehicle);
+                        if (!vehicleResult.IsSuccess)
+                        {
+                            scope.Dispose();
+                            return new Return<dynamic>
+                            {
+                                InternalErrorMessage = vehicleResult.InternalErrorMessage,
+                                Message = vehicleResult.Message
+                            };
+                        }
+
+                        vehicleTypeDictionary.Add(vehicle.PlateNumber, vehicleType.Data.Name);
                     }
                 }
-                
+
+                // Send mail to new customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = customer.Email,
+                    ToUsername = customer.FullName,
+                    Subject = "Welcome to Bai Parking - Your account has been successfully created",
+                    Body = $@"
+                        <p>We are thrilled to have you as part of our Bai Parking community! Your account has been successfully created.</p>
+                        <p>Here are your account details:</p>
+                        <ul>
+                            <li><strong>Name:</strong> {customer.FullName}</li>
+                            <li><strong>Email:</strong> {customer.Email}</li>
+                            <li><strong>Account Type:</strong> {customerType.Data.Name}</li>
+                        </ul>
+                        {(req.Vehicles != null && req.Vehicles.Any() ? $@"
+                        <p><strong>Registered Vehicle Information:</strong></p>
+                        <ul>
+                            {string.Join("", req.Vehicles.Select(vehicle => $"<li><strong>Plate Number:</strong> {Helper.Utilities.FormatPlateNumber(vehicle.PlateNumber)}, <strong>Vehicle Type:</strong> {vehicleTypeDictionary[vehicle.PlateNumber]}</li>"))}
+                        </ul>" : "")}
+                        <p>Your account has been successfully created, and you're now ready to explore all the features we have to offer.</p>
+                        <p>If you did not request this account, please disregard this email.</p>
+                        "
+                };
+
                 scope.Complete();
                 return new Return<dynamic>
                 {
@@ -676,6 +805,18 @@ namespace FUParkingService
                     };
                 }
                 scope.Complete();
+
+                // Send mail to customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = customer.Data.Email,
+                    ToUsername = customer.Data.FullName,
+                    Subject = "Account Deletion",
+                    Body = "Your account has been deleted!"
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
                 return new Return<dynamic>
                 {
                     IsSuccess = true,
@@ -719,6 +860,7 @@ namespace FUParkingService
                     };
                 }
 
+                var cusType = "";
                 if (req.CustomerTypeId != null)
                 {
                     var customerType = await _customerRepository.GetCustomerTypeByIdAsync(req.CustomerTypeId.Value);
@@ -731,6 +873,7 @@ namespace FUParkingService
                             Message = customerType.Message
                         };
                     }
+                    cusType = customerType.Data.Name;
                     if (customerType.Data.Name.Equals(CustomerTypeEnum.PAID))
                     {
                         // create wallet main and waller extra
@@ -738,7 +881,7 @@ namespace FUParkingService
                         {
                             CustomerId = customer.Data.Id,
                             WalletType = WalletType.MAIN,
-                            Balance = 0,                            
+                            Balance = 0,
                         };
 
                         var walletExtra = new Wallet
@@ -777,7 +920,7 @@ namespace FUParkingService
                 {
                     customer.Data.FullName = req.FullName;
                 }
-                
+
                 if (req.Email != null && !req.Email.Equals(customer.Data.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     var isEmailCustomerExist = await _customerRepository.GetCustomerByEmailAsync(req.Email);
@@ -803,6 +946,26 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.SERVER_ERROR
                     };
                 }
+
+                // Send mail to customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = customer.Data.Email,
+                    ToUsername = customer.Data.FullName,
+                    Subject = "Account Information Updated",
+                    Body = $@"
+                        <p>We wanted to inform you that your account information has been successfully updated.</p>
+                        <p>Here are the details of the changes made:</p>
+                        <ul>
+                            {(req.FullName != null ? $"<li><strong>Full Name:</strong> {req.FullName}</li>" : "")}
+                            {(req.Email != null ? $"<li><strong>Email:</strong> {req.Email.ToLower()}</li>" : "")}
+                            {((req.CustomerTypeId != null && cusType != "") ? $"<li><strong>Account Type:</strong> {cusType}</li>" : "")}
+                        </ul>
+                    "
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
                 scope.Complete();
                 return new Return<dynamic>
                 {

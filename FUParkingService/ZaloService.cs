@@ -267,26 +267,8 @@ namespace FUParkingService
                 if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && customer.Data is not null)
                 {
                     var title = "Top-up Successful!";
-                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet using ZaloPay E-Wallet.\n";
-
-                    if (package.Data.ExtraCoin > 1)
-                    {
-                        body += $"You received an additional {Utilities.FormatMoney(package.Data.ExtraCoin ?? 0)} bic into your extra wallet.\n";
-                    }
-
-                    body += $"\nTotal balance in main wallet: {Utilities.FormatMoney(walletMain.Data.Balance)}.";
-
-                    if (extraAmount > 0)
-                    {
-                        body += $"\nTotal balance in extra wallet: {Utilities.FormatMoney(extraAmount)} bic.";
-                    }
-
-                    if (expDate?.Date >= currentDateTime.Date && expDate.HasValue)
-                    {
-                        body += $"\nExtra wallet expiration date: {Utilities.FormatDateTime(expDate)}.";
-                    }
-
-                    body += "\n\nIf you have any questions, please contact Bai Parking directly or visit the Support section in the Bai App.";
+                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet using ZaloPay E-Wallet.\n" +
+                        $"Please log in to the Bai app to see more. If you have any questions, please contact Bai Parking directly or visit the Support section in the Bai app.";
 
                     // Send Firebase notification
                     var fcmToken = customer.Data?.FCMToken;
