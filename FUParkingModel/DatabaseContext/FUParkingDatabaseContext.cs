@@ -23,7 +23,7 @@ namespace FUParkingModel.DatabaseContext
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
 #pragma warning disable CS8603 // Possible null reference return.
-            return config.GetConnectionString("DockerConnection");
+            return config.GetConnectionString("DefaultConnection");
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
