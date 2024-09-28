@@ -165,6 +165,7 @@ namespace FUParkingService.VnPayService
                 string vnpayTranId = vnpay.GetResponseData("vnp_TransactionNo");
                 string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
                 string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+                string vnp_CardType = vnpay.GetResponseData("vnp_CardType");
                 string? vnp_SecureHash = queryStringParameters["vnp_SecureHash"];
 
                 if (vnp_SecureHash is null)
@@ -298,26 +299,8 @@ namespace FUParkingService.VnPayService
                 if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT) && customer.Data is not null)
                 {
                     var title = "Top-up Successful!";
-                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet using VnPay Payment Gateway.\n";
-
-                    if (package.Data.ExtraCoin > 1)
-                    {
-                        body += $"You received an additional {Utilities.FormatMoney(package.Data.ExtraCoin ?? 0)} bic into your extra wallet.\n";
-                    }
-
-                    body += $"\nTotal balance in main wallet: {Utilities.FormatMoney(mainAmount)}.";
-
-                    if (extraAmount > 0)
-                    {
-                        body += $"\nTotal balance in extra wallet: {Utilities.FormatMoney(extraAmount)} bic.";
-                    }
-
-                    if (expDate?.Date >= currentDateTime.Date && expDate.HasValue)
-                    {
-                        body += $"\nExtra wallet expiration date: {Utilities.FormatDateTime(expDate)}.";
-                    }
-
-                    body += "\n\nIf you have any questions, please contact Bai Parking directly or visit the Support section in the Bai App.";
+                    var body = $"You have successfully topped up {Utilities.FormatMoney(package.Data.CoinAmount)} bic into your main wallet via {vnp_CardType} using VnPay Payment Gateway.\n\n" +
+                        $"Please log in to the Bai app to see more. If you have any questions, please contact Bai Parking directly or visit the Support section in the Bai app.";
 
                     // Send Firebase notification
                     var fcmToken = deposit.Data.Customer?.FCMToken;

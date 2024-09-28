@@ -12,6 +12,8 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService.Helper;
 using FUParkingService.Interface;
+using FUParkingService.MailObject;
+using FUParkingService.MailService;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Transactions;
@@ -26,10 +28,11 @@ namespace FUParkingService
         private readonly IMinioService _minioService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IFirebaseService _firebaseService;
+        private readonly IMailService _mailService;
         private readonly ILogger<VehicleService> _logger;
         private readonly IPriceRepository _priceRepository;
 
-        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService, ILogger<VehicleService> logger, IPriceRepository priceRepository)
+        public VehicleService(IVehicleRepository vehicleRepository, IHelpperService helpperService, ISessionRepository sessionRepository, IMinioService minioService, ICustomerRepository customerRepository, IFirebaseService firebaseService, ILogger<VehicleService> logger, IPriceRepository priceRepository, IMailService mailService)
         {
             _vehicleRepository = vehicleRepository;
             _helpperService = helpperService;
@@ -37,6 +40,7 @@ namespace FUParkingService
             _minioService = minioService;
             _customerRepository = customerRepository;
             _firebaseService = firebaseService;
+            _mailService = mailService;
             _logger = logger;
             _priceRepository = priceRepository;
         }
@@ -197,7 +201,7 @@ namespace FUParkingService
                     MaxPrice = reqDto.MaxPrice,
                     MinPrice = reqDto.MinPrice,
                     CreatedById = checkAuth.Data.Id,
-                    PriceTableId = resultPriceTable.Data.Id,                    
+                    PriceTableId = resultPriceTable.Data.Id,
                 };
 
                 var resultPriceItem = await _priceRepository.CreatePriceItemAsync(priceItem);
@@ -263,7 +267,7 @@ namespace FUParkingService
                         };
                     }
                     vehicleType.Data.Name = reqDto.Name;
-                }                
+                }
                 vehicleType.Data.Description = reqDto.Description ?? vehicleType.Data.Description;
                 vehicleType.Data.LastModifyById = checkAuth.Data.Id;
                 vehicleType.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
@@ -608,7 +612,8 @@ namespace FUParkingService
                     };
                     var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
 
-                    if (notificationResult.IsSuccess == false) {
+                    if (notificationResult.IsSuccess == false)
+                    {
                         _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", checkAuth.Data.Id, notificationResult.InternalErrorMessage);
                     }
                 }
@@ -785,7 +790,7 @@ namespace FUParkingService
                         Message = ErrorEnumApplication.VEHICLE_IS_IN_SESSION
                     };
                 }
-                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
+                vehicle.Data.DeletedDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
@@ -862,6 +867,28 @@ namespace FUParkingService
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // send notification to customer
+                var customer = await _customerRepository.GetCustomerByIdAsync(vehicle.Data.CustomerId ?? Guid.NewGuid());
+                if (customer.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
+                {
+                    if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                    {
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            Title = "Vehicle Registration",
+                            Body = req.IsAccept ? "Your vehicle registration has been approved by Bai's Staff." : "Your vehicle registration has been rejected by Bai's Staff."
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                        if (notificationResult.IsSuccess == false)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                        }
+                    }
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
@@ -943,6 +970,27 @@ namespace FUParkingService
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // Firebase send notification
+                var customer = await _customerRepository.GetCustomerByIdAsync(vehicle.Data.CustomerId ?? Guid.NewGuid());
+                {
+                    if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                    {
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            Title = "Vehicle Status",
+                            Body = req.IsActive ? "Your vehicle has been activated by Bai's Supervisor!" : "Your vehicle has been deactivated by Bai's Supervisor!"
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                        if (notificationResult.IsSuccess == false)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                        }
+                    }
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
@@ -1025,10 +1073,10 @@ namespace FUParkingService
                 var vehicle = await _vehicleRepository.GetVehicleByIdAsync(req.VehicleId);
                 if (!vehicle.IsSuccess || vehicle.Data is null)
                 {
-                    return new Return<dynamic> 
-                    { 
-                        Message = ErrorEnumApplication.VEHICLE_NOT_EXIST, 
-                        InternalErrorMessage = vehicle.InternalErrorMessage 
+                    return new Return<dynamic>
+                    {
+                        Message = ErrorEnumApplication.VEHICLE_NOT_EXIST,
+                        InternalErrorMessage = vehicle.InternalErrorMessage
                     };
                 }
                 // Check vehicle is in any session
@@ -1104,10 +1152,30 @@ namespace FUParkingService
                 }
                 vehicle.Data.StatusVehicle = StatusVehicleEnum.ACTIVE;
                 vehicle.Data.LastModifyById = checkAuth.Data.Id;
-                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));                
+                vehicle.Data.LastModifyDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // Firebase send notification
+                var customer = await _customerRepository.GetCustomerByIdAsync(vehicle.Data.CustomerId ?? Guid.NewGuid());
+                {
+                    if (!string.IsNullOrEmpty(customer.Data?.FCMToken))
+                    {
+                        var firebaseReq = new FirebaseReqDto
+                        {
+                            ClientTokens = new List<string> { customer.Data.FCMToken },
+                            Title = "Vehicle Information Updated",
+                            Body = $"Your vehicle with plate number {Helper.Utilities.FormatPlateNumber(vehicle.Data.PlateNumber)} has been updated by Bai's Manager! Open the Bai app to see more."
+                        };
+                        var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                        if (notificationResult.IsSuccess == false)
+                        {
+                            _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                        }
+                    }
+                }
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)
@@ -1280,7 +1348,7 @@ namespace FUParkingService
                     {
                         PlateNumber = item.PlateNumber,
                         VehicleTypeId = item.VehicleTypeId,
-                        CustomerId = req.CustomerId,                        
+                        CustomerId = req.CustomerId,
                         StatusVehicle = StatusVehicleEnum.ACTIVE,
                         StaffId = checkAuth.Data.Id,
                     };
@@ -1296,6 +1364,36 @@ namespace FUParkingService
                     }
                 }
                 scope.Complete();
+
+                // send mail to customer
+                MailRequest mailRequest = new()
+                {
+                    ToEmail = customer.Data.Email,
+                    ToUsername = customer.Data.FullName,
+                    Subject = "Vehicle Registration Confirmation",
+                    Body = $"We are pleased to inform you that your vehicle(s) has been successfully added by Bai's Supervisor. " +
+                           "You can now use the Bai app to view your registered vehicles."
+                };
+
+                await _mailService.SendEmailAsync(mailRequest);
+
+                // Firebase send notification
+                if (!string.IsNullOrEmpty(customer.Data.FCMToken))
+                {
+                    var firebaseReq = new FirebaseReqDto
+                    {
+                        ClientTokens = new List<string> { customer.Data.FCMToken },
+                        Title = "Vehicle Registration",
+                        Body = "Your vehicle has been added by Bai's Supervisor. Open the Bai app to see more."
+                    };
+                    var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                    if (notificationResult.IsSuccess == false)
+                    {
+                        _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                    }
+                }
+
                 return new Return<dynamic>
                 {
                     IsSuccess = true,
@@ -1338,6 +1436,41 @@ namespace FUParkingService
                 var result = await _vehicleRepository.UpdateVehicleAsync(vehicle.Data);
                 if (!result.Message.Equals(SuccessfullyEnumServer.UPDATE_OBJECT_SUCCESSFULLY))
                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = result.InternalErrorMessage };
+
+                // Firebase send notification
+                var customer = await _customerRepository.GetCustomerByIdAsync(vehicle.Data.CustomerId ?? Guid.NewGuid());
+                {
+                    if (customer.Data != null && customer.Data is not null)
+                    {
+                        if (!string.IsNullOrEmpty(customer.Data.FCMToken))
+                        {
+                            var firebaseReq = new FirebaseReqDto
+                            {
+                                ClientTokens = new List<string> { customer.Data.FCMToken },
+                                Title = "Vehicle Information Deleteted",
+                                Body = $"Your vehicle information with plate number {Helper.Utilities.FormatPlateNumber(vehicle.Data.PlateNumber)} has been deleteted by Bai's Supervisor. Open the Bai app to see more."
+                            };
+                            var notificationResult = await _firebaseService.SendNotificationAsync(firebaseReq);
+
+                            if (notificationResult.IsSuccess == false)
+                            {
+                                _logger.LogError("Failed to send notification to customer Id {CustomerId}. Error: {Error}", customer.Data.Id, notificationResult.InternalErrorMessage);
+                            }
+                        }
+
+                        MailRequest mailRequest = new()
+                        {
+                            ToEmail = customer.Data.Email,
+                            ToUsername = customer.Data.FullName,
+                            Subject = "Vehicle Information Deleteted",
+                            Body = $"We are sorry to inform you that your vehicle with plate number {Helper.Utilities.FormatPlateNumber(vehicle.Data.PlateNumber)} has been deleted by Bai's Supervisor. " +
+                              "Please contact Bai's Supervisor for more information."
+                        };
+
+                        await _mailService.SendEmailAsync(mailRequest);
+                    }
+                }
+
                 return new Return<dynamic> { IsSuccess = true, Message = SuccessfullyEnumServer.DELETE_OBJECT_SUCCESSFULLY };
             }
             catch (Exception ex)

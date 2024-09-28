@@ -53,22 +53,23 @@ namespace FUParkingService.MailService
                             font-family: Arial, sans-serif;
                             color: #333;
                         }}
-                        .container {{
-                            width: 100%;
-                            max-width: 100px;
-                            margin: 0 auto;
-                            border: 1px solid #ddd;
-                            border-radius: 5px;
+                        .container {{width: 100%;
+                            max-width: 800px; 
+                            margin: 20px auto; 
+                            border: 2px solid #ddd; 
+                            border-radius: 10px; 
                             overflow: hidden;
                         }}
-                        .header {{
-                            background-color: #f4f4f4;
+                        .header {{background - color: #f4f4f4;
                             text-align: center;
                             padding: 20px 0;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
                         }}
-                        .header img {{
+                        .header img {{width: 100%;
                             max-width: 150px;
-                            max-height:50px;
+                            height: auto;
                             margin: 0 10px;
                         }}
                         .header .logo2 {{
@@ -137,7 +138,6 @@ namespace FUParkingService.MailService
 
                         <!-- Footer -->
                         <div class=""footer"">
-                            <p>Bai Parking System</p>
                             <p>A: Lot E2a-7, D1 Street, Hi-Tech Park, Long Thanh My Ward, Thu Duc City, Ho Chi Minh City</p>
                             <p>E: <a href=""mailto:baiparking.system@gmail.com"">baiparking.system@gmail.com</a> | T: (028) 7300 5588</p>
                         </div>
