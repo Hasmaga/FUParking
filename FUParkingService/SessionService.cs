@@ -669,8 +669,12 @@ namespace FUParkingService
                         balanceCondition = WalletBalanceCondition.WalletExtraSufficient;
                     }
                     else if (walletExtra.Data.Balance + walletMain.Data.Balance >= price)
-                    {
+                    {                        
                         balanceCondition = WalletBalanceCondition.CombinedSufficient;
+                        if (walletExtra.Data.Balance == 0)
+                        {
+                            balanceCondition = WalletBalanceCondition.WalletMainSufficient;                            
+                        }
                     }
                     else if (walletMain.Data.Balance >= price)
                     {
@@ -945,27 +949,15 @@ namespace FUParkingService
                                 if (!paymentMethod.IsSuccess || paymentMethod.Data == null || !paymentMethod.Message.Equals(SuccessfullyEnumServer.FOUND_OBJECT))
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR, InternalErrorMessage = paymentMethod.InternalErrorMessage };
 
-                                var paymentMain = new Payment
+                                var payment = new Payment
                                 {
                                     PaymentMethodId = paymentMethod.Data.Id,
                                     SessionId = sessionCard.Data.Id,
-                                    TotalPrice = price - walletExtra.Data.Balance,
+                                    TotalPrice = price,
                                 };
-                                var createPaymentMain = await _paymentRepository.CreatePaymentAsync(paymentMain);
-                                if (!createPaymentMain.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentMain.Data == null)
-                                {
-                                    scope.Dispose();
-                                    return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
-                                }
 
-                                var paymentExtra = new Payment
-                                {
-                                    PaymentMethodId = paymentMethod.Data.Id,
-                                    SessionId = sessionCard.Data.Id,
-                                    TotalPrice = walletExtra.Data.Balance,
-                                };
-                                var createPaymentExtra = await _paymentRepository.CreatePaymentAsync(paymentExtra);
-                                if (!createPaymentExtra.Message.Equals(SuccessfullyEnumServer.CREATE_OBJECT_SUCCESSFULLY) || createPaymentExtra.Data == null)
+                                var createPayment = await _paymentRepository.CreatePaymentAsync(payment);
+                                if (!createPayment.IsSuccess || createPayment.Data == null)
                                 {
                                     scope.Dispose();
                                     return new Return<dynamic> { Message = ErrorEnumApplication.SERVER_ERROR };
@@ -974,7 +966,7 @@ namespace FUParkingService
                                 var transactionMain = new FUParkingModel.Object.Transaction
                                 {
                                     WalletId = walletMain.Data.Id,
-                                    PaymentId = createPaymentMain.Data.Id,
+                                    PaymentId = createPayment.Data.Id,
                                     Amount = price - walletExtra.Data.Balance,
                                     TransactionDescription = "Pay for parking",
                                     TransactionStatus = StatusTransactionEnum.SUCCEED,
@@ -989,7 +981,7 @@ namespace FUParkingService
                                 var transactionExtra = new FUParkingModel.Object.Transaction
                                 {
                                     WalletId = walletExtra.Data.Id,
-                                    PaymentId = createPaymentExtra.Data.Id,
+                                    PaymentId = createPayment.Data.Id,
                                     Amount = walletExtra.Data.Balance,
                                     TransactionDescription = "Pay for parking",
                                     TransactionStatus = StatusTransactionEnum.SUCCEED,
@@ -1557,7 +1549,7 @@ namespace FUParkingService
                         IsFeedback = item.Feedbacks?.Count > 0,
                         FeedbackTitle = item.Feedbacks?.FirstOrDefault()?.Title,
                         FeedbackDescription = item.Feedbacks?.FirstOrDefault()?.Description,
-                        MoneyEstimated = moneyEstimatedNeedToPay == 0 ? null : moneyEstimatedNeedToPay
+                        MoneyEstimated = moneyEstimatedNeedToPay == 0 ? null : moneyEstimatedNeedToPay                        
                     });
                 }
                 return new Return<IEnumerable<GetHistorySessionResDto>>

@@ -4,6 +4,7 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
+using System.Transactions;
 
 namespace FUParkingRepository
 {
@@ -146,6 +147,16 @@ namespace FUParkingRepository
                 {
                     wallet.Balance = 0;
                     _db.Wallets.Update(wallet);
+                    // Create transaction
+                    FUParkingModel.Object.Transaction transaction = new()
+                    {
+                        WalletId = wallet.Id,
+                        Amount = wallet.Balance,
+                        TransactionStatus = StatusTransactionEnum.SUCCEED,
+                        CreatedDate = datetimenow,
+                        TransactionDescription = "The currency has expired.",
+                    };
+                    await _db.Transactions.AddAsync(transaction);
                     await _db.SaveChangesAsync();
                 }
                 return new Return<dynamic>
