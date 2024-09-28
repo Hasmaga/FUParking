@@ -46,7 +46,8 @@ namespace FUParkingRepository
             try
             {
                 var customers = await _db.Customers
-                    .Where(c => (CustomerTypeId == null || c.CustomerTypeId == CustomerTypeId) && (StatusCustomer == null || c.StatusCustomer == StatusCustomer))
+                    .Where(c => (CustomerTypeId == null || c.CustomerTypeId == CustomerTypeId) && (StatusCustomer == null || c.StatusCustomer == StatusCustomer)
+                    && c.DeletedDate == null)
                     .ToListAsync();
                 return new Return<IEnumerable<Customer>>
                 {
@@ -97,7 +98,7 @@ namespace FUParkingRepository
             {
                 return new Return<Customer>
                 {
-                    Data = await _db.Customers.Include(c => c.CustomerType).FirstOrDefaultAsync(c => c.Id.Equals(customerId)),
+                    Data = await _db.Customers.Include(c => c.CustomerType).FirstOrDefaultAsync(c => c.Id.Equals(customerId) && c.DeletedDate == null),
                     IsSuccess = true,
                     Message = SuccessfullyEnumServer.FOUND_OBJECT
                 };
@@ -258,7 +259,7 @@ namespace FUParkingRepository
                 var query = await _db.Customers
                     .Include(c => c.CustomerType)
                     .Include(c => c.Vehicles)
-                    .Where(c => c.Vehicles.Any(v => v.PlateNumber == plateNumber))
+                    .Where(c => c.Vehicles.Any(v => v.PlateNumber == plateNumber) && c.DeletedDate == null)
                     .FirstOrDefaultAsync();
 #pragma warning restore CS8604 // Possible null reference argument.
                 return new Return<Customer>

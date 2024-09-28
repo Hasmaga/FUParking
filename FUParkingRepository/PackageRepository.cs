@@ -106,7 +106,7 @@ namespace FUParkingRepository
             try
             {
                 string status = active ? StatusPackageEnum.ACTIVE : StatusPackageEnum.INACTIVE;
-                var result = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())).ToListAsync();
+                var result = await _db.Packages.Where(p => p.PackageStatus != null && p.PackageStatus.ToLower().Equals(status.ToLower())&& p.DeletedDate == null).ToListAsync();
                 res.Message = result.Count > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT;
                 res.IsSuccess = true;
                 res.TotalRecord = result.Count;

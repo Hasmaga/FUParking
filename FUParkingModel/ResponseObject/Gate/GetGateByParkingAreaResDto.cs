@@ -12,5 +12,6 @@ namespace FUParkingModel.ResponseObject.Gate
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;     
         public string Status {  get; set; } = null!;
+        public Guid ParkingAreaId { get; set; }
     }
 }

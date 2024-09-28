@@ -2082,6 +2082,8 @@ namespace FUParkingService
                         Mode = result.Data.Mode,
                         ImageOutUrl = result.Data.ImageOutUrl ?? "",
                         ImageInUrl = result.Data.ImageInUrl,
+                        ImageInBodyUrl = result.Data.ImageInBodyUrl,
+                        ImageOutBodyUrl = result.Data.ImageOutBodyUrl ?? "",                        
                         GateOutName = result.Data.GateOut?.Name ?? "",
                         GateInName = result.Data.GateIn?.Name ?? "",
                         PlateNumber = result.Data.PlateNumber,

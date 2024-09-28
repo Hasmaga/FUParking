@@ -154,7 +154,7 @@ namespace FUParkingService
                         ParkingAreaName = fb.ParkingArea?.Name ?? "N/A",
                         Title = fb.Title ?? "N/A",
                         Description = fb.Description ?? "N/A",
-                        CreatedDate = fb.CreatedDate.ToString("dd/MM/yyyy")
+                        CreatedDate = fb.CreatedDate
                     }),
                     Message = res.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
                     TotalRecord = res.TotalRecord

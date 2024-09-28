@@ -376,7 +376,8 @@ namespace FUParkingService
                         Id = x.Id,
                         Name = x.Name,
                         Description = x.Description ?? "",
-                        Status = x.StatusGate
+                        Status = x.StatusGate,
+                        ParkingAreaId = x.ParkingArea?.Id ?? Guid.Empty
                     }),
                     IsSuccess = true,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,
@@ -511,7 +512,8 @@ namespace FUParkingService
                         Id = x.Id,
                         Name = x.Name,
                         Description = x.Description ?? "",
-                        Status = x.StatusGate
+                        Status = x.StatusGate,
+                        ParkingAreaId = x.ParkingAreaId
                     }),
                     IsSuccess = true,
                     Message = result.TotalRecord > 0 ? SuccessfullyEnumServer.FOUND_OBJECT : ErrorEnumApplication.NOT_FOUND_OBJECT,

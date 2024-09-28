@@ -113,7 +113,7 @@ namespace FUParkingRepository
         {
             try
             {
-                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Email == email);
+                var result = await _db.Users.Include(r => r.Role).FirstOrDefaultAsync(u => u.Email == email && u.DeletedDate == null);
                 return new Return<User>
                 {
                     Data = result,

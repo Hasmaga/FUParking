@@ -346,7 +346,7 @@ namespace FUParkingService
                             Name = resultCreateCus.Data.FullName,
                             Email = resultCreateCus.Data.Email,
                             Avatar = payload.Picture,
-                            CustomerType = isUserRegistered.Data?.CustomerType?.Name == CustomerTypeEnum.PAID ? "PAID" : "NONPAID"
+                            CustomerType = resultCreateCus.Data?.CustomerType?.Name == CustomerTypeEnum.PAID ? "PAID" : "NONPAID"
                         },
                         IsSuccess = true,
                         Message = SuccessfullyEnumServer.LOGIN_SUCCESSFULLY
