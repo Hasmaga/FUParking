@@ -255,7 +255,7 @@ namespace FUParkingService.VnPayService
 
                 // Check if walletExtra.Data.EXPDate is expired and package.Data.EXPPackage is null and package has ExtraCoin > 0
                 var isWalletExpired = walletExtra.Data.EXPDate is not null && walletExtra.Data.EXPDate.Value.Date < currentDateTime.Date;
-                var hasExtraPackageDate = package.Data.EXPPackage is not null;
+                var hasExtraPackageDate = package.Data.EXPPackage is not null || package.Data.EXPPackage > 0;
                 var hasExtraCoin = package.Data.ExtraCoin.HasValue && package.Data.ExtraCoin > 0;
 
                 if (isWalletExpired && !hasExtraPackageDate)
