@@ -13,6 +13,7 @@ using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using FUParkingService;
 using FUParkingService.Interface;
+using FUParkingService.MailService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -38,9 +39,10 @@ namespace FUParkingTesting
         private readonly Mock<IFirebaseService> _firebaseServiceMock = new();
         private readonly Mock<ILogger<VehicleService>> _loggerMock = new();
         private readonly Mock<IPriceRepository> _priceRepository = new();
+        private readonly Mock<IMailService> _mailService = new();
         private readonly VehicleService _vehicleService;
 
-        public VehicleServiceTesting(Mock<IPriceRepository> priceRepository)
+        public VehicleServiceTesting()
         {
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
             _helpperServiceMock = new Mock<IHelpperService>();
@@ -50,7 +52,8 @@ namespace FUParkingTesting
             _firebaseServiceMock = new Mock<IFirebaseService>();
             _loggerMock = new Mock<ILogger<VehicleService>>();
             _priceRepository = new Mock<IPriceRepository>();
-            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object, _loggerMock.Object, _priceRepository.Object);            
+            _mailService = new Mock<IMailService>();
+            _vehicleService = new VehicleService(_vehicleRepositoryMock.Object, _helpperServiceMock.Object, _sessionRepositoryMock.Object, _minioServiceMock.Object, _customerRepositoryMock.Object, _firebaseServiceMock.Object, _loggerMock.Object, _priceRepository.Object, _mailService.Object);            
         }
         // GetVehicleTypesAsync
         // Successful

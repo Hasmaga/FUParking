@@ -11,6 +11,9 @@ using FUParkingModel.RequestObject.Customer;
 using FUParkingModel.ResponseObject.Statistic;
 using FUParkingModel.ResponseObject.Session;
 using Castle.Core.Resource;
+using FirebaseService;
+using FUParkingService.MailService;
+using Microsoft.Extensions.Logging;
 
 namespace FUParkingTesting
 {
@@ -20,6 +23,9 @@ namespace FUParkingTesting
         private readonly Mock<IHelpperService> _helpperServiceMock;
         private readonly Mock<IVehicleRepository> _vehicleRepositoryMock;
         private readonly Mock<IWalletRepository> _walletRepositoryMock;
+        private readonly Mock<IFirebaseService> _firebaseService;
+        private readonly Mock<IMailService> _mailService;
+        private readonly Mock<ILogger<CustomerService>> _logger;
         private readonly CustomerService _customerService;
 
         public CustomerServiceTesting()
@@ -28,7 +34,10 @@ namespace FUParkingTesting
             _helpperServiceMock = new Mock<IHelpperService>();
             _vehicleRepositoryMock = new Mock<IVehicleRepository>();
             _walletRepositoryMock = new Mock<IWalletRepository>();
-            _customerService = new CustomerService(_customerRepositoryMock.Object, _helpperServiceMock.Object, _vehicleRepositoryMock.Object, _walletRepositoryMock.Object);
+            _firebaseService = new Mock<IFirebaseService>();
+            _mailService = new Mock<IMailService>();
+            _logger = new Mock<ILogger<CustomerService>>();
+            _customerService = new CustomerService(_customerRepositoryMock.Object, _helpperServiceMock.Object, _vehicleRepositoryMock.Object, _walletRepositoryMock.Object, _firebaseService.Object, _mailService.Object, _logger.Object);
         }
 
         // ChangeStatusCustomerAsync
