@@ -4,7 +4,6 @@ using FUParkingModel.Object;
 using FUParkingModel.ReturnCommon;
 using FUParkingRepository.Interface;
 using Microsoft.EntityFrameworkCore;
-using System.Transactions;
 
 namespace FUParkingRepository
 {
