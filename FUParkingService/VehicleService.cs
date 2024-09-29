@@ -1365,17 +1365,17 @@ namespace FUParkingService
                 }
                 scope.Complete();
 
-                // send mail to customer
-                MailRequest mailRequest = new()
-                {
-                    ToEmail = customer.Data.Email,
-                    ToUsername = customer.Data.FullName,
-                    Subject = "Vehicle Registration Confirmation",
-                    Body = $"We are pleased to inform you that your vehicle(s) has been successfully added by Bai's Supervisor. " +
-                           "You can now use the Bai app to view your registered vehicles."
-                };
+                //// send mail to customer
+                //MailRequest mailRequest = new()
+                //{
+                //    ToEmail = customer.Data.Email,
+                //    ToUsername = customer.Data.FullName,
+                //    Subject = "Vehicle Registration Confirmation",
+                //    Body = $"We are pleased to inform you that your vehicle(s) has been successfully added by Bai's Supervisor. " +
+                //           "You can now use the Bai app to view your registered vehicles."
+                //};
 
-                await _mailService.SendEmailAsync(mailRequest);
+                //await _mailService.SendEmailAsync(mailRequest);
 
                 // Firebase send notification
                 if (!string.IsNullOrEmpty(customer.Data.FCMToken))
